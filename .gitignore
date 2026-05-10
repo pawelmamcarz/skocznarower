@@ -5,3 +5,4 @@
 .env*
 !.env.example
 uploads/hero.mp4
+uploads/FastDL.to_*
