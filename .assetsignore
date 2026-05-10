@@ -5,3 +5,4 @@ uploads/FastDL.to_*
 .git/
 .claude/
 node_modules/
+src/
