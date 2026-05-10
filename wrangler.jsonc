@@ -8,6 +8,10 @@
   "assets": {
     "directory": "."
   },
+  "routes": [
+    { "pattern": "skocznarower.pl/*", "zone_name": "skocznarower.pl" },
+    { "pattern": "www.skocznarower.pl/*", "zone_name": "skocznarower.pl" }
+  ],
   "compatibility_flags": [
     "nodejs_compat"
   ]

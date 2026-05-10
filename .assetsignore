@@ -1,0 +1,7 @@
+uploads/*.mp4
+uploads/*.pdf
+uploads/FastDL.to_*
+.wrangler/
+.git/
+.claude/
+node_modules/
