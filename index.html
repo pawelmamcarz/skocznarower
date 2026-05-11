@@ -584,6 +584,91 @@
     .reveal[data-delay="3"] { transition-delay: .3s; }
     .reveal[data-delay="4"] { transition-delay: .4s; }
 
+    /* ─── CENNIK ─────────────────────────────────────────── */
+    .price-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 2px;
+      margin-top: 56px;
+    }
+    .price-cat {
+      background: var(--bg2);
+      padding: 32px 28px;
+    }
+    .price-cat-name {
+      font-family: var(--fd);
+      font-size: 20px;
+      letter-spacing: .06em;
+      color: var(--accent);
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .price-row:last-child { border-bottom: none; }
+    .price-label { color: rgba(240,240,240,.72); line-height: 1.4; }
+    .price-val {
+      font-weight: 700;
+      color: var(--white);
+      white-space: nowrap;
+      font-size: 13px;
+    }
+    .price-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 20px;
+      line-height: 1.6;
+    }
+
+    /* ─── FAQ ─────────────────────────────────────────────── */
+    .faq-list { margin-top: 56px; }
+    .faq-item {
+      border-top: 1px solid var(--border);
+      padding: 0;
+    }
+    .faq-item:last-child { border-bottom: 1px solid var(--border); }
+    .faq-q {
+      width: 100%;
+      background: none;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 22px 0;
+      font-family: var(--fd);
+      font-size: clamp(18px, 2.5vw, 24px);
+      letter-spacing: .04em;
+      color: var(--white);
+      cursor: pointer;
+      text-align: left;
+    }
+    .faq-q:hover { color: var(--accent); }
+    .faq-icon {
+      flex-shrink: 0;
+      width: 22px; height: 22px;
+      color: var(--accent);
+      transition: transform .3s;
+    }
+    .faq-item.open .faq-icon { transform: rotate(45deg); }
+    .faq-a {
+      display: none;
+      font-size: 15px;
+      color: rgba(240,240,240,.65);
+      line-height: 1.75;
+      padding-bottom: 20px;
+      max-width: 680px;
+    }
+    .faq-item.open .faq-a { display: block; }
+
     /* ─── MOBILE CTA BAR ─────────────────────────────────── */
     .mobile-bar {
       display: none;
@@ -632,6 +717,8 @@
   <ul class="nav-links">
     <li><a href="#o-mnie">O mnie</a></li>
     <li><a href="#uslugi">Usługi</a></li>
+    <li><a href="#cennik">Cennik</a></li>
+    <li><a href="#faq">FAQ</a></li>
     <li><a href="#kontakt">Kontakt</a></li>
     <li><a class="cta" href="tel:600370810">600 370 810</a></li>
   </ul>
@@ -722,6 +809,7 @@ Bo skoro rowery są moją pasją, to naturalne, że nauczyłem się też serwiso
 <section class="section" id="uslugi">
   <p class="eyebrow reveal">Usługi</p>
   <h2 class="display reveal" data-delay="1">CO<br>NAPRAWIAM</h2>
+  <p class="about-body reveal" data-delay="2" style="max-width:640px; margin-top:12px; margin-bottom:0;">Serwis rowerowy w Grodzisku Mazowieckim – specjalizacja Dirt Jump, BMX i MTB. Obsługuję rowerzystów z Pruszkowa, Milanówka i okolic Warszawy.</p>
 
   <div class="services-grid">
 
@@ -786,6 +874,113 @@ Bo skoro rowery są moją pasją, to naturalne, że nauczyłem się też serwiso
       </svg>
       <div class="service-name">BUDOWA NA MIARĘ</div>
       <div class="service-desc">Od ramy do gotowego roweru – razem wybierzemy części i złożymy coś wyjątkowego.</div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     CENNIK
+════════════════════════════════════════════════ -->
+<section class="section section-alt" id="cennik">
+  <p class="eyebrow reveal">Cennik</p>
+  <h2 class="display reveal" data-delay="1">CENNIK<br>SERWISU</h2>
+
+  <div class="price-grid">
+
+    <div class="price-cat reveal" data-delay="1">
+      <div class="price-cat-name">PRZEGLĄDY</div>
+      <div class="price-row"><span class="price-label">Przegląd podstawowy</span><span class="price-val">od 100 zł</span></div>
+      <div class="price-row"><span class="price-label">Przegląd kompleksowy</span><span class="price-val">od 220 zł</span></div>
+      <div class="price-row"><span class="price-label">Regulacja hamulców</span><span class="price-val">30 zł</span></div>
+      <div class="price-row"><span class="price-label">Regulacja przerzutek</span><span class="price-val">30 zł</span></div>
+      <div class="price-row"><span class="price-label">Wymiana linek i pancerzy</span><span class="price-val">od 45 zł</span></div>
+    </div>
+
+    <div class="price-cat reveal" data-delay="2">
+      <div class="price-cat-name">KOŁA</div>
+      <div class="price-row"><span class="price-label">Centrowanie koła</span><span class="price-val">40 zł</span></div>
+      <div class="price-row"><span class="price-label">Zaplatanie koła (robocizna)</span><span class="price-val">od 120 zł</span></div>
+      <div class="price-row"><span class="price-label">Wymiana dętki</span><span class="price-val">25 zł + dętka</span></div>
+      <div class="price-row"><span class="price-label">Wymiana opony</span><span class="price-val">30 zł + opona</span></div>
+      <div class="price-row"><span class="price-label">Montaż tubeless</span><span class="price-val">od 50 zł / koło</span></div>
+    </div>
+
+    <div class="price-cat reveal" data-delay="3">
+      <div class="price-cat-name">ZAWIESZENIE</div>
+      <div class="price-row"><span class="price-label">Serwis widelca (podstawowy)</span><span class="price-val">od 150 zł</span></div>
+      <div class="price-row"><span class="price-label">Serwis amortyzatora tylnego</span><span class="price-val">od 150 zł</span></div>
+      <div class="price-row"><span class="price-label">Regulacja geometrii zawieszenia</span><span class="price-val">od 60 zł</span></div>
+    </div>
+
+    <div class="price-cat reveal" data-delay="1">
+      <div class="price-cat-name">SPECJALIZACJE</div>
+      <div class="price-row"><span class="price-label">Montaż osprzętu (hamulce, manetki)</span><span class="price-val">od 40 zł</span></div>
+      <div class="price-row"><span class="price-label">Bleeding hamulców hydraulicznych</span><span class="price-val">od 80 zł</span></div>
+      <div class="price-row"><span class="price-label">Budowa roweru na miarę</span><span class="price-val">od 400 zł</span></div>
+      <p class="price-note">Ceny podane za robociznę. Części wyceniane oddzielnie. Dokładna wycena po oględzinach roweru.</p>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     FAQ
+════════════════════════════════════════════════ -->
+<section class="section" id="faq">
+  <p class="eyebrow reveal">FAQ</p>
+  <h2 class="display reveal" data-delay="1">PYTANIA<br>I ODPOWIEDZI</h2>
+
+  <div class="faq-list reveal" data-delay="2">
+
+    <div class="faq-item">
+      <button class="faq-q">
+        Jak umówić rower do serwisu w Grodzisku Mazowieckim?
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <div class="faq-a">Zadzwoń lub napisz na Instagramie (@xpyszczek_). Ustalamy termin i przyjeżdżasz na Jesionową 18 w Grodzisku Mazowieckim. Serwis działa wyłącznie po wcześniejszym umówieniu.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q">
+        Ile trwa serwis roweru?
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <div class="faq-a">Proste naprawy (regulacja, wymiana dętki) wykonuję tego samego dnia lub w ciągu 1–2 dni. Przegląd kompleksowy czy zaplatanie koła zajmuje zazwyczaj 2–4 dni robocze. Przy dużym obłożeniu poinformuję Cię o czasie oczekiwania przy umawianiu.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q">
+        Czy serwisujecie rowery Dirt Jump i BMX?
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <div class="faq-a">To nasza specjalizacja. Dirt Jump i BMX to rowery, które znam od podszewki — jeżdżę na nich od lat. Wiem jak je serwisować żeby działały bez zarzutu na torze, skateparku czy w terenie.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q">
+        Czy naprawiasz rowery elektryczne (e-bike)?
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <div class="faq-a">Tak, wykonuję serwis mechaniczny e-bike'ów — zawieszenie, hamulce, koła, osprzęt. Nie zajmuję się elektroniką ani oprogramowaniem silnika.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q">
+        Czy dojadę do serwisu z Pruszkowa lub Milanówka?
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <div class="faq-a">Tak — Jesionowa 18 w Grodzisku Mazowieckim jest dobrze skomunikowana. Z Pruszkowa to ok. 15 min samochodem, z Milanówka ok. 10 min, z Warszawy (zachodnie dzielnice) ok. 30–40 min.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q">
+        Jakie marki osprzętu obsługujesz?
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <div class="faq-a">Pracuję na całym osprzęcie — Shimano, SRAM, TRP, Hope, Magura. Zawieszenia: RockShox, Fox, Manitou, DVO. Jeśli masz rower z innym osprzętem — zapytaj, na pewno się dogadamy.</div>
     </div>
 
   </div>
@@ -933,6 +1128,13 @@ Bo skoro rowery są moją pasją, to naturalne, że nauczyłem się też serwiso
      SCRIPTS
 ════════════════════════════════════════════════ -->
 <script>
+  // --- FAQ accordion ---
+  document.querySelectorAll('.faq-q').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.closest('.faq-item').classList.toggle('open');
+    });
+  });
+
   // --- Nav scroll ---
   const nav = document.getElementById('nav');
   window.addEventListener('scroll', () => {
