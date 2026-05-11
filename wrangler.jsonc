@@ -5,10 +5,8 @@
   "observability": {
     "enabled": true
   },
-  "main": "src/index.js",
   "assets": {
-    "directory": ".",
-    "binding": "ASSETS"
+    "directory": "."
   },
   "routes": [
     { "pattern": "skocznarower.pl/*", "zone_name": "skocznarower.pl" },
