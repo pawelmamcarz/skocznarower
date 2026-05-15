@@ -8,7 +8,8 @@
   "main": "src/index.js",
   "assets": {
     "directory": ".",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    "run_worker_first": true
   },
   "routes": [
     { "pattern": "skocznarower.pl/*", "zone_name": "skocznarower.pl" },
