@@ -4,6 +4,7 @@ uploads/FastDL.to_*
 .wrangler/
 .git/
 .claude/
+.playwright-mcp/
 node_modules/
 src/
 migrations/
