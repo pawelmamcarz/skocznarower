@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Umów wizytę — skocznarower.pl, serwis rowerowy Grodzisk Mazowiecki</title>
+  <meta name="description" content="Umów wizytę w serwisie rowerowym w Grodzisku Mazowieckim. Wybierz usługę, datę i godzinę, oddzwonię żeby potwierdzić.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://www.skocznarower.pl/umow">
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/uploads/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/uploads/favicon-192.png">
+  <link rel="icon" type="image/png" href="/uploads/favicon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:    #080808;
+      --bg2:   #101010;
+      --bg3:   #1c1c1c;
+      --accent: #9fe22e;
+      --accent-dim: rgba(159,226,46,.10);
+      --white: #f0f0f0;
+      --muted: #888;
+      --border: rgba(255,255,255,.07);
+      --fd: 'Bebas Neue', sans-serif;
+      --fb: 'DM Sans', sans-serif;
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: var(--fb);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      padding-top: 90px;
+    }
+
+    /* ─── NAV ─────────────────────────────────────────────── */
+    .nav {
+      position: fixed;
+      inset-block-start: 0; inset-inline: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 48px;
+      background: rgba(8,8,8,.94);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo { display:flex; align-items:center; gap:11px; text-decoration:none; }
+    .logo-icon { height: 44px; width:auto; }
+    .nav-links { display:flex; gap:34px; list-style:none; align-items:center; }
+    .nav-links a { color:var(--white); text-decoration:none; font-size:14px; font-weight:500; letter-spacing:.02em; }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-cta {
+      background: var(--accent); color: var(--bg) !important;
+      padding: 9px 18px; border-radius: 6px; font-weight: 700;
+    }
+    .nav-cta:hover { color: var(--bg) !important; background: #b6f23d; }
+
+    @media (max-width: 720px) {
+      body { padding-top: 70px; }
+      .nav { padding: 14px 20px; }
+      .nav-links { gap: 14px; }
+      .nav-links li:not(:last-child) { display: none; }
+    }
+
+    /* ─── HEADER ──────────────────────────────────────────── */
+    .header {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 60px 32px 40px;
+    }
+    .eyebrow {
+      font-size: 12px;
+      letter-spacing: .25em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 18px;
+    }
+    .display {
+      font-family: var(--fd);
+      font-size: clamp(48px, 8vw, 96px);
+      line-height: .92;
+      letter-spacing: .01em;
+      margin-bottom: 24px;
+    }
+    .display em { color: var(--accent); font-style: normal; }
+    .lead {
+      font-size: 17px;
+      color: #ccc;
+      max-width: 620px;
+      line-height: 1.6;
+    }
+
+    /* ─── FORM ────────────────────────────────────────────── */
+    .form-wrap {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 0 32px 80px;
+    }
+    .step {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      margin-bottom: 18px;
+    }
+    .step-num {
+      font-family: var(--fd);
+      color: var(--accent);
+      font-size: 14px;
+      letter-spacing: .25em;
+      margin-bottom: 6px;
+    }
+    .step-title {
+      font-family: var(--fd);
+      font-size: 26px;
+      letter-spacing: .02em;
+      margin-bottom: 20px;
+    }
+
+    .choices {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px;
+    }
+    .choice {
+      position: relative;
+      cursor: pointer;
+    }
+    .choice input { position: absolute; opacity: 0; pointer-events: none; }
+    .choice-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: border-color .15s, background .15s;
+    }
+    .choice:hover .choice-card { border-color: rgba(159,226,46,.4); }
+    .choice input:checked + .choice-card {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+    .choice input:focus-visible + .choice-card {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .date-row { display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; }
+    .date-input {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--white);
+      padding: 14px 16px;
+      border-radius: 8px;
+      font-family: var(--fb);
+      font-size: 16px;
+      min-width: 220px;
+      color-scheme: dark;
+    }
+    .date-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+
+    .slots {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 8px;
+      margin-top: 18px;
+    }
+    .slot {
+      position: relative;
+      cursor: pointer;
+    }
+    .slot input { position:absolute; opacity:0; pointer-events:none; }
+    .slot-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 600;
+      transition: border-color .15s, background .15s, color .15s;
+    }
+    .slot:hover .slot-card { border-color: rgba(159,226,46,.4); }
+    .slot input:checked + .slot-card {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: var(--bg);
+    }
+    .slot.disabled { cursor: not-allowed; opacity: .35; }
+    .slot.disabled .slot-card { text-decoration: line-through; }
+
+    .slots-empty, .slots-hint {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 12px;
+    }
+
+    .fields { display: grid; gap: 14px; }
+    .fields .row { display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 600px) { .fields .row { grid-template-columns: 1fr; } }
+
+    label.field {
+      display: block;
+    }
+    label.field span {
+      display: block;
+      font-size: 12px;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    label.field span em { color: var(--accent); font-style: normal; }
+    .input, .textarea {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--white);
+      padding: 13px 14px;
+      border-radius: 6px;
+      font-family: var(--fb);
+      font-size: 15px;
+    }
+    .input:focus, .textarea:focus, .date-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+    .textarea { min-height: 90px; resize: vertical; line-height: 1.5; }
+
+    .submit-row {
+      margin-top: 28px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .btn-submit {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 16px 36px;
+      border-radius: 8px;
+      font-family: var(--fb);
+      font-size: 20px;
+      letter-spacing: .04em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .12s, background .15s;
+    }
+    .btn-submit:hover { background: #b6f23d; transform: translateY(-1px); }
+    .btn-submit:disabled { opacity: .5; cursor: wait; transform: none; }
+    .submit-note { font-size: 13px; color: var(--muted); }
+
+    .alert {
+      margin-top: 16px;
+      padding: 14px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .alert-error { background: rgba(214,102,102,.12); border: 1px solid rgba(214,102,102,.4); color: #f1a1a1; }
+    .alert-success { background: var(--accent-dim); border: 1px solid rgba(159,226,46,.4); color: var(--accent); }
+
+    /* ─── SUCCESS ─────────────────────────────────────────── */
+    .success-box {
+      background: var(--bg2);
+      border: 1px solid rgba(159,226,46,.3);
+      border-radius: 12px;
+      padding: 40px 32px;
+      text-align: center;
+    }
+    .success-box .check {
+      width: 56px; height: 56px;
+      background: var(--accent);
+      color: var(--bg);
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      font-size: 28px;
+    }
+    .success-box h2 {
+      font-family: var(--fd);
+      font-size: 36px;
+      margin-bottom: 12px;
+      letter-spacing: .02em;
+    }
+    .success-box p { color: #ccc; margin-bottom: 8px; }
+    .success-meta {
+      background: var(--bg3);
+      border-radius: 8px;
+      padding: 18px;
+      margin: 24px auto;
+      max-width: 380px;
+      text-align: left;
+      font-size: 14px;
+    }
+    .success-meta div { padding: 4px 0; }
+    .success-meta strong { color: var(--accent); display: inline-block; min-width: 100px; }
+
+    /* ─── FOOTER ──────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 30px 32px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      max-width: 880px;
+      margin: 0 auto;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="logo" href="/">
+    <img class="logo-icon" src="/uploads/logo-icon.png" alt="Skocz na Rower" width="44" height="48">
+  </a>
+  <ul class="nav-links">
+    <li><a href="/#uslugi">Usługi</a></li>
+    <li><a href="/#cennik">Cennik</a></li>
+    <li><a href="/#kontakt">Kontakt</a></li>
+    <li><a class="nav-cta" href="tel:600370810">600 370 810</a></li>
+  </ul>
+</nav>
+
+<header class="header">
+  <p class="eyebrow">Rezerwacja online</p>
+  <h1 class="display">Umów<br><em>wizytę</em></h1>
+  <p class="lead">Wybierz usługę, dzień i godzinę. Oddzwonię żeby potwierdzić termin. Wszystko trwa minutę.</p>
+</header>
+
+<main class="form-wrap">
+
+<form id="booking-form" autocomplete="on" novalidate>
+
+  <section class="step">
+    <div class="step-num">01 — Usługa</div>
+    <h2 class="step-title">Co robimy?</h2>
+    <div class="choices" id="services">
+      <!-- wypełniane JS-em -->
+    </div>
+  </section>
+
+  <section class="step">
+    <div class="step-num">02 — Sprzęt</div>
+    <h2 class="step-title">Jaki rower?</h2>
+    <div class="choices" id="bike-types">
+      <!-- wypełniane JS-em -->
+    </div>
+  </section>
+
+  <section class="step">
+    <div class="step-num">03 — Termin</div>
+    <h2 class="step-title">Kiedy przyjedziesz?</h2>
+    <div class="date-row">
+      <input id="date" class="date-input" type="date" required>
+    </div>
+    <div id="slots-area">
+      <p class="slots-hint">Wybierz datę żeby zobaczyć wolne godziny.</p>
+    </div>
+  </section>
+
+  <section class="step">
+    <div class="step-num">04 — Kontakt</div>
+    <h2 class="step-title">Jak się skontaktować?</h2>
+    <div class="fields">
+      <div class="row">
+        <label class="field">
+          <span>Imię <em>*</em></span>
+          <input class="input" type="text" id="name" name="name" required maxlength="80" autocomplete="given-name">
+        </label>
+        <label class="field">
+          <span>Telefon <em>*</em></span>
+          <input class="input" type="tel" id="phone" name="phone" required inputmode="numeric" autocomplete="tel" placeholder="np. 600 370 810">
+        </label>
+      </div>
+      <label class="field">
+        <span>Email (opcjonalnie)</span>
+        <input class="input" type="email" id="email" name="email" maxlength="120" autocomplete="email">
+      </label>
+      <label class="field">
+        <span>Opisz krótko co dolega rowerowi</span>
+        <textarea class="textarea" id="notes" name="notes" maxlength="1000" placeholder="np. trzeszczy suport, źle hamuje tył, prosta regulacja przerzutek..."></textarea>
+      </label>
+    </div>
+
+    <div class="submit-row">
+      <button class="btn-submit" type="submit" id="submit-btn">Umów wizytę →</button>
+      <span class="submit-note">Po wysłaniu oddzwonię żeby potwierdzić.</span>
+    </div>
+
+    <div id="alert" hidden></div>
+  </section>
+
+</form>
+
+<div id="success" hidden></div>
+
+</main>
+
+<footer>
+  <p>skocznarower.pl · Jesionowa 18, Grodzisk Mazowiecki · <a href="tel:600370810">600 370 810</a></p>
+</footer>
+
+<script>
+const SERVICES = [
+  { id: 'przeglad-podstawowy',  name: 'Przegląd podstawowy' },
+  { id: 'przeglad-kompleksowy', name: 'Przegląd kompleksowy' },
+  { id: 'regulacja',            name: 'Regulacja (hamulce / przerzutki)' },
+  { id: 'wymiana-czesci',       name: 'Wymiana części' },
+  { id: 'kolo-centrowanie',     name: 'Centrowanie koła' },
+  { id: 'kolo-naprawa',         name: 'Naprawa koła' },
+  { id: 'kolo-zaplatanie',      name: 'Zaplatanie koła' },
+  { id: 'pod-ridera',           name: 'Konfiguracja pod ridera' },
+  { id: 'budowa',               name: 'Budowa roweru na miarę' },
+  { id: 'hulajnoga',            name: 'Serwis hulajnogi' },
+  { id: 'inne',                 name: 'Inne (opisz niżej)' },
+];
+
+const BIKE_TYPES = [
+  'Dirt Jump / BMX',
+  'MTB',
+  'Rower miejski / trekking',
+  'E-bike',
+  'Hulajnoga',
+  'Inny',
+];
+
+const $ = sel => document.querySelector(sel);
+
+// ─── Render checklist ───────────────────────────────────────
+function renderChoices(containerId, options, fieldName) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = options.map((opt, i) => {
+    const value = typeof opt === 'string' ? opt : opt.id;
+    const label = typeof opt === 'string' ? opt : opt.name;
+    return `
+      <label class="choice">
+        <input type="radio" name="${fieldName}" value="${value}" ${i === 0 && fieldName === 'service' ? '' : ''}>
+        <div class="choice-card">${label}</div>
+      </label>`;
+  }).join('');
+}
+renderChoices('services', SERVICES, 'service');
+renderChoices('bike-types', BIKE_TYPES, 'bike');
+
+// ─── Date / slots ───────────────────────────────────────────
+const dateInput = $('#date');
+const slotsArea = $('#slots-area');
+
+const today = new Date();
+today.setDate(today.getDate() + 1);
+dateInput.min = today.toISOString().slice(0, 10);
+
+dateInput.addEventListener('change', loadSlots);
+
+async function loadSlots() {
+  const date = dateInput.value;
+  if (!date) return;
+  slotsArea.innerHTML = '<p class="slots-hint">Ładuję wolne godziny...</p>';
+  try {
+    const r = await fetch('/api/availability?date=' + encodeURIComponent(date));
+    const data = await r.json();
+    renderSlots(data.slots || []);
+  } catch (e) {
+    slotsArea.innerHTML = '<p class="slots-empty">Coś nie zagrało, spróbuj jeszcze raz.</p>';
+  }
+}
+
+function renderSlots(slots) {
+  if (slots.length === 0) {
+    slotsArea.innerHTML = '<p class="slots-empty">W tym dniu nie pracuję. Wybierz inną datę.</p>';
+    return;
+  }
+  const anyAvailable = slots.some(s => s.available);
+  slotsArea.innerHTML = `
+    <div class="slots">
+      ${slots.map(s => `
+        <label class="slot ${s.available ? '' : 'disabled'}">
+          <input type="radio" name="slot" value="${s.time}" ${s.available ? '' : 'disabled'}>
+          <div class="slot-card">${s.time}</div>
+        </label>
+      `).join('')}
+    </div>
+    ${anyAvailable ? '' : '<p class="slots-empty">Wszystkie terminy zajęte. Wybierz inny dzień.</p>'}
+  `;
+}
+
+// ─── Submit ─────────────────────────────────────────────────
+const form = $('#booking-form');
+const submitBtn = $('#submit-btn');
+const alertBox = $('#alert');
+
+function showAlert(msg, kind = 'error') {
+  alertBox.className = 'alert alert-' + kind;
+  alertBox.textContent = msg;
+  alertBox.hidden = false;
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  alertBox.hidden = true;
+
+  const service = form.querySelector('input[name="service"]:checked')?.value;
+  const bike    = form.querySelector('input[name="bike"]:checked')?.value;
+  const slot    = form.querySelector('input[name="slot"]:checked')?.value;
+  const date    = dateInput.value;
+  const name    = $('#name').value.trim();
+  const phone   = $('#phone').value.trim();
+  const email   = $('#email').value.trim();
+  const notes   = $('#notes').value.trim();
+
+  if (!service) return showAlert('Wybierz usługę.');
+  if (!bike)    return showAlert('Wybierz typ roweru.');
+  if (!date)    return showAlert('Wybierz datę.');
+  if (!slot)    return showAlert('Wybierz godzinę.');
+  if (name.length < 2) return showAlert('Wpisz imię.');
+  if (!/[0-9]{9}/.test(phone.replace(/[^0-9+]/g, ''))) return showAlert('Wpisz prawidłowy telefon.');
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Wysyłam...';
+
+  try {
+    const r = await fetch('/api/bookings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        date, time_slot: slot,
+        service_type: service, bike_type: bike,
+        customer_name: name, customer_phone: phone,
+        customer_email: email || null,
+        notes: notes || null,
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      showAlert(data.error || 'Nie udało się umówić, spróbuj ponownie.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Umów wizytę →';
+      return;
+    }
+    showSuccess({ id: data.id, date, slot, service, bike, name, phone });
+  } catch (err) {
+    showAlert('Brak połączenia, spróbuj jeszcze raz.');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Umów wizytę →';
+  }
+});
+
+function showSuccess({ id, date, slot, service, bike, name, phone }) {
+  const serviceName = SERVICES.find(s => s.id === service)?.name || service;
+  form.hidden = true;
+  const box = $('#success');
+  box.hidden = false;
+  box.innerHTML = `
+    <div class="success-box">
+      <div class="check">✓</div>
+      <h2>Termin zarezerwowany</h2>
+      <p>Dzięki, ${escapeHtml(name)}! Oddzwonię na <strong>${escapeHtml(phone)}</strong> żeby potwierdzić.</p>
+      <div class="success-meta">
+        <div><strong>Data:</strong> ${date}, godz. ${slot}</div>
+        <div><strong>Usługa:</strong> ${escapeHtml(serviceName)}</div>
+        <div><strong>Rower:</strong> ${escapeHtml(bike)}</div>
+        <div><strong>Numer:</strong> ${id.slice(0, 8)}</div>
+      </div>
+      <p><a href="/" style="color: var(--accent); text-decoration: none;">← Wróć na stronę</a></p>
+    </div>
+  `;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  })[c]);
+}
+</script>
+
+</body>
+</html>

@@ -6,7 +6,10 @@ uploads/FastDL.to_*
 .claude/
 node_modules/
 src/
+migrations/
 CLAUDE.md
 .assetsignore
 .gitignore
+.dev.vars
+.dev.vars.example
 .DS_Store

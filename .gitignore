@@ -6,3 +6,7 @@
 !.env.example
 uploads/hero.mp4
 uploads/FastDL.to_*
+
+# test artifacts
+.playwright-mcp/
+.DS_Store

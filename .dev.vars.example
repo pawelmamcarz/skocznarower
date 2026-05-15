@@ -1,0 +1,8 @@
+# Skopiuj do .dev.vars (gitignored) i wypełnij własnymi wartościami
+ADMIN_PASSWORD=zmien-mnie
+SESSION_SECRET=wygeneruj-losowy-ciag-np-openssl-rand-hex-32
+
+# Email (opcjonalne — jeśli puste, rezerwacje działają, ale bez powiadomień)
+RESEND_API_KEY=
+NOTIFY_EMAIL=
+FROM_EMAIL=rezerwacje@skocznarower.pl
