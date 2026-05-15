@@ -22,7 +22,7 @@
     {
       "binding": "DB",
       "database_name": "skocznarower-db",
-      "database_id": "PLACEHOLDER_RUN_WRANGLER_D1_CREATE",
+      "database_id": "1df60167-a71d-4a9c-87d7-3fd5fba9b75f",
       "migrations_dir": "migrations"
     }
   ]
