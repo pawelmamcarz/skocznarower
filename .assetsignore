@@ -6,3 +6,7 @@ uploads/FastDL.to_*
 .claude/
 node_modules/
 src/
+CLAUDE.md
+.assetsignore
+.gitignore
+.DS_Store
