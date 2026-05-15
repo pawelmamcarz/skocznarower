@@ -142,16 +142,22 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 14px 16px;
-      font-size: 14px;
-      font-weight: 500;
       transition: border-color .15s, background .15s;
+    }
+    .choice-name { font-size: 14px; font-weight: 500; }
+    .choice-price {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+      letter-spacing: .02em;
     }
     .choice:hover .choice-card { border-color: rgba(159,226,46,.4); }
     .choice input:checked + .choice-card {
       border-color: var(--accent);
       background: var(--accent-dim);
-      color: var(--accent);
     }
+    .choice input:checked + .choice-card .choice-name { color: var(--accent); }
+    .choice input:checked + .choice-card .choice-price { color: var(--accent); opacity: .85; }
     .choice input:focus-visible + .choice-card {
       outline: 2px solid var(--accent);
       outline-offset: 2px;
@@ -415,17 +421,17 @@
 
 <script>
 const SERVICES = [
-  { id: 'przeglad-podstawowy',  name: 'Przegląd podstawowy' },
-  { id: 'przeglad-kompleksowy', name: 'Przegląd kompleksowy' },
-  { id: 'regulacja',            name: 'Regulacja (hamulce / przerzutki)' },
-  { id: 'wymiana-czesci',       name: 'Wymiana części' },
-  { id: 'kolo-centrowanie',     name: 'Centrowanie koła' },
-  { id: 'kolo-naprawa',         name: 'Naprawa koła' },
-  { id: 'kolo-zaplatanie',      name: 'Zaplatanie koła' },
-  { id: 'pod-ridera',           name: 'Konfiguracja pod ridera' },
-  { id: 'budowa',               name: 'Budowa roweru na miarę' },
-  { id: 'hulajnoga',            name: 'Serwis hulajnogi' },
-  { id: 'inne',                 name: 'Inne (opisz niżej)' },
+  { id: 'przeglad-podstawowy',  name: 'Przegląd podstawowy',         price: 'od 100 zł' },
+  { id: 'przeglad-kompleksowy', name: 'Przegląd kompleksowy',        price: 'od 220 zł' },
+  { id: 'regulacja',            name: 'Regulacja (hamulce / przerzutki)', price: 'od 30 zł' },
+  { id: 'wymiana-czesci',       name: 'Wymiana części',              price: 'od 25 zł + część' },
+  { id: 'kolo-centrowanie',     name: 'Centrowanie koła',            price: 'od 40 zł' },
+  { id: 'kolo-naprawa',         name: 'Naprawa koła',                price: 'od 25 zł' },
+  { id: 'kolo-zaplatanie',      name: 'Zaplatanie koła',             price: 'od 120 zł' },
+  { id: 'pod-ridera',           name: 'Konfiguracja pod ridera',     price: 'od 10 zł' },
+  { id: 'budowa',               name: 'Budowa roweru na miarę',      price: 'od 400 zł' },
+  { id: 'hulajnoga',            name: 'Serwis hulajnogi',            price: 'od 30 zł' },
+  { id: 'inne',                 name: 'Inne (opisz niżej)',          price: 'wycena indywidualna' },
 ];
 
 const BIKE_TYPES = [
@@ -442,13 +448,17 @@ const $ = sel => document.querySelector(sel);
 // ─── Render checklist ───────────────────────────────────────
 function renderChoices(containerId, options, fieldName) {
   const container = document.getElementById(containerId);
-  container.innerHTML = options.map((opt, i) => {
+  container.innerHTML = options.map(opt => {
     const value = typeof opt === 'string' ? opt : opt.id;
     const label = typeof opt === 'string' ? opt : opt.name;
+    const price = typeof opt === 'string' ? '' : opt.price;
     return `
       <label class="choice">
-        <input type="radio" name="${fieldName}" value="${value}" ${i === 0 && fieldName === 'service' ? '' : ''}>
-        <div class="choice-card">${label}</div>
+        <input type="radio" name="${fieldName}" value="${value}">
+        <div class="choice-card">
+          <div class="choice-name">${label}</div>
+          ${price ? `<div class="choice-price">${price}</div>` : ''}
+        </div>
       </label>`;
   }).join('');
 }

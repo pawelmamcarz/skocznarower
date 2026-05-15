@@ -5,17 +5,17 @@
 // - reszta -> ASSETS
 
 const SERVICES = [
-  { id: 'przeglad-podstawowy',  name: 'Przegląd podstawowy' },
-  { id: 'przeglad-kompleksowy', name: 'Przegląd kompleksowy' },
-  { id: 'regulacja',            name: 'Regulacja (hamulce / przerzutki)' },
-  { id: 'wymiana-czesci',       name: 'Wymiana części (klocki, linki, dętka, opona)' },
-  { id: 'kolo-centrowanie',     name: 'Centrowanie koła' },
-  { id: 'kolo-naprawa',         name: 'Naprawa koła' },
-  { id: 'kolo-zaplatanie',      name: 'Zaplatanie koła' },
-  { id: 'pod-ridera',           name: 'Konfiguracja pod ridera' },
-  { id: 'budowa',               name: 'Budowa roweru na miarę' },
-  { id: 'hulajnoga',            name: 'Serwis hulajnogi' },
-  { id: 'inne',                 name: 'Inne (opisz w notatce)' },
+  { id: 'przeglad-podstawowy',  name: 'Przegląd podstawowy',                       price: 'od 100 zł' },
+  { id: 'przeglad-kompleksowy', name: 'Przegląd kompleksowy',                      price: 'od 220 zł' },
+  { id: 'regulacja',            name: 'Regulacja (hamulce / przerzutki)',          price: 'od 30 zł' },
+  { id: 'wymiana-czesci',       name: 'Wymiana części (klocki, linki, dętka...)',  price: 'od 25 zł + część' },
+  { id: 'kolo-centrowanie',     name: 'Centrowanie koła',                          price: 'od 40 zł' },
+  { id: 'kolo-naprawa',         name: 'Naprawa koła',                              price: 'od 25 zł' },
+  { id: 'kolo-zaplatanie',      name: 'Zaplatanie koła',                           price: 'od 120 zł' },
+  { id: 'pod-ridera',           name: 'Konfiguracja pod ridera',                   price: 'od 10 zł' },
+  { id: 'budowa',               name: 'Budowa roweru na miarę',                    price: 'od 400 zł' },
+  { id: 'hulajnoga',            name: 'Serwis hulajnogi',                          price: 'od 30 zł' },
+  { id: 'inne',                 name: 'Inne (opisz w notatce)',                    price: 'wycena indywidualna' },
 ];
 
 const BIKE_TYPES = [
@@ -29,13 +29,13 @@ const BIKE_TYPES = [
 
 // 0=Nd, 1=Pn ... 6=Sob
 const SCHEDULE = {
-  0: [],
-  1: ['09:00','10:00','11:00','14:00','15:00','16:00','17:00'],
-  2: ['09:00','10:00','11:00','14:00','15:00','16:00','17:00'],
-  3: ['09:00','10:00','11:00','14:00','15:00','16:00','17:00'],
-  4: ['09:00','10:00','11:00','14:00','15:00','16:00','17:00'],
-  5: ['09:00','10:00','11:00','14:00','15:00','16:00','17:00'],
-  6: ['09:00','10:00','11:00','12:00','13:00'],
+  0: ['09:00','10:00','11:00','12:00','13:00','16:00','17:00','18:00','19:00'],
+  1: ['16:00','17:00','18:00','19:00'],
+  2: ['16:00','17:00','18:00','19:00'],
+  3: ['16:00','17:00','18:00','19:00'],
+  4: ['16:00','17:00','18:00','19:00'],
+  5: ['16:00','17:00','18:00','19:00'],
+  6: ['09:00','10:00','11:00','12:00','13:00','16:00','17:00','18:00','19:00'],
 };
 
 export default {
@@ -311,10 +311,18 @@ async function adminUpdateBooking(request, env) {
     await env.DB.prepare("UPDATE bookings SET status='cancelled' WHERE id=?1").bind(id).run();
   } else if (action === 'delete') {
     await env.DB.prepare('DELETE FROM bookings WHERE id=?1').bind(id).run();
+  } else if (action === 'price') {
+    const raw = String(form.get('final_price') || '').replace(',', '.').trim();
+    const price = raw === '' ? null : Math.round(parseFloat(raw));
+    if (price !== null && (isNaN(price) || price < 0 || price > 100000)) {
+      return new Response('Bad price', { status: 400 });
+    }
+    await env.DB.prepare('UPDATE bookings SET final_price=?1 WHERE id=?2').bind(price, id).run();
   } else {
     return new Response('Bad action', { status: 400 });
   }
-  return new Response('', { status: 302, headers: { 'Location': '/admin' } });
+  const back = String(form.get('back') || '/admin');
+  return new Response('', { status: 302, headers: { 'Location': back } });
 }
 
 async function adminBlockSlot(request, env) {
@@ -386,8 +394,12 @@ ${ADMIN_STYLES}
 function renderDashboard({ bookings, blocked, filter, today }) {
   const pendingCount = bookings.filter(b => b.status === 'pending').length;
 
+  const back = `/admin?filter=${encodeURIComponent(filter)}`;
   const row = b => {
-    const service = SERVICES.find(s => s.id === b.service_type)?.name || b.service_type;
+    const svc = SERVICES.find(s => s.id === b.service_type);
+    const service = svc?.name || b.service_type;
+    const estPrice = svc?.price || '—';
+    const finalVal = b.final_price != null ? b.final_price : '';
     return `
     <tr class="status-${b.status}">
       <td class="when">
@@ -406,10 +418,21 @@ function renderDashboard({ bookings, blocked, filter, today }) {
         <div>${escapeHtml(service)}</div>
         ${b.notes ? `<div class="muted notes">${escapeHtml(b.notes)}</div>` : ''}
       </td>
+      <td class="price-est"><span class="muted">${escapeHtml(estPrice)}</span></td>
+      <td class="price-final">
+        <form method="post" action="/admin/booking" class="price-form">
+          <input type="hidden" name="id" value="${b.id}">
+          <input type="hidden" name="action" value="price">
+          <input type="hidden" name="back" value="${escapeHtml(back)}">
+          <input type="number" name="final_price" value="${finalVal}" min="0" max="100000" step="1" placeholder="zł" class="price-input">
+          <button type="submit" class="btn-save" title="Zapisz">✓</button>
+        </form>
+      </td>
       <td><span class="badge badge-${b.status}">${statusLabel(b.status)}</span></td>
       <td class="actions">
         <form method="post" action="/admin/booking" style="display:inline">
           <input type="hidden" name="id" value="${b.id}">
+          <input type="hidden" name="back" value="${escapeHtml(back)}">
           ${b.status === 'pending' ? '<button name="action" value="confirm" class="btn-ok">Potwierdź</button>' : ''}
           ${b.status !== 'done' ? '<button name="action" value="done" class="btn-ok">Zrobione</button>' : ''}
           ${b.status !== 'cancelled' ? '<button name="action" value="cancel" class="btn-warn">Anuluj</button>' : ''}
@@ -418,6 +441,10 @@ function renderDashboard({ bookings, blocked, filter, today }) {
       </td>
     </tr>`;
   };
+
+  const revenue = bookings
+    .filter(b => b.status === 'done' && b.final_price != null)
+    .reduce((sum, b) => sum + b.final_price, 0);
 
   return `<!doctype html><html lang="pl"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -442,10 +469,10 @@ ${ADMIN_STYLES}
 </nav>
 
 <section class="card">
-  <h2>Lista (${bookings.length})</h2>
+  <h2>Lista (${bookings.length})${revenue > 0 ? ` · <span style="font-weight:400;color:var(--accent)">${revenue} zł</span><span class="muted" style="font-weight:400;font-size:13px"> z ukończonych</span>` : ''}</h2>
   ${bookings.length === 0 ? '<p class="muted">Brak rezerwacji.</p>' : `
   <table>
-    <thead><tr><th>Kiedy</th><th>Klient</th><th>Kontakt</th><th>Usługa</th><th>Status</th><th></th></tr></thead>
+    <thead><tr><th>Kiedy</th><th>Klient</th><th>Kontakt</th><th>Usługa</th><th>Wycena</th><th>Faktycznie</th><th>Status</th><th></th></tr></thead>
     <tbody>${bookings.map(row).join('')}</tbody>
   </table>`}
 </section>
@@ -525,6 +552,24 @@ tr.status-done td { opacity: .65; }
 .actions form { display: flex; flex-wrap: wrap; gap: 4px; }
 .actions button { font-size: 11px; padding: 4px 8px; border: 1px solid #333; background: transparent; color: #ccc; border-radius: 3px; cursor: pointer; }
 .actions button:hover { border-color: #555; color: #fff; }
+
+.price-form { display: flex; gap: 4px; align-items: center; }
+.price-input {
+  width: 70px; background: #0e0e0e; border: 1px solid #333; color: #fff;
+  padding: 5px 7px; border-radius: 3px; font-size: 13px; font-family: inherit;
+  -moz-appearance: textfield;
+}
+.price-input::-webkit-outer-spin-button,
+.price-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.price-input:focus { outline: 1px solid var(--accent, #9fe22e); border-color: #9fe22e; }
+.btn-save {
+  background: transparent; color: #9fe22e; border: 1px solid #333;
+  width: 26px; height: 26px; border-radius: 3px; cursor: pointer; font-size: 14px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.btn-save:hover { border-color: #9fe22e; background: rgba(159,226,46,.1); }
+.price-est { white-space: nowrap; }
+.price-final { white-space: nowrap; }
 .btn-ok:hover { border-color: #9fe22e; color: #9fe22e; }
 .btn-warn:hover { border-color: #f4c542; color: #f4c542; }
 .btn-del:hover { border-color: #d66; color: #d66; }
