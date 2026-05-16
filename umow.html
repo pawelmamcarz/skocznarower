@@ -16,6 +16,35 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
 
+  <!-- Analytics: zsynchronizowane z index.html. Bez wpisanych ID skrypty nic nie ładują. -->
+  <link rel="preconnect" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://connect.facebook.net">
+  <script>
+    window.GA_ID = '';        // np. 'G-XXXXXXXXXX' (taki sam jak w index.html)
+    window.FB_PIXEL_ID = '';  // np. '1234567890123456' (taki sam jak w index.html)
+  </script>
+  <script>
+    if (window.GA_ID) {
+      const s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=' + window.GA_ID;
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function gtag(){ dataLayer.push(arguments); };
+      gtag('js', new Date());
+      gtag('config', window.GA_ID, { anonymize_ip: true });
+    }
+    if (window.FB_PIXEL_ID) {
+      !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+      n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+      document,'script','https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', window.FB_PIXEL_ID);
+      fbq('track', 'PageView');
+    }
+  </script>
+
   <style>
     :root {
       --bg:    #080808;
@@ -421,6 +450,8 @@
 
 <script>
 const SERVICES = [
+  { id: 'pakiet-wiosenny',      name: 'Pakiet wiosenny PRO',         price: '350 zł' },
+  { id: 'odbior',               name: 'Odbiór i odwóz roweru',       price: 'od 40 zł' },
   { id: 'przeglad-podstawowy',  name: 'Przegląd podstawowy',         price: 'od 100 zł' },
   { id: 'przeglad-kompleksowy', name: 'Przegląd kompleksowy',        price: 'od 220 zł' },
   { id: 'regulacja',            name: 'Regulacja (hamulce / przerzutki)', price: 'od 30 zł' },
@@ -561,12 +592,24 @@ form.addEventListener('submit', async (e) => {
       return;
     }
     showSuccess({ id: data.id, date, slot, service, bike, name, phone });
+    trackBookingSuccess({ service, bike });
   } catch (err) {
     showAlert('Brak połączenia, spróbuj jeszcze raz.');
     submitBtn.disabled = false;
     submitBtn.textContent = 'Umów wizytę →';
   }
 });
+
+function trackBookingSuccess({ service, bike }) {
+  try {
+    if (typeof gtag === 'function') {
+      gtag('event', 'booking_submit', { service_type: service, bike_type: bike });
+    }
+    if (typeof fbq === 'function') {
+      fbq('track', 'Schedule', { content_category: service });
+    }
+  } catch (_) {}
+}
 
 function showSuccess({ id, date, slot, service, bike, name, phone }) {
   const serviceName = SERVICES.find(s => s.id === service)?.name || service;

@@ -5,6 +5,8 @@
 // - reszta -> ASSETS
 
 const SERVICES = [
+  { id: 'pakiet-wiosenny',      name: 'Pakiet wiosenny PRO (przegląd + bleeding + centrowanie 2 kół)', price: '350 zł' },
+  { id: 'odbior',               name: 'Odbiór i odwóz roweru (adres podaj w notatce)', price: 'od 40 zł' },
   { id: 'przeglad-podstawowy',  name: 'Przegląd podstawowy',                       price: 'od 100 zł' },
   { id: 'przeglad-kompleksowy', name: 'Przegląd kompleksowy',                      price: 'od 220 zł' },
   { id: 'regulacja',            name: 'Regulacja (hamulce / przerzutki)',          price: 'od 30 zł' },
@@ -59,6 +61,16 @@ export default {
 
     return env.ASSETS.fetch(request);
   },
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil((async () => {
+      try { await sendDailyReminders(env); }
+      catch (e) { console.error('reminders error', e); }
+      try { await sendFollowUps(env); }
+      catch (e) { console.error('followups error', e); }
+      try { await sendSeasonalReminders(env); }
+      catch (e) { console.error('seasonal reminders error', e); }
+    })());
+  },
 };
 
 // ─── API ────────────────────────────────────────────────────────────────────
@@ -70,7 +82,38 @@ async function handleApi(request, env, url) {
   if (url.pathname === '/api/bookings' && request.method === 'POST') {
     return await apiCreateBooking(request, env);
   }
+  if (url.pathname === '/api/reminders' && request.method === 'POST') {
+    return await apiSeasonalReminder(request, env);
+  }
   return json({ error: 'Not found' }, 404);
+}
+
+async function apiSeasonalReminder(request, env) {
+  let body;
+  try { body = await request.json(); }
+  catch { return json({ error: 'Bad JSON' }, 400); }
+
+  const email = String(body?.email || '').trim().toLowerCase();
+  if (!email || email.length > 120 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return json({ error: 'Nieprawidłowy email' }, 400);
+  }
+  if (body?.consent !== true) {
+    return json({ error: 'Potrzebna zgoda na kontakt' }, 400);
+  }
+
+  const id = crypto.randomUUID();
+  try {
+    await env.DB.prepare(
+      `INSERT INTO seasonal_reminders (id, email, signed_up_at) VALUES (?1, ?2, ?3)`
+    ).bind(id, email, Date.now()).run();
+  } catch (e) {
+    if (String(e?.message || '').toLowerCase().includes('unique')) {
+      return json({ ok: true, message: 'Już jesteś na liście, do zobaczenia wiosną.' });
+    }
+    console.error('seasonal insert error', e);
+    return json({ error: 'Błąd zapisu' }, 500);
+  }
+  return json({ ok: true, message: 'Zapisany, przypomnę mailem przed sezonem.' });
 }
 
 async function apiAvailability(env, dateStr) {
@@ -321,7 +364,8 @@ async function adminUpdateBooking(request, env) {
   } else {
     return new Response('Bad action', { status: 400 });
   }
-  const back = String(form.get('back') || '/admin');
+  let back = String(form.get('back') || '/admin');
+  if (!back.startsWith('/') || back.startsWith('//')) back = '/admin';
   return new Response('', { status: 302, headers: { 'Location': back } });
 }
 
@@ -395,10 +439,11 @@ function renderDashboard({ bookings, blocked, filter, today }) {
   const pendingCount = bookings.filter(b => b.status === 'pending').length;
 
   const back = `/admin?filter=${encodeURIComponent(filter)}`;
+  const backEsc = escapeHtml(back);
   const row = b => {
     const svc = SERVICES.find(s => s.id === b.service_type);
     const service = svc?.name || b.service_type;
-    const estPrice = svc?.price || '—';
+    const estPrice = svc?.price || '-';
     const finalVal = b.final_price != null ? b.final_price : '';
     return `
     <tr class="status-${b.status}">
@@ -423,7 +468,7 @@ function renderDashboard({ bookings, blocked, filter, today }) {
         <form method="post" action="/admin/booking" class="price-form">
           <input type="hidden" name="id" value="${b.id}">
           <input type="hidden" name="action" value="price">
-          <input type="hidden" name="back" value="${escapeHtml(back)}">
+          <input type="hidden" name="back" value="${backEsc}">
           <input type="number" name="final_price" value="${finalVal}" min="0" max="100000" step="1" placeholder="zł" class="price-input">
           <button type="submit" class="btn-save" title="Zapisz">✓</button>
         </form>
@@ -432,7 +477,7 @@ function renderDashboard({ bookings, blocked, filter, today }) {
       <td class="actions">
         <form method="post" action="/admin/booking" style="display:inline">
           <input type="hidden" name="id" value="${b.id}">
-          <input type="hidden" name="back" value="${escapeHtml(back)}">
+          <input type="hidden" name="back" value="${backEsc}">
           ${b.status === 'pending' ? '<button name="action" value="confirm" class="btn-ok">Potwierdź</button>' : ''}
           ${b.status !== 'done' ? '<button name="action" value="done" class="btn-ok">Zrobione</button>' : ''}
           ${b.status !== 'cancelled' ? '<button name="action" value="cancel" class="btn-warn">Anuluj</button>' : ''}
@@ -469,7 +514,7 @@ ${ADMIN_STYLES}
 </nav>
 
 <section class="card">
-  <h2>Lista (${bookings.length})${revenue > 0 ? ` · <span style="font-weight:400;color:var(--accent)">${revenue} zł</span><span class="muted" style="font-weight:400;font-size:13px"> z ukończonych</span>` : ''}</h2>
+  <h2>Lista (${bookings.length})${revenue > 0 ? ` · <span class="revenue">${revenue} zł</span><span class="muted revenue-note"> z ukończonych</span>` : ''}</h2>
   ${bookings.length === 0 ? '<p class="muted">Brak rezerwacji.</p>' : `
   <table>
     <thead><tr><th>Kiedy</th><th>Klient</th><th>Kontakt</th><th>Usługa</th><th>Wycena</th><th>Faktycznie</th><th>Status</th><th></th></tr></thead>
@@ -570,6 +615,8 @@ tr.status-done td { opacity: .65; }
 .btn-save:hover { border-color: #9fe22e; background: rgba(159,226,46,.1); }
 .price-est { white-space: nowrap; }
 .price-final { white-space: nowrap; }
+.revenue { font-weight: 400; color: #9fe22e; }
+.revenue-note { font-weight: 400; font-size: 13px; }
 .btn-ok:hover { border-color: #9fe22e; color: #9fe22e; }
 .btn-warn:hover { border-color: #f4c542; color: #f4c542; }
 .btn-del:hover { border-color: #d66; color: #d66; }
@@ -697,4 +744,137 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[c]);
+}
+
+// ─── SCHEDULED: SMS reminders + follow-ups ─────────────────────────────────
+
+async function sendDailyReminders(env) {
+  const tomorrow = addDaysWarsaw(1);
+  const rows = await env.DB.prepare(
+    `SELECT id, customer_name, customer_phone, date, time_slot
+     FROM bookings
+     WHERE date = ?1 AND status = 'confirmed' AND reminder_sent_at IS NULL`
+  ).bind(tomorrow).all();
+
+  for (const b of rows.results || []) {
+    const text = `Cześć ${b.customer_name.split(' ')[0]}! Przypomnienie: jutro o ${b.time_slot} wizyta w skocznarower.pl, Jesionowa 18 Grodzisk Maz. Jakby coś: 600 370 810.`;
+    const ok = await sendSms(env, b.customer_phone, text);
+    if (ok) {
+      await env.DB.prepare('UPDATE bookings SET reminder_sent_at = ?1 WHERE id = ?2')
+        .bind(Date.now(), b.id).run();
+    }
+  }
+}
+
+async function sendFollowUps(env) {
+  const threeDaysAgo = addDaysWarsaw(-3);
+  const rows = await env.DB.prepare(
+    `SELECT id, customer_name, customer_phone
+     FROM bookings
+     WHERE date <= ?1 AND status = 'done' AND feedback_sent_at IS NULL`
+  ).bind(threeDaysAgo).all();
+
+  const reviewLink = env.REVIEW_LINK || 'https://www.skocznarower.pl/';
+  for (const b of rows.results || []) {
+    const firstName = b.customer_name.split(' ')[0];
+    const text = `Dzięki za zaufanie, ${firstName}! Jeśli wszystko gra, zostaw opinię na Google: ${reviewLink} . To 30 sekund, a mi pomaga zdobywać klientów. Pozdrawiam, Mateusz / skocznarower.pl`;
+    const ok = await sendSms(env, b.customer_phone, text);
+    if (ok) {
+      await env.DB.prepare('UPDATE bookings SET feedback_sent_at = ?1 WHERE id = ?2')
+        .bind(Date.now(), b.id).run();
+    }
+  }
+}
+
+async function sendSeasonalReminders(env) {
+  const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Warsaw' });
+  const [year, month, day] = today.split('-');
+  if (month !== '03' || day !== '15') return;
+
+  const rows = await env.DB.prepare(
+    `SELECT id, email FROM seasonal_reminders WHERE sent_at IS NULL`
+  ).all();
+
+  if (!env.RESEND_API_KEY) {
+    console.log('seasonal reminders: no RESEND_API_KEY, skipping send for', (rows.results || []).length);
+    return;
+  }
+  const from = env.FROM_EMAIL || 'rezerwacje@skocznarower.pl';
+
+  for (const r of rows.results || []) {
+    try {
+      await resendSend(env.RESEND_API_KEY, {
+        from,
+        to: r.email,
+        subject: 'Czas na przegląd przed sezonem, skocznarower.pl',
+        text:
+`Cześć,
+
+Wiosna pełną parą. To dobry moment, żeby rower wrócił do formy: przegląd, bleeding, centrowanie kół, sprawdzenie napędu.
+
+Wybierasz termin tutaj: https://www.skocznarower.pl/umow
+
+Pakiet wiosenny PRO (przegląd kompleksowy + bleeding 1 obwodu + centrowanie 2 kół) jest dostępny taniej niż usługi osobno.
+
+Do zobaczenia w warsztacie,
+Mateusz / skocznarower.pl
+Jesionowa 18, Grodzisk Mazowiecki
+Tel. 600 370 810
+`,
+      });
+      await env.DB.prepare('UPDATE seasonal_reminders SET sent_at = ?1 WHERE id = ?2')
+        .bind(Date.now(), r.id).run();
+    } catch (e) {
+      console.error('seasonal mail error for', r.email, e);
+    }
+  }
+}
+
+/**
+ * Wysyła SMS przez SerwerSMS. Wymaga env.SMS_API_LOGIN i env.SMS_API_PASSWORD jako secrets.
+ * Bez ustawionych sekretów loguje treść do console (dry-run dla developmentu).
+ *
+ * Jeśli wolisz innego dostawcę (SMSAPI, Twilio, Plivo), podmień ciało tej funkcji,
+ * cała reszta workera używa tej jednej abstrakcji.
+ */
+async function sendSms(env, phoneRaw, text) {
+  const phone = normalizePhone(phoneRaw);
+  const target = phone.startsWith('48') ? phone : (phone.length === 9 ? '48' + phone : phone);
+
+  if (!env.SMS_API_LOGIN || !env.SMS_API_PASSWORD) {
+    console.log('[SMS dry-run] →', target, text);
+    return true;
+  }
+
+  try {
+    const r = await fetch('https://api2.serwersms.pl/messages/send_sms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: env.SMS_API_LOGIN,
+        password: env.SMS_API_PASSWORD,
+        phone: target,
+        text,
+        sender: env.SMS_SENDER || 'Eco',
+      }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || data?.success === false) {
+      console.error('SMS send failed', r.status, data);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error('SMS send exception', e);
+    return false;
+  }
+}
+
+function addDaysWarsaw(days) {
+  const tz = 'Europe/Warsaw';
+  const now = new Date();
+  const todayStr = now.toLocaleDateString('sv-SE', { timeZone: tz });
+  const d = new Date(todayStr + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toLocaleDateString('sv-SE', { timeZone: tz });
 }

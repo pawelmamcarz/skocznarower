@@ -153,9 +153,76 @@
   }
   </script>
 
+  <!-- TODO: Schema.org Review/AggregateRating, odkomentuj po zebraniu min. 5 realnych opinii Google.
+       Co zrobić:
+         1. Wpisz REALNĄ ratingValue (np. 4.9) i reviewCount (np. 12) zgodne z Google Business.
+         2. W tablicy "review" wpisz 3-5 prawdziwych cytatów (autor + tekst + data).
+         3. Usuń otaczający komentarz HTML.
+       Schema dopuszcza wiele bloków JSON-LD na stronie, więc nie trzeba edytować LocalBusiness powyżej.
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "skocznarower.pl – Serwis Rowerowy",
+    "url": "https://www.skocznarower.pl",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "12",
+      "bestRating": "5",
+      "worstRating": "1"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "author": {"@type": "Person", "name": "Imię Klienta"},
+        "datePublished": "2026-05-01",
+        "reviewRating": {"@type": "Rating", "ratingValue": "5", "bestRating": "5"},
+        "reviewBody": "Tekst opinii z Google."
+      }
+    ]
+  }
+  </script>
+  -->
+
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+
+  <!-- ─── ANALYTICS ─────────────────────────────────────────────
+       Aby aktywować, wpisz swoje ID poniżej:
+         - GA4: https://analytics.google.com → Admin → Data Streams → Mierzenie ID (format: G-XXXXXXXXXX)
+         - Meta Pixel: https://business.facebook.com → Events Manager → Twój Pixel (15-16 cyfr)
+       Bez ID skrypty nic nie ładują, więc strona pozostaje szybka.
+  ───────────────────────────────────────────────────────────── -->
+  <link rel="preconnect" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://connect.facebook.net">
+  <script>
+    window.GA_ID = '';        // np. 'G-XXXXXXXXXX'
+    window.FB_PIXEL_ID = '';  // np. '1234567890123456'
+  </script>
+  <script>
+    if (window.GA_ID) {
+      const s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=' + window.GA_ID;
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function gtag(){ dataLayer.push(arguments); };
+      gtag('js', new Date());
+      gtag('config', window.GA_ID, { anonymize_ip: true });
+    }
+    if (window.FB_PIXEL_ID) {
+      !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+      n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+      document,'script','https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', window.FB_PIXEL_ID);
+      fbq('track', 'PageView');
+    }
+  </script>
 
   <style>
     /* ─── TOKENS ─────────────────────────────────────────── */
@@ -512,6 +579,81 @@
     }
     .social-card-handle { font-size: 13px; color: var(--muted); }
 
+    /* ─── REMINDER (LEAD CAPTURE) ────────────────────────── */
+    .reminder-inner { max-width: 720px; }
+    .reminder-sub {
+      font-size: 17px;
+      color: rgba(240,240,240,.75);
+      line-height: 1.6;
+      max-width: 620px;
+      margin-top: 18px;
+      margin-bottom: 36px;
+    }
+    .reminder-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 520px;
+    }
+    .reminder-field span {
+      display: block;
+      font-size: 11px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .reminder-input {
+      width: 100%;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      color: var(--white);
+      padding: 14px 16px;
+      border-radius: 4px;
+      font-family: var(--fb);
+      font-size: 15px;
+      transition: border-color .15s;
+    }
+    .reminder-input:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+      border-color: var(--accent);
+    }
+    .reminder-consent {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      font-size: 13px;
+      color: rgba(240,240,240,.65);
+      line-height: 1.5;
+      cursor: pointer;
+    }
+    .reminder-consent input {
+      margin-top: 3px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .reminder-submit {
+      align-self: flex-start;
+      margin-top: 4px;
+    }
+    .reminder-msg {
+      font-size: 14px;
+      padding: 12px 16px;
+      border-radius: 4px;
+      margin-top: 8px;
+    }
+    .reminder-msg.ok {
+      background: var(--accent-dim);
+      border: 1px solid rgba(159,226,46,.4);
+      color: var(--accent);
+    }
+    .reminder-msg.err {
+      background: rgba(214,102,102,.12);
+      border: 1px solid rgba(214,102,102,.4);
+      color: #f1a1a1;
+    }
+
     /* ─── CONTACT ────────────────────────────────────────── */
     .contact-grid {
       display: grid;
@@ -696,6 +838,101 @@
       color: var(--muted);
       margin-top: 20px;
       line-height: 1.6;
+    }
+
+    /* ─── OPINIE ─────────────────────────────────────────── */
+    .reviews-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 40px;
+      padding: 22px 24px;
+      background: var(--bg2);
+      border: 1px solid rgba(159,226,46,0.18);
+      border-radius: 4px;
+    }
+    .reviews-rating {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .reviews-score {
+      font-family: var(--fd);
+      font-size: 38px;
+      color: var(--accent);
+      letter-spacing: .02em;
+      line-height: 1;
+    }
+    .reviews-stars {
+      font-size: 22px;
+      color: var(--accent);
+      letter-spacing: .08em;
+    }
+    .reviews-count {
+      font-size: 14px;
+      color: rgba(240,240,240,.7);
+    }
+    .reviews-cta {
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border-bottom: 1px solid var(--accent);
+      padding-bottom: 2px;
+    }
+    .reviews-cta:hover { color: #b5f040; border-color: #b5f040; }
+
+    .reviews-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 28px;
+    }
+    .review {
+      background: var(--bg2);
+      padding: 26px 24px;
+      border-radius: 4px;
+      position: relative;
+    }
+    .review::before {
+      content: '"';
+      position: absolute;
+      top: 8px; left: 16px;
+      font-family: var(--fd);
+      font-size: 56px;
+      color: var(--accent);
+      opacity: .25;
+      line-height: 1;
+    }
+    .review blockquote {
+      font-size: 15px;
+      line-height: 1.55;
+      color: rgba(240,240,240,.85);
+      position: relative;
+      z-index: 1;
+    }
+    .review figcaption {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .review figcaption strong {
+      font-size: 14px;
+      color: var(--white);
+      font-weight: 600;
+    }
+    .review figcaption span {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: .03em;
     }
 
     /* ─── FAQ ─────────────────────────────────────────────── */
@@ -1094,6 +1331,10 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24 11.47 11.47 0 003.58.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.58a1 1 0 01-.24 1.01l-2.21 2.2z"/></svg>
         Zadzwoń
       </a>
+      <a href="https://wa.me/48600370810?text=Cze%C5%9B%C4%87%2C%20chcia%C5%82bym%20um%C3%B3wi%C4%87%20rower" class="btn btn-ghost" rel="noopener" target="_blank" aria-label="Napisz na WhatsAppie">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.198-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.297-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.464 3.488"/></svg>
+        WhatsApp
+      </a>
     </div>
   </div>
 </section>
@@ -1425,6 +1666,66 @@
 
 
 <!-- ═══════════════════════════════════════════════
+     OPINIE: szablon, odkomentuj po zebraniu opinii Google.
+     Co zrobić:
+       1. W Google Business → opinie, skopiuj 4-6 realnych cytatów.
+       2. Podmień GOOGLE_BUSINESS_URL na link do profilu (https://g.page/r/...).
+       3. Podmień LICZBĘ_OPINII i ŚREDNIĄ_OCEN na realne wartości.
+       4. Usuń otaczające znaczniki komentarza HTML i ten opis.
+       5. W <head> JSON-LD odkomentuj blok aggregateRating + review.
+══════════════════════════════════════════════════ -->
+<!--
+<section class="section" id="opinie">
+  <p class="eyebrow reveal">Opinie</p>
+  <h2 class="display reveal" data-delay="1">CO MÓWIĄ<br>KLIENCI</h2>
+
+  <div class="reviews-head reveal" data-delay="2">
+    <div class="reviews-rating">
+      <span class="reviews-score">ŚREDNIA_OCEN</span>
+      <span class="reviews-stars" aria-label="5 na 5 gwiazdek">★★★★★</span>
+      <span class="reviews-count">LICZBA_OPINII opinii Google</span>
+    </div>
+    <a class="reviews-cta" href="GOOGLE_BUSINESS_URL" target="_blank" rel="noopener">Zobacz wszystkie opinie →</a>
+  </div>
+
+  <div class="reviews-grid">
+    <figure class="review reveal" data-delay="1">
+      <blockquote>"Cytat opinii klienta. 2-4 zdania, najlepiej takie które mówią o efekcie pracy: 'Po centrowaniu koło chodzi jak nowe', 'Doradził mi co naprawdę warto wymienić, a co spokojnie poczeka'."</blockquote>
+      <figcaption>
+        <strong>Imię Klienta</strong>
+        <span>Miasto · typ roweru</span>
+      </figcaption>
+    </figure>
+
+    <figure class="review reveal" data-delay="2">
+      <blockquote>"Druga opinia."</blockquote>
+      <figcaption>
+        <strong>Imię Klienta</strong>
+        <span>Miasto · typ roweru</span>
+      </figcaption>
+    </figure>
+
+    <figure class="review reveal" data-delay="3">
+      <blockquote>"Trzecia opinia."</blockquote>
+      <figcaption>
+        <strong>Imię Klienta</strong>
+        <span>Miasto · typ roweru</span>
+      </figcaption>
+    </figure>
+
+    <figure class="review reveal" data-delay="1">
+      <blockquote>"Czwarta opinia."</blockquote>
+      <figcaption>
+        <strong>Imię Klienta</strong>
+        <span>Miasto · typ roweru</span>
+      </figcaption>
+    </figure>
+  </div>
+</section>
+-->
+
+
+<!-- ═══════════════════════════════════════════════
      CENNIK
 ════════════════════════════════════════════════ -->
 <section class="section section-alt" id="cennik">
@@ -1433,7 +1734,33 @@
 
   <div class="price-grid">
 
-    <div class="price-cat reveal" data-delay="1">
+    <div class="price-cat reveal" data-delay="1" style="background: linear-gradient(135deg, var(--bg2) 0%, rgba(159,226,46,0.06) 100%); border: 1px solid rgba(159,226,46,0.22);">
+      <div class="price-cat-name">PAKIETY · OSZCZĘDŹ</div>
+      <div class="price-row">
+        <span class="price-label">
+          <strong style="color:var(--white)">Pakiet wiosenny PRO</strong><br>
+          <span style="font-size:12px; color:var(--muted); line-height:1.5">Przegląd kompleksowy + bleeding 1 obwód + centrowanie 2 kół + sprawdzenie napędu</span>
+        </span>
+        <span class="price-val">350 zł</span>
+      </div>
+      <div class="price-row">
+        <span class="price-label">
+          <strong style="color:var(--white)">Odbiór i odwóz roweru</strong><br>
+          <span style="font-size:12px; color:var(--muted)">Grodzisk, Milanówek, Pruszków</span>
+        </span>
+        <span class="price-val">od 40 zł</span>
+      </div>
+      <div class="price-row">
+        <span class="price-label">
+          <strong style="color:var(--white)">Odbiór i odwóz roweru</strong><br>
+          <span style="font-size:12px; color:var(--muted)">Warszawa zachodnia</span>
+        </span>
+        <span class="price-val">od 70 zł</span>
+      </div>
+      <p class="price-note">Pakiet wiosenny PRO jest tańszy niż te same usługi zamówione osobno. Odbiór: napisz w notatce do rezerwacji o jakiej godzinie i z jakiego adresu mam przyjechać.</p>
+    </div>
+
+    <div class="price-cat reveal" data-delay="2">
       <div class="price-cat-name">PRZEGLĄDY</div>
       <div class="price-row"><span class="price-label">Przegląd podstawowy</span><span class="price-val">od 100 zł</span></div>
       <div class="price-row"><span class="price-label">Przegląd kompleksowy</span><span class="price-val">od 220 zł</span></div>
@@ -1525,7 +1852,7 @@
         Czy dojadę do serwisu z Pruszkowa lub Milanówka?
         <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
-      <div class="faq-a">Tak, bez problemu. Z Pruszkowa ok. 15 min samochodem, z Milanówka minuta, jesteśmy na granicy. Z zachodnich dzielnic Warszawy wychodzi ok. 30 minut. Umów się, nie bój się jechać dalej.</div>
+      <div class="faq-a">Tak, bez problemu. Z <a href="/serwis-rowerow-pruszkow" style="color:var(--accent)">Pruszkowa</a> ok. 15 min samochodem, z <a href="/serwis-rowerow-milanowek" style="color:var(--accent)">Milanówka</a> minuta, jesteśmy na granicy. Z zachodnich dzielnic Warszawy wychodzi ok. 30 minut. Umów się, nie bój się jechać dalej.</div>
     </div>
 
     <div class="faq-item">
@@ -1573,7 +1900,7 @@
         Robisz serwis hydraulicznych hamulców rowerowych?
         <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
-      <div class="faq-a">Tak, bleeding to jedna z częstszych rzeczy. Robię dla Shimano, SRAM, TRP, Hope i Magury. Odpowietrzanie, wymiana oleju, regulacja punktu chwytu. Jak masz gąbczasty chwyt albo manetka cofa się do kierownicy, czas na serwis hydrauliki. Cena od 80 zł za obwód, zależy od modelu i stanu.</div>
+      <div class="faq-a">Tak, bleeding to jedna z częstszych rzeczy. Robię dla <a href="/bleeding-hamulcow-shimano" style="color:var(--accent)">Shimano</a>, SRAM, TRP, Hope i Magury. Odpowietrzanie, wymiana oleju, regulacja punktu chwytu. Jak masz gąbczasty chwyt albo manetka cofa się do kierownicy, czas na serwis hydrauliki. Cena od 80 zł za obwód, zależy od modelu i stanu.</div>
     </div>
 
     <div class="faq-item">
@@ -1584,6 +1911,31 @@
       <div class="faq-a">Shimano, SRAM, TRP, Hope, Magura, bez problemu. Zawieszenia to RockShox, Fox, Manitou, DVO. Masz coś innego? Napisz, prawie na pewno dam radę.</div>
     </div>
 
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     LEAD CAPTURE: PRZYPOMNIJ NA SEZON
+════════════════════════════════════════════════ -->
+<section class="section" id="przypomnienie">
+  <div class="reminder-inner">
+    <p class="eyebrow reveal">Przypomnij mi</p>
+    <h2 class="display reveal" data-delay="1">CO ROKU<br>TA SAMA HISTORIA</h2>
+    <p class="reminder-sub reveal" data-delay="2">Wiosna przychodzi, rower stoi w garażu od jesieni, klocki są twarde, łańcuch zaciągnięty, koła bije. Zostaw email, w marcu napiszę żebyś umówił przegląd zanim wszyscy się zgłoszą i terminy się zapełnią.</p>
+
+    <form class="reminder-form reveal" data-delay="3" id="reminder-form">
+      <label class="reminder-field">
+        <span>Email</span>
+        <input type="email" class="reminder-input" name="email" required maxlength="120" placeholder="twoj@adres.pl" autocomplete="email">
+      </label>
+      <label class="reminder-consent">
+        <input type="checkbox" name="consent" required>
+        <span>Zgadzam się na otrzymanie jednego przypomnienia mailem w marcu o przeglądzie rowerowym. Możesz zrezygnować w każdej chwili.</span>
+      </label>
+      <button type="submit" class="btn btn-green reminder-submit">Zapisz mnie</button>
+      <p class="reminder-msg" id="reminder-msg" hidden></p>
+    </form>
   </div>
 </section>
 
@@ -1660,20 +2012,24 @@
         <a class="ci-val" href="tel:600370810">600 370 810</a>
       </div>
       <div class="contact-item reveal" data-delay="2">
+        <div class="ci-label">WhatsApp</div>
+        <a class="ci-val" href="https://wa.me/48600370810?text=Cze%C5%9B%C4%87%2C%20chcia%C5%82bym%20um%C3%B3wi%C4%87%20rower" target="_blank" rel="noopener">Napisz na 600 370 810</a>
+      </div>
+      <div class="contact-item reveal" data-delay="3">
         <div class="ci-label">Adres</div>
         <span class="ci-val">Jesionowa 18<br>05-825 Grodzisk Mazowiecki</span>
       </div>
-      <div class="contact-item reveal" data-delay="3">
+      <div class="contact-item reveal" data-delay="4">
         <div class="ci-label">Instagram</div>
         <a class="ci-val" href="https://www.instagram.com/xpyszczek_" target="_blank" rel="noopener">@xpyszczek_</a>
       </div>
-      <div class="contact-item reveal" data-delay="4">
+      <div class="contact-item reveal" data-delay="5">
         <div class="ci-label">Godziny</div>
         <span class="ci-val" style="font-size:17px; line-height:1.6">
           Tylko po umówieniu
         </span>
       </div>
-      <div class="contact-item reveal" data-delay="5" style="margin-top:24px;">
+      <div class="contact-item reveal" data-delay="6" style="margin-top:24px;">
         <a href="/umow" class="btn btn-green" style="font-size:16px; padding:14px 22px;">Umów wizytę online →</a>
       </div>
     </div>
@@ -1703,6 +2059,9 @@
   <a href="/umow" class="btn btn-green" style="flex:1; justify-content:center; font-size:15px; padding:15px;">Umów wizytę</a>
   <a href="tel:600370810" class="btn btn-ghost" style="justify-content:center; font-size:15px; padding:15px; min-width:54px;" aria-label="Zadzwoń: 600 370 810">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24 11.47 11.47 0 003.58.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.58a1 1 0 01-.24 1.01l-2.21 2.2z"/></svg>
+  </a>
+  <a href="https://wa.me/48600370810?text=Cze%C5%9B%C4%87%2C%20chcia%C5%82bym%20um%C3%B3wi%C4%87%20rower" class="btn btn-ghost" style="justify-content:center; font-size:15px; padding:15px; min-width:54px;" rel="noopener" target="_blank" aria-label="Napisz na WhatsAppie">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.198-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.297-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.464 3.488"/></svg>
   </a>
 </div>
 
@@ -1753,6 +2112,69 @@
     });
   }, { threshold: 0.12 });
   reveals.forEach(el => obs.observe(el));
+
+  // --- Lead capture: przypomnienie sezonowe ---
+  const remForm = document.getElementById('reminder-form');
+  if (remForm) {
+    const remMsg = document.getElementById('reminder-msg');
+    const remBtn = remForm.querySelector('button[type="submit"]');
+    remForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      remMsg.hidden = true; remMsg.className = 'reminder-msg';
+      const email = remForm.email.value.trim();
+      const consent = remForm.consent.checked;
+      if (!email) { showRemMsg('Wpisz adres email.', 'err'); return; }
+      if (!consent) { showRemMsg('Zaznacz zgodę żebym mógł napisać.', 'err'); return; }
+      remBtn.disabled = true;
+      const originalText = remBtn.textContent;
+      remBtn.textContent = 'Zapisuję...';
+      try {
+        const r = await fetch('/api/reminders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, consent: true }),
+        });
+        const data = await r.json();
+        if (!r.ok) {
+          showRemMsg(data.error || 'Coś nie zagrało, spróbuj jeszcze raz.', 'err');
+        } else {
+          showRemMsg(data.message || 'Zapisany.', 'ok');
+          remForm.email.value = '';
+          remForm.consent.checked = false;
+          try { if (typeof gtag === 'function') gtag('event', 'lead_capture', { source: 'seasonal_reminder' }); } catch (_) {}
+          try { if (typeof fbq === 'function') fbq('track', 'Lead', { source: 'seasonal_reminder' }); } catch (_) {}
+        }
+      } catch (err) {
+        showRemMsg('Brak połączenia, spróbuj jeszcze raz.', 'err');
+      } finally {
+        remBtn.disabled = false;
+        remBtn.textContent = originalText;
+      }
+    });
+    function showRemMsg(text, kind) {
+      remMsg.textContent = text;
+      remMsg.classList.add(kind);
+      remMsg.hidden = false;
+    }
+  }
+
+  // --- Outbound contact tracking (GA4 + Meta Pixel, no-op gdy brak ID) ---
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a');
+    if (!a) return;
+    const href = a.getAttribute('href') || '';
+    let kind = null;
+    if (href.startsWith('tel:')) kind = 'tel';
+    else if (href.includes('wa.me')) kind = 'whatsapp';
+    else if (href.includes('instagram.com')) kind = 'instagram';
+    else if (href.includes('tiktok.com')) kind = 'tiktok';
+    else if (href === '/umow' || href.endsWith('/umow')) kind = 'umow_cta';
+    if (!kind) return;
+    try {
+      if (typeof gtag === 'function') gtag('event', 'contact_click', { kind, location: location.pathname });
+      if (kind === 'umow_cta' && typeof fbq === 'function') fbq('track', 'InitiateCheckout', { content_category: 'booking' });
+    } catch (_) {}
+  }, { passive: true });
 
   // --- Tweaks panel protocol ---
   const panel = document.getElementById('tweaksPanel');

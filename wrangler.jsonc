@@ -25,5 +25,14 @@
       "database_id": "1df60167-a71d-4a9c-87d7-3fd5fba9b75f",
       "migrations_dir": "migrations"
     }
-  ]
+  ],
+  // Cron 08:00 UTC = 09:00 lub 10:00 czasu Warszawy (zależnie od DST).
+  // Handler scheduled() wysyła SMS przypominające (24h przed) i prośby o opinię (3 dni po wizycie).
+  // Wymaga sekretów: SMS_API_LOGIN, SMS_API_PASSWORD (SerwerSMS). Bez nich Worker tylko loguje wiadomości do console.
+  "triggers": {
+    "crons": ["0 8 * * *"]
+  },
+  "vars": {
+    "REVIEW_LINK": "https://g.page/r/CHANGE_TO_GOOGLE_BUSINESS_REVIEW_URL"
+  }
 }
