@@ -5,18 +5,17 @@
 // - reszta -> ASSETS
 
 const SERVICES = [
-  { id: 'pakiet-wiosenny',      name: 'Pakiet wiosenny PRO (przegląd + bleeding + centrowanie 2 kół)', price: '350 zł' },
-  { id: 'odbior',               name: 'Odbiór i odwóz roweru (adres podaj w notatce)', price: 'od 40 zł' },
-  { id: 'przeglad-podstawowy',  name: 'Przegląd podstawowy',                       price: 'od 100 zł' },
-  { id: 'przeglad-kompleksowy', name: 'Przegląd kompleksowy',                      price: 'od 220 zł' },
-  { id: 'regulacja',            name: 'Regulacja (hamulce / przerzutki)',          price: 'od 30 zł' },
-  { id: 'wymiana-czesci',       name: 'Wymiana części (klocki, linki, dętka...)',  price: 'od 25 zł + część' },
-  { id: 'kolo-centrowanie',     name: 'Centrowanie koła',                          price: 'od 40 zł' },
-  { id: 'kolo-naprawa',         name: 'Naprawa koła',                              price: 'od 25 zł' },
-  { id: 'kolo-zaplatanie',      name: 'Zaplatanie koła',                           price: 'od 120 zł' },
-  { id: 'pod-ridera',           name: 'Konfiguracja pod ridera',                   price: 'od 10 zł' },
-  { id: 'budowa',               name: 'Budowa roweru na miarę',                    price: 'od 400 zł' },
-  { id: 'hulajnoga',            name: 'Serwis hulajnogi',                          price: 'od 30 zł' },
+  { id: 'odbior',               name: 'Odbiór i odwóz roweru (adres podaj w notatce)', price: 'od 50 zł' },
+  { id: 'przeglad-podstawowy',  name: 'Przegląd podstawowy',                       price: 'od 150 zł' },
+  { id: 'przeglad-kompleksowy', name: 'Przegląd kompleksowy',                      price: 'od 340 zł' },
+  { id: 'regulacja',            name: 'Regulacja (hamulce / przerzutki)',          price: 'od 40 zł' },
+  { id: 'wymiana-czesci',       name: 'Wymiana części (klocki, linki, dętka...)',  price: 'od 35 zł + część' },
+  { id: 'kolo-centrowanie',     name: 'Centrowanie koła',                          price: 'od 120 zł' },
+  { id: 'kolo-naprawa',         name: 'Naprawa koła',                              price: 'od 35 zł' },
+  { id: 'kolo-zaplatanie',      name: 'Zaplatanie koła',                           price: 'od 180 zł' },
+  { id: 'pod-ridera',           name: 'Konfiguracja pod ridera',                   price: 'od 20 zł' },
+  { id: 'budowa',               name: 'Budowa roweru na miarę',                    price: 'od 500 zł' },
+  { id: 'hulajnoga',            name: 'Serwis hulajnogi',                          price: 'od 40 zł' },
   { id: 'inne',                 name: 'Inne (opisz w notatce)',                    price: 'wycena indywidualna' },
 ];
 
@@ -31,13 +30,13 @@ const BIKE_TYPES = [
 
 // 0=Nd, 1=Pn ... 6=Sob
 const SCHEDULE = {
-  0: ['09:00','10:00','11:00','12:00','13:00','16:00','17:00','18:00','19:00'],
+  0: ['16:00','17:00','18:00','19:00'],
   1: ['16:00','17:00','18:00','19:00'],
   2: ['16:00','17:00','18:00','19:00'],
   3: ['16:00','17:00','18:00','19:00'],
   4: ['16:00','17:00','18:00','19:00'],
   5: ['16:00','17:00','18:00','19:00'],
-  6: ['09:00','10:00','11:00','12:00','13:00','16:00','17:00','18:00','19:00'],
+  6: ['16:00','17:00','18:00','19:00'],
 };
 
 export default {
@@ -69,6 +68,8 @@ export default {
       catch (e) { console.error('followups error', e); }
       try { await sendSeasonalReminders(env); }
       catch (e) { console.error('seasonal reminders error', e); }
+      try { await fetchGoogleReviews(env); }
+      catch (e) { console.error('google reviews error', e); }
     })());
   },
 };
@@ -85,7 +86,47 @@ async function handleApi(request, env, url) {
   if (url.pathname === '/api/reminders' && request.method === 'POST') {
     return await apiSeasonalReminder(request, env);
   }
+  if (url.pathname === '/api/reviews' && request.method === 'GET') {
+    return await apiReviews(env);
+  }
   return json({ error: 'Not found' }, 404);
+}
+
+async function apiReviews(env) {
+  const [reviewsRes, profileRow] = await Promise.all([
+    env.DB.prepare(
+      'SELECT review_id, author_name, author_photo, rating, text, publish_time FROM google_reviews ORDER BY publish_time DESC LIMIT 6'
+    ).all(),
+    env.DB.prepare(
+      "SELECT rating, review_count, fetched_at FROM google_profile WHERE id = 'profile'"
+    ).first(),
+  ]);
+
+  const reviewLink = env.REVIEW_LINK && !env.REVIEW_LINK.includes('CHANGE_TO_')
+    ? env.REVIEW_LINK : null;
+
+  return new Response(JSON.stringify({
+    profile: profileRow ? {
+      rating: profileRow.rating,
+      review_count: profileRow.review_count,
+      fetched_at: profileRow.fetched_at,
+    } : null,
+    review_link: reviewLink,
+    reviews: (reviewsRes.results || []).map(r => ({
+      id: r.review_id,
+      author: r.author_name,
+      photo: r.author_photo,
+      rating: r.rating,
+      text: r.text,
+      time: r.publish_time,
+    })),
+  }), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'public, max-age=600, s-maxage=3600',
+    },
+  });
 }
 
 async function apiSeasonalReminder(request, env) {
@@ -188,7 +229,7 @@ async function apiCreateBooking(request, env) {
     body.notes?.trim() || null,
   ).run();
 
-  // Notyfikacja email — best-effort, błąd nie zatrzymuje rezerwacji
+  // Notyfikacja email, best-effort, błąd nie zatrzymuje rezerwacji
   sendNotifications(env, { id, ...body }).catch(e => console.error('Mail error', e));
 
   return json({
@@ -230,7 +271,7 @@ async function sendNotifications(env, b) {
     await resendSend(env.RESEND_API_KEY, {
       from,
       to: env.NOTIFY_EMAIL,
-      subject: `Nowa rezerwacja: ${b.date} ${b.time_slot} — ${b.customer_name}`,
+      subject: `Nowa rezerwacja: ${b.date} ${b.time_slot}, ${b.customer_name}`,
       text:
 `Nowa rezerwacja w skocznarower.pl
 
@@ -241,7 +282,7 @@ Rower:   ${b.bike_type}
 Klient:  ${b.customer_name}
 Telefon: ${b.customer_phone}
 ${b.customer_email ? 'Email:   ' + b.customer_email + '\n' : ''}
-Notatka: ${b.notes || '—'}
+Notatka: ${b.notes || 'brak'}
 
 Panel: https://www.skocznarower.pl/admin
 ID:    ${b.id}
@@ -249,12 +290,12 @@ ID:    ${b.id}
     });
   }
 
-  // do klienta — tylko jeśli podał email
+  // do klienta, tylko jeśli podał email
   if (b.customer_email) {
     await resendSend(env.RESEND_API_KEY, {
       from,
       to: b.customer_email,
-      subject: 'Potwierdzenie rezerwacji — skocznarower.pl',
+      subject: 'Potwierdzenie rezerwacji, skocznarower.pl',
       text:
 `Cześć ${b.customer_name},
 
@@ -320,7 +361,25 @@ async function handleAdmin(request, env, url) {
   if (path === '/admin/block' && request.method === 'POST') {
     return await adminBlockSlot(request, env);
   }
+  if (path === '/admin/reviews-refresh' && request.method === 'POST') {
+    return await adminRefreshReviews(env);
+  }
   return new Response('Not found', { status: 404 });
+}
+
+async function adminRefreshReviews(env) {
+  let msg = 'ok';
+  try {
+    const result = await fetchGoogleReviews(env);
+    msg = result || 'ok';
+  } catch (e) {
+    console.error('manual google reviews error', e);
+    msg = 'error';
+  }
+  return new Response('', {
+    status: 302,
+    headers: { 'Location': '/admin?reviews=' + encodeURIComponent(msg) },
+  });
 }
 
 async function adminLogin(request, env) {
@@ -414,7 +473,18 @@ async function adminDashboard(env, url) {
     'SELECT * FROM blocked_slots WHERE date >= ?1 ORDER BY date ASC, time_slot ASC'
   ).bind(today).all()).results || [];
 
-  return html(renderDashboard({ bookings, blocked, filter, today }));
+  const reviewsProfile = await env.DB.prepare(
+    "SELECT rating, review_count, fetched_at FROM google_profile WHERE id = 'profile'"
+  ).first();
+  const reviewsCount = (await env.DB.prepare(
+    'SELECT COUNT(*) AS n FROM google_reviews'
+  ).first())?.n || 0;
+  const reviewsStatus = url.searchParams.get('reviews') || '';
+
+  return html(renderDashboard({
+    bookings, blocked, filter, today,
+    reviewsProfile, reviewsCount, reviewsStatus,
+  }));
 }
 
 // ─── HTML PAGES ─────────────────────────────────────────────────────────────
@@ -422,7 +492,7 @@ async function adminDashboard(env, url) {
 function loginPage(error = '') {
   return html(`<!doctype html><html lang="pl"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Panel — skocznarower.pl</title>
+<title>Panel · skocznarower.pl</title>
 <meta name="robots" content="noindex,nofollow">
 ${ADMIN_STYLES}
 </head><body class="login">
@@ -435,7 +505,7 @@ ${ADMIN_STYLES}
 </body></html>`);
 }
 
-function renderDashboard({ bookings, blocked, filter, today }) {
+function renderDashboard({ bookings, blocked, filter, today, reviewsProfile, reviewsCount, reviewsStatus }) {
   const pendingCount = bookings.filter(b => b.status === 'pending').length;
 
   const back = `/admin?filter=${encodeURIComponent(filter)}`;
@@ -493,7 +563,7 @@ function renderDashboard({ bookings, blocked, filter, today }) {
 
   return `<!doctype html><html lang="pl"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Panel — skocznarower.pl</title>
+<title>Panel · skocznarower.pl</title>
 <meta name="robots" content="noindex,nofollow">
 ${ADMIN_STYLES}
 </head><body>
@@ -539,7 +609,7 @@ ${ADMIN_STYLES}
       ${blocked.map(b => `
       <tr>
         <td>${b.date}</td>
-        <td>${b.time_slot === 'all' ? '— cały dzień —' : b.time_slot}</td>
+        <td>${b.time_slot === 'all' ? 'cały dzień' : b.time_slot}</td>
         <td>${escapeHtml(b.reason || '')}</td>
         <td>
           <form method="post" action="/admin/block" style="display:inline">
@@ -552,6 +622,31 @@ ${ADMIN_STYLES}
       </tr>`).join('')}
     </tbody>
   </table>`}
+</section>
+
+<section class="card">
+  <h2>Opinie Google</h2>
+  <p class="muted">Pobierane z Google Places API. Cron odświeża raz dziennie, możesz wymusić ręcznie.</p>
+  <div style="display:flex; flex-wrap:wrap; gap:24px; align-items:center; margin:14px 0;">
+    <div>
+      <div style="font-size:24px; font-weight:700; color:#9fe22e;">
+        ${reviewsProfile?.rating ? reviewsProfile.rating.toFixed(1) : '–'}
+        <span style="font-size:14px; color:#888; font-weight:400;">średnia</span>
+      </div>
+      <div class="muted" style="margin-top:4px;">
+        ${reviewsProfile?.review_count ?? 0} opinii w Google · ${reviewsCount} w cache
+      </div>
+      <div class="muted" style="margin-top:2px;">
+        ${reviewsProfile?.fetched_at ? 'Ostatnie pobranie: ' + new Date(reviewsProfile.fetched_at).toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw' }) : 'Jeszcze nie pobrane.'}
+      </div>
+    </div>
+    <form method="post" action="/admin/reviews-refresh">
+      <button type="submit" style="background:#9fe22e; color:#000; border:none; padding:10px 18px; border-radius:4px; font-weight:600; cursor:pointer;">Odśwież teraz</button>
+    </form>
+  </div>
+  ${reviewsStatus === 'no-keys' ? '<p class="muted" style="color:#f4c542;">Brak GOOGLE_PLACES_API_KEY albo GOOGLE_PLACE_ID. Dodaj sekrety, żeby pobrać opinie.</p>' : ''}
+  ${reviewsStatus === 'error' ? '<p class="muted" style="color:#d66;">Błąd pobierania, zobacz logi Workera w Cloudflare.</p>' : ''}
+  ${reviewsStatus.startsWith('ok-') ? `<p class="muted" style="color:#9fe22e;">Pobrano i zapisano ${reviewsStatus.slice(3)} opinii.</p>` : ''}
 </section>
 
 </body></html>`;
@@ -831,35 +926,40 @@ Tel. 600 370 810
 }
 
 /**
- * Wysyła SMS przez SerwerSMS. Wymaga env.SMS_API_LOGIN i env.SMS_API_PASSWORD jako secrets.
- * Bez ustawionych sekretów loguje treść do console (dry-run dla developmentu).
+ * Wysyła SMS przez SMSAPI (smsapi.pl). Wymaga env.SMSAPI_TOKEN (OAuth token z panelu).
+ * Bez tokena loguje treść do console (dry-run dla developmentu).
  *
- * Jeśli wolisz innego dostawcę (SMSAPI, Twilio, Plivo), podmień ciało tej funkcji,
- * cała reszta workera używa tej jednej abstrakcji.
+ * Pole nadawcy: env.SMS_SENDER, fallback 'Info' (darmowy nadawca SMSAPI dostępny od razu).
+ * Własna nazwa alfanumeryczna wymaga zatwierdzenia w panelu SMSAPI (1-3 dni).
  */
 async function sendSms(env, phoneRaw, text) {
   const phone = normalizePhone(phoneRaw);
   const target = phone.startsWith('48') ? phone : (phone.length === 9 ? '48' + phone : phone);
 
-  if (!env.SMS_API_LOGIN || !env.SMS_API_PASSWORD) {
+  if (!env.SMSAPI_TOKEN) {
     console.log('[SMS dry-run] →', target, text);
     return true;
   }
 
   try {
-    const r = await fetch('https://api2.serwersms.pl/messages/send_sms', {
+    const body = new URLSearchParams({
+      to: target,
+      message: text,
+      from: env.SMS_SENDER || 'Info',
+      format: 'json',
+      encoding: 'utf-8',
+    });
+    const r = await fetch('https://api.smsapi.pl/sms.do', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: env.SMS_API_LOGIN,
-        password: env.SMS_API_PASSWORD,
-        phone: target,
-        text,
-        sender: env.SMS_SENDER || 'Eco',
-      }),
+      headers: {
+        'Authorization': `Bearer ${env.SMSAPI_TOKEN}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+      },
+      body,
     });
     const data = await r.json().catch(() => ({}));
-    if (!r.ok || data?.success === false) {
+    if (!r.ok || data?.error) {
       console.error('SMS send failed', r.status, data);
       return false;
     }
@@ -868,6 +968,81 @@ async function sendSms(env, phoneRaw, text) {
     console.error('SMS send exception', e);
     return false;
   }
+}
+
+// ─── GOOGLE REVIEWS (Places API New) ───────────────────────────────────────
+
+/**
+ * Pobiera opinie z Google Places API (New) i zapisuje w D1.
+ * Cron uruchamia raz dziennie, admin może odpalić ręcznie z /admin.
+ *
+ * Bez env.GOOGLE_PLACES_API_KEY i env.GOOGLE_PLACE_ID funkcja wypisuje
+ * informację do konsoli i wraca bez zmian w bazie.
+ *
+ * Places API (New) zwraca do 5 najnowszych opinii. Limit po stronie Google.
+ *
+ * Zwraca krótki komunikat statusu dla panelu admina.
+ */
+async function fetchGoogleReviews(env) {
+  if (!env.GOOGLE_PLACES_API_KEY || !env.GOOGLE_PLACE_ID) {
+    console.log('google reviews: brak GOOGLE_PLACES_API_KEY/GOOGLE_PLACE_ID, pomijam');
+    return 'no-keys';
+  }
+
+  const url = `https://places.googleapis.com/v1/places/${encodeURIComponent(env.GOOGLE_PLACE_ID)}?languageCode=pl`;
+  const r = await fetch(url, {
+    headers: {
+      'X-Goog-Api-Key': env.GOOGLE_PLACES_API_KEY,
+      'X-Goog-FieldMask': 'id,displayName,rating,userRatingCount,reviews',
+    },
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`Places API ${r.status}: ${t.slice(0, 300)}`);
+  }
+  const data = await r.json();
+  const now = Date.now();
+
+  await env.DB.prepare(
+    `INSERT INTO google_profile (id, rating, review_count, fetched_at)
+     VALUES ('profile', ?1, ?2, ?3)
+     ON CONFLICT(id) DO UPDATE SET
+       rating = excluded.rating,
+       review_count = excluded.review_count,
+       fetched_at = excluded.fetched_at`
+  ).bind(
+    typeof data.rating === 'number' ? data.rating : null,
+    typeof data.userRatingCount === 'number' ? data.userRatingCount : null,
+    now,
+  ).run();
+
+  const reviews = Array.isArray(data.reviews) ? data.reviews : [];
+  let written = 0;
+  for (const rv of reviews) {
+    const id = rv.name || `${env.GOOGLE_PLACE_ID}/${rv.publishTime || crypto.randomUUID()}`;
+    const author = rv.authorAttribution?.displayName || 'Klient Google';
+    const photo = rv.authorAttribution?.photoUri || null;
+    const rating = Number.isFinite(rv.rating) ? rv.rating : 5;
+    const text = String(rv.text?.text || rv.originalText?.text || '').trim();
+    if (!text) continue;
+    const publishTime = rv.publishTime ? Date.parse(rv.publishTime) : now;
+    const lang = rv.text?.languageCode || rv.originalText?.languageCode || null;
+    await env.DB.prepare(
+      `INSERT INTO google_reviews (review_id, author_name, author_photo, rating, text, publish_time, language, fetched_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+       ON CONFLICT(review_id) DO UPDATE SET
+         author_name = excluded.author_name,
+         author_photo = excluded.author_photo,
+         rating = excluded.rating,
+         text = excluded.text,
+         publish_time = excluded.publish_time,
+         language = excluded.language,
+         fetched_at = excluded.fetched_at`
+    ).bind(id, author, photo, rating, text, publishTime, lang, now).run();
+    written += 1;
+  }
+
+  return `ok-${written}`;
 }
 
 function addDaysWarsaw(days) {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Umów wizytę — skocznarower.pl, serwis rowerowy Grodzisk Mazowiecki</title>
+  <title>Umów wizytę, skocznarower.pl, serwis rowerowy Grodzisk Mazowiecki</title>
   <meta name="description" content="Umów wizytę w serwisie rowerowym w Grodzisku Mazowieckim. Wybierz usługę, datę i godzinę, oddzwonię żeby potwierdzić.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://www.skocznarower.pl/umow">
@@ -372,7 +372,7 @@
 <header class="header">
   <p class="eyebrow">Rezerwacja online</p>
   <h1 class="display">Umów<br><em>wizytę</em></h1>
-  <p class="lead">Wybierz usługę, dzień i godzinę. Oddzwonię żeby potwierdzić termin. Wszystko trwa minutę.</p>
+  <p class="lead">Wybierz usługę, dzień i godzinę. Oddzwonię, żeby potwierdzić termin. Cała rezerwacja zajmuje minutę.</p>
 </header>
 
 <main class="form-wrap">
@@ -380,7 +380,7 @@
 <form id="booking-form" autocomplete="on" novalidate>
 
   <section class="step">
-    <div class="step-num">01 — Usługa</div>
+    <div class="step-num">01 · Usługa</div>
     <h2 class="step-title">Co robimy?</h2>
     <div class="choices" id="services">
       <!-- wypełniane JS-em -->
@@ -388,7 +388,7 @@
   </section>
 
   <section class="step">
-    <div class="step-num">02 — Sprzęt</div>
+    <div class="step-num">02 · Sprzęt</div>
     <h2 class="step-title">Jaki rower?</h2>
     <div class="choices" id="bike-types">
       <!-- wypełniane JS-em -->
@@ -396,7 +396,7 @@
   </section>
 
   <section class="step">
-    <div class="step-num">03 — Termin</div>
+    <div class="step-num">03 · Termin</div>
     <h2 class="step-title">Kiedy przyjedziesz?</h2>
     <div class="date-row">
       <input id="date" class="date-input" type="date" required>
@@ -407,7 +407,7 @@
   </section>
 
   <section class="step">
-    <div class="step-num">04 — Kontakt</div>
+    <div class="step-num">04 · Kontakt</div>
     <h2 class="step-title">Jak się skontaktować?</h2>
     <div class="fields">
       <div class="row">
@@ -450,18 +450,17 @@
 
 <script>
 const SERVICES = [
-  { id: 'pakiet-wiosenny',      name: 'Pakiet wiosenny PRO',         price: '350 zł' },
-  { id: 'odbior',               name: 'Odbiór i odwóz roweru',       price: 'od 40 zł' },
-  { id: 'przeglad-podstawowy',  name: 'Przegląd podstawowy',         price: 'od 100 zł' },
-  { id: 'przeglad-kompleksowy', name: 'Przegląd kompleksowy',        price: 'od 220 zł' },
-  { id: 'regulacja',            name: 'Regulacja (hamulce / przerzutki)', price: 'od 30 zł' },
-  { id: 'wymiana-czesci',       name: 'Wymiana części',              price: 'od 25 zł + część' },
-  { id: 'kolo-centrowanie',     name: 'Centrowanie koła',            price: 'od 40 zł' },
-  { id: 'kolo-naprawa',         name: 'Naprawa koła',                price: 'od 25 zł' },
-  { id: 'kolo-zaplatanie',      name: 'Zaplatanie koła',             price: 'od 120 zł' },
-  { id: 'pod-ridera',           name: 'Konfiguracja pod ridera',     price: 'od 10 zł' },
-  { id: 'budowa',               name: 'Budowa roweru na miarę',      price: 'od 400 zł' },
-  { id: 'hulajnoga',            name: 'Serwis hulajnogi',            price: 'od 30 zł' },
+  { id: 'odbior',               name: 'Odbiór i odwóz roweru',       price: 'od 50 zł' },
+  { id: 'przeglad-podstawowy',  name: 'Przegląd podstawowy',         price: 'od 150 zł' },
+  { id: 'przeglad-kompleksowy', name: 'Przegląd kompleksowy',        price: 'od 340 zł' },
+  { id: 'regulacja',            name: 'Regulacja (hamulce / przerzutki)', price: 'od 40 zł' },
+  { id: 'wymiana-czesci',       name: 'Wymiana części',              price: 'od 35 zł + część' },
+  { id: 'kolo-centrowanie',     name: 'Centrowanie koła',            price: 'od 120 zł' },
+  { id: 'kolo-naprawa',         name: 'Naprawa koła',                price: 'od 35 zł' },
+  { id: 'kolo-zaplatanie',      name: 'Zaplatanie koła',             price: 'od 180 zł' },
+  { id: 'pod-ridera',           name: 'Konfiguracja pod ridera',     price: 'od 20 zł' },
+  { id: 'budowa',               name: 'Budowa roweru na miarę',      price: 'od 500 zł' },
+  { id: 'hulajnoga',            name: 'Serwis hulajnogi',            price: 'od 40 zł' },
   { id: 'inne',                 name: 'Inne (opisz niżej)',          price: 'wycena indywidualna' },
 ];
 

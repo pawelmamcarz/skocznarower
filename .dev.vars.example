@@ -2,7 +2,18 @@
 ADMIN_PASSWORD=zmien-mnie
 SESSION_SECRET=wygeneruj-losowy-ciag-np-openssl-rand-hex-32
 
-# Email (opcjonalne — jeśli puste, rezerwacje działają, ale bez powiadomień)
+# Email (opcjonalne, jeśli puste, rezerwacje działają, ale bez powiadomień)
 RESEND_API_KEY=
 NOTIFY_EMAIL=
 FROM_EMAIL=rezerwacje@skocznarower.pl
+
+# SMSAPI (opcjonalne, bez tokena SMS-y idą tylko do logów workera)
+# Token wygenerujesz w panelu SMSAPI → Ustawienia → Token API (OAuth)
+SMSAPI_TOKEN=
+SMS_SENDER=Info
+
+# Google Places API (opcjonalne, bez tych dwóch sekcja opinii zostaje schowana)
+# GOOGLE_PLACE_ID: znajdź w https://developers.google.com/maps/documentation/places/web-service/place-id
+# GOOGLE_PLACES_API_KEY: Google Cloud Console, włącz "Places API (New)", zrób klucz, ogranicz do Places API + domeny
+GOOGLE_PLACES_API_KEY=
+GOOGLE_PLACE_ID=

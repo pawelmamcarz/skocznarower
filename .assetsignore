@@ -9,6 +9,7 @@ node_modules/
 src/
 migrations/
 CLAUDE.md
+OUTREACH_PLAN.md
 .assetsignore
 .gitignore
 .dev.vars
