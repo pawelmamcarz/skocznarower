@@ -265,14 +265,19 @@ async function sendNotifications(env, b) {
 
   const service = SERVICES.find(s => s.id === b.service_type)?.name || b.service_type;
   const from = env.FROM_EMAIL || 'rezerwacje@skocznarower.pl';
+  // REPLY_TO_EMAIL should be a direct external address (e.g. Gmail) that does not
+  // rely on Cloudflare Email Routing, so that customer replies are deliverable even
+  // when the @skocznarower.pl forwarding chain is broken.
+  const replyTo = env.REPLY_TO_EMAIL || env.NOTIFY_EMAIL;
 
   // do właściciela
   if (env.NOTIFY_EMAIL) {
-    await resendSend(env.RESEND_API_KEY, {
-      from,
-      to: env.NOTIFY_EMAIL,
-      subject: `Nowa rezerwacja: ${b.date} ${b.time_slot}, ${b.customer_name}`,
-      text:
+    try {
+      await resendSend(env.RESEND_API_KEY, {
+        from,
+        to: env.NOTIFY_EMAIL,
+        subject: `Nowa rezerwacja: ${b.date} ${b.time_slot}, ${b.customer_name}`,
+        text:
 `Nowa rezerwacja w skocznarower.pl
 
 Data:    ${b.date} ${b.time_slot}
@@ -287,16 +292,20 @@ Notatka: ${b.notes || 'brak'}
 Panel: https://www.skocznarower.pl/admin
 ID:    ${b.id}
 `,
-    });
+      });
+    } catch (e) {
+      console.error('Mail owner error', e);
+    }
   }
 
   // do klienta, tylko jeśli podał email
   if (b.customer_email) {
-    await resendSend(env.RESEND_API_KEY, {
-      from,
-      to: b.customer_email,
-      subject: 'Potwierdzenie rezerwacji, skocznarower.pl',
-      text:
+    try {
+      const payload = {
+        from,
+        to: b.customer_email,
+        subject: 'Potwierdzenie rezerwacji, skocznarower.pl',
+        text:
 `Cześć ${b.customer_name},
 
 Dziękuję za zgłoszenie. Skontaktuję się z Tobą, żeby potwierdzić termin.
@@ -310,7 +319,12 @@ Jeśli coś się zmieni, zadzwoń: 600 370 810.
 Mateusz / skocznarower.pl
 Jesionowa 18, Grodzisk Mazowiecki
 `,
-    });
+      };
+      if (replyTo) payload.reply_to = replyTo;
+      await resendSend(env.RESEND_API_KEY, payload);
+    } catch (e) {
+      console.error('Mail customer error', e);
+    }
   }
 }
 
@@ -1047,10 +1061,11 @@ async function sendSeasonalReminders(env) {
     return;
   }
   const from = env.FROM_EMAIL || 'rezerwacje@skocznarower.pl';
+  const replyTo = env.REPLY_TO_EMAIL || env.NOTIFY_EMAIL;
 
   for (const r of rows.results || []) {
     try {
-      await resendSend(env.RESEND_API_KEY, {
+      const payload = {
         from,
         to: r.email,
         subject: 'Czas na przegląd przed sezonem, skocznarower.pl',
@@ -1068,7 +1083,9 @@ Mateusz / skocznarower.pl
 Jesionowa 18, Grodzisk Mazowiecki
 Tel. 600 370 810
 `,
-      });
+      };
+      if (replyTo) payload.reply_to = replyTo;
+      await resendSend(env.RESEND_API_KEY, payload);
       await env.DB.prepare('UPDATE seasonal_reminders SET sent_at = ?1 WHERE id = ?2')
         .bind(Date.now(), r.id).run();
     } catch (e) {
