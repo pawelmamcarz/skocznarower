@@ -364,7 +364,60 @@ async function handleAdmin(request, env, url) {
   if (path === '/admin/reviews-refresh' && request.method === 'POST') {
     return await adminRefreshReviews(env);
   }
+  if (path === '/admin/outreach' && request.method === 'POST') {
+    return await adminUpdateOutreach(request, env);
+  }
   return new Response('Not found', { status: 404 });
+}
+
+async function adminUpdateOutreach(request, env) {
+  const form = await request.formData();
+  const action = String(form.get('action') || '');
+  const now = Date.now();
+
+  if (action === 'add') {
+    const brand_name = String(form.get('brand_name') || '').trim();
+    const channel = String(form.get('channel') || '').trim();
+    const contact_method = String(form.get('contact_method') || '').trim() || null;
+    const notes = String(form.get('notes') || '').trim() || null;
+    if (!brand_name || !['A','B','C'].includes(channel)) {
+      return new Response('Bad', { status: 400 });
+    }
+    await env.DB.prepare(
+      'INSERT INTO outreach_contacts (brand_name, channel, contact_method, status, notes, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6)'
+    ).bind(brand_name, channel, contact_method, 'planned', notes, now).run();
+  } else {
+    const id = String(form.get('id') || '');
+    if (!id) return new Response('Bad', { status: 400 });
+    if (action === 'sent') {
+      await env.DB.prepare(
+        "UPDATE outreach_contacts SET status='sent', sent_at=?1, updated_at=?1 WHERE id=?2"
+      ).bind(now, id).run();
+    } else if (action === 'responded') {
+      const response = String(form.get('response') || '').trim() || null;
+      await env.DB.prepare(
+        "UPDATE outreach_contacts SET status='responded', response=?1, updated_at=?2 WHERE id=?3"
+      ).bind(response, now, id).run();
+    } else if (action === 'closed') {
+      await env.DB.prepare(
+        "UPDATE outreach_contacts SET status='closed', updated_at=?1 WHERE id=?2"
+      ).bind(now, id).run();
+    } else if (action === 'reopen') {
+      await env.DB.prepare(
+        "UPDATE outreach_contacts SET status='planned', sent_at=NULL, updated_at=?1 WHERE id=?2"
+      ).bind(now, id).run();
+    } else if (action === 'notes') {
+      const notes = String(form.get('notes') || '').trim() || null;
+      await env.DB.prepare(
+        "UPDATE outreach_contacts SET notes=?1, updated_at=?2 WHERE id=?3"
+      ).bind(notes, now, id).run();
+    } else if (action === 'delete') {
+      await env.DB.prepare('DELETE FROM outreach_contacts WHERE id=?1').bind(id).run();
+    } else {
+      return new Response('Bad action', { status: 400 });
+    }
+  }
+  return new Response('', { status: 302, headers: { 'Location': '/admin#outreach' } });
 }
 
 async function adminRefreshReviews(env) {
@@ -481,9 +534,14 @@ async function adminDashboard(env, url) {
   ).first())?.n || 0;
   const reviewsStatus = url.searchParams.get('reviews') || '';
 
+  const outreach = (await env.DB.prepare(
+    "SELECT * FROM outreach_contacts ORDER BY CASE status WHEN 'planned' THEN 0 WHEN 'sent' THEN 1 WHEN 'responded' THEN 2 WHEN 'closed' THEN 3 ELSE 4 END, channel ASC, id ASC"
+  ).all()).results || [];
+
   return html(renderDashboard({
     bookings, blocked, filter, today,
     reviewsProfile, reviewsCount, reviewsStatus,
+    outreach,
   }));
 }
 
@@ -505,7 +563,7 @@ ${ADMIN_STYLES}
 </body></html>`);
 }
 
-function renderDashboard({ bookings, blocked, filter, today, reviewsProfile, reviewsCount, reviewsStatus }) {
+function renderDashboard({ bookings, blocked, filter, today, reviewsProfile, reviewsCount, reviewsStatus, outreach }) {
   const pendingCount = bookings.filter(b => b.status === 'pending').length;
 
   const back = `/admin?filter=${encodeURIComponent(filter)}`;
@@ -572,6 +630,7 @@ ${ADMIN_STYLES}
   <h1>Rezerwacje</h1>
   <div class="topbar-right">
     <span class="muted">Dziś: ${today}</span>
+    <a href="#outreach" class="logout">Współpraca</a>
     <a href="/admin/logout" class="logout">Wyloguj</a>
   </div>
 </header>
@@ -649,7 +708,100 @@ ${ADMIN_STYLES}
   ${reviewsStatus.startsWith('ok-') ? `<p class="muted" style="color:#9fe22e;">Pobrano i zapisano ${reviewsStatus.slice(3)} opinii.</p>` : ''}
 </section>
 
+${renderOutreachSection(outreach || [])}
+
 </body></html>`;
+}
+
+function renderOutreachSection(outreach) {
+  const channelLabel = c => c === 'A' ? 'A · brand' : c === 'B' ? 'B · dystro' : 'C · sklep bez warsztatu';
+  const statusLabel = s => ({
+    planned: 'do wysłania', sent: 'wysłany', responded: 'odpisali', closed: 'zamknięty',
+  }[s] || s);
+  const statusColor = s => ({
+    planned: '#aaa', sent: '#f4c542', responded: '#9fe22e', closed: '#666',
+  }[s] || '#aaa');
+
+  const stats = outreach.reduce((acc, o) => {
+    acc[o.status] = (acc[o.status] || 0) + 1;
+    return acc;
+  }, {});
+
+  const row = o => `
+    <tr style="opacity:${o.status === 'closed' ? .55 : 1}">
+      <td><strong>${escapeHtml(o.brand_name)}</strong></td>
+      <td><span class="muted">${channelLabel(o.channel)}</span></td>
+      <td class="muted" style="max-width:280px; word-break:break-all">${escapeHtml(o.contact_method || '')}</td>
+      <td>
+        <span class="badge" style="background:${statusColor(o.status)}22; color:${statusColor(o.status)}; border:1px solid ${statusColor(o.status)}66;">${statusLabel(o.status)}</span>
+        ${o.sent_at ? `<div class="muted" style="font-size:11px; margin-top:4px;">${new Date(o.sent_at).toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw' })}</div>` : ''}
+      </td>
+      <td class="muted" style="font-size:12px; max-width:260px;">
+        ${o.notes ? `<div>${escapeHtml(o.notes)}</div>` : ''}
+        ${o.response ? `<div style="color:#9fe22e; margin-top:4px;"><strong>Odp.:</strong> ${escapeHtml(o.response)}</div>` : ''}
+      </td>
+      <td class="actions" style="white-space:nowrap;">
+        ${o.status === 'planned' ? `
+          <form method="post" action="/admin/outreach" style="display:inline">
+            <input type="hidden" name="id" value="${o.id}">
+            <button name="action" value="sent" class="btn-ok">Wysłałem</button>
+          </form>` : ''}
+        ${o.status === 'sent' ? `
+          <form method="post" action="/admin/outreach" style="display:inline; margin-right:4px;" onsubmit="this.querySelector('input[name=response]').value = prompt('Co odpisali? (skrót)') || ''; if(!this.querySelector('input[name=response]').value) return false;">
+            <input type="hidden" name="id" value="${o.id}">
+            <input type="hidden" name="response" value="">
+            <button name="action" value="responded" class="btn-ok">Odpisali</button>
+          </form>
+          <form method="post" action="/admin/outreach" style="display:inline">
+            <input type="hidden" name="id" value="${o.id}">
+            <button name="action" value="closed" class="btn-warn">Brak odp.</button>
+          </form>` : ''}
+        ${o.status === 'responded' ? `
+          <form method="post" action="/admin/outreach" style="display:inline">
+            <input type="hidden" name="id" value="${o.id}">
+            <button name="action" value="closed" class="btn-warn">Zamknij</button>
+          </form>` : ''}
+        ${o.status === 'closed' ? `
+          <form method="post" action="/admin/outreach" style="display:inline">
+            <input type="hidden" name="id" value="${o.id}">
+            <button name="action" value="reopen" class="btn-ok">Odśwież</button>
+          </form>` : ''}
+        <form method="post" action="/admin/outreach" style="display:inline" onsubmit="return confirm('Usunąć kontakt?')">
+          <input type="hidden" name="id" value="${o.id}">
+          <button name="action" value="delete" class="btn-del">×</button>
+        </form>
+      </td>
+    </tr>`;
+
+  return `
+<section class="card" id="outreach">
+  <h2>Współpraca · outreach
+    <span class="muted" style="font-weight:400; font-size:14px; margin-left:12px;">
+      ${stats.planned || 0} do wysłania · ${stats.sent || 0} czeka · ${stats.responded || 0} odpisało · ${stats.closed || 0} zamknięte
+    </span>
+  </h2>
+  <p class="muted" style="margin-bottom:12px;">Plan w OUTREACH_PLAN.md (root repo). A = brand / dealer, B = dystrybutor / program serwisowy, C = sklep bez warsztatu (recommended-local / pickup-hub / warranty).</p>
+
+  <form method="post" action="/admin/outreach" style="display:grid; grid-template-columns: 2fr 1fr 2fr 2fr auto; gap:8px; margin-bottom:18px;">
+    <input type="hidden" name="action" value="add">
+    <input type="text" name="brand_name" placeholder="Nazwa marki / sklepu" required maxlength="120">
+    <select name="channel" required>
+      <option value="">Kanał</option>
+      <option value="A">A · brand</option>
+      <option value="B">B · dystro / program</option>
+      <option value="C">C · sklep bez warsztatu</option>
+    </select>
+    <input type="text" name="contact_method" placeholder="Email / formularz / IG" maxlength="200">
+    <input type="text" name="notes" placeholder="Notatka (opcjonalnie)" maxlength="500">
+    <button type="submit">Dodaj</button>
+  </form>
+
+  ${outreach.length === 0 ? '<p class="muted">Brak kontaktów. Dodaj pierwszy z formularza powyżej.</p>' : `
+  <table>
+    <thead><tr><th>Marka / sklep</th><th>Kanał</th><th>Kontakt</th><th>Status</th><th>Notatki / odpowiedź</th><th></th></tr></thead>
+    <tbody>${outreach.map(row).join('')}</tbody>
+  </table>`}
+</section>`;
 }
 
 const ADMIN_STYLES = `<style>
