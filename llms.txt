@@ -1,0 +1,22 @@
+# skocznarower.pl
+
+> Profesjonalny serwis rowerowy w Grodzisku Mazowieckim (Jesionowa 18). Specjalizacja: dirt jump, BMX, MTB (full suspension i hardtail), e-bike. Prowadzi Mateusz Mamcarz (xPyszczek). Obsługuje klientów z Grodziska Mazowieckiego, Pruszkowa, Milanówka, Brwinowa i zachodniej Warszawy.
+
+Warsztat jednoosobowy, przyjęcia wyłącznie po wcześniejszym umówieniu. Zaplatanie i centrowanie kół na profesjonalnej centrownicy z miernikiem wybierania (dial indicator), bleeding hamulców hydraulicznych Shimano, SRAM, TRP, Hope, Magura. Możliwy odbiór i odwóz roweru w Grodzisku, Milanówku, Pruszkowie oraz zachodniej Warszawie.
+
+## Kontakt
+- Adres: Jesionowa 18, 05-825 Grodzisk Mazowiecki, Polska
+- Telefon: +48 600 370 810
+- Instagram: https://www.instagram.com/xpyszczek_
+- TikTok: https://www.tiktok.com/@xpyszczek.dirt
+- Rezerwacja online: https://www.skocznarower.pl/umow
+
+## Strony
+- [Strona główna](https://www.skocznarower.pl/): pełny opis serwisu, cennik, FAQ, dane kontaktowe.
+- [Rezerwacja online](https://www.skocznarower.pl/umow): wybór usługi, daty i godziny przyjęcia roweru.
+- [Serwis rowerów Pruszków](https://www.skocznarower.pl/serwis-rowerow-pruszkow): informacje dla klientów z Pruszkowa (ok. 15 min jazdy samochodem).
+- [Serwis rowerów Milanówek](https://www.skocznarower.pl/serwis-rowerow-milanowek): informacje dla klientów z Milanówka (serwis stoi minutę od granicy miast).
+- [Bleeding hamulców Shimano](https://www.skocznarower.pl/bleeding-hamulcow-shimano): odpowietrzanie hamulców hydraulicznych XT, SLX, Deore, XTR, Saint, Zee.
+
+## Pełne dane dla LLM
+- [llms-full.txt](https://www.skocznarower.pl/llms-full.txt): rozszerzony zestaw faktów, pełny cennik, FAQ, mapa usług.
