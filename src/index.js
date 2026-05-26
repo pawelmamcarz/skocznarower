@@ -14,6 +14,7 @@ const SERVICES = [
   { id: 'kolo-naprawa',         name: 'Naprawa koła',                              price: 'od 35 zł' },
   { id: 'kolo-zaplatanie',      name: 'Zaplatanie koła',                           price: 'od 180 zł' },
   { id: 'pod-ridera',           name: 'Konfiguracja pod ridera',                   price: 'od 20 zł' },
+  { id: 'skladanie',            name: 'Składanie roweru (z pudełka / z części)',   price: 'od 120 zł' },
   { id: 'budowa',               name: 'Budowa roweru na miarę',                    price: 'od 500 zł' },
   { id: 'hulajnoga',            name: 'Serwis hulajnogi',                          price: 'od 40 zł' },
   { id: 'inne',                 name: 'Inne (opisz w notatce)',                    price: 'wycena indywidualna' },
