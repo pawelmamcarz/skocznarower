@@ -23,7 +23,7 @@ Marketing site + bookings app for **skocznarower.pl**, a bicycle service shop in
   - `BIKE_TYPES` — bike-type whitelist for the form.
   - `SCHEDULE` — opening-hours map keyed by day-of-week (0=Sun…6=Sat). Changes here change the available slots returned by `/api/availability`.
   Touching any of these means re-checking the corresponding HTML.
-- Admin auth: HMAC-signed session cookie (`SESSION_SECRET`, falling back to `ADMIN_PASSWORD`). The `/admin` page lists bookings, lets you set final price, mark done/cancel, and block slots/days in `blocked_slots`.
+- Admin auth: HMAC-signed session cookie (`SESSION_SECRET`, falling back to `ADMIN_PASSWORD`). The `/admin` page lists bookings, lets you set final price, mark done/cancel, and block slots/days in `blocked_slots`. A second tab **Współpraca** (anchor `#outreach`) is an outreach tracker over `outreach_contacts`: add/send/respond/close/reopen, status filter by channel (A brand / B distributor / C shop). Routes: `POST /admin/outreach` (action-based, redirects to `/admin#outreach`).
 - `scheduled()` runs on the `0 8 * * *` cron (08:00 UTC ≈ 09:00–10:00 Warsaw depending on DST):
   - SMS reminder 24h before each `confirmed` booking (sets `reminder_sent_at`).
   - SMS asking for a Google review 3 days after each `done` booking (sets `feedback_sent_at`, uses `REVIEW_LINK` var).
@@ -33,14 +33,17 @@ Marketing site + bookings app for **skocznarower.pl**, a bicycle service shop in
 
 ### D1 database
 - Binding `DB` → `skocznarower-db` (id in `wrangler.jsonc`). Migrations in `migrations/` are applied in order via `npx wrangler d1 migrations apply`.
-- Tables: `bookings` (with `status` ∈ pending/confirmed/done/cancelled, plus `final_price`, `reminder_sent_at`, `feedback_sent_at`), `blocked_slots` (PK `(date, time_slot)`; `time_slot='all'` blocks the whole day), `seasonal_reminders` (unique on `email`), `google_reviews` (PK `review_id` from Google Places, upserted), `google_profile` (single row `id='profile'` with current rating + total review count).
+- Tables: `bookings` (with `status` ∈ pending/confirmed/done/cancelled, plus `final_price`, `reminder_sent_at`, `feedback_sent_at`), `blocked_slots` (PK `(date, time_slot)`; `time_slot='all'` blocks the whole day), `seasonal_reminders` (unique on `email`), `google_reviews` (PK `review_id` from Google Places, upserted), `google_profile` (single row `id='profile'` with current rating + total review count), `outreach_contacts` (brand_name, channel A/B/C, status planned/sent/responded/closed, optional `sent_at`/`response`/`notes`; seeded from `OUTREACH_PLAN.md` in migration 0006).
 - New schema changes: add a numbered SQL file in `migrations/`, do not edit historical ones.
 
 ### JSON-LD blocks
 Each public page has its own JSON-LD. On `index.html` there are two (`FAQPage`, `LocalBusiness`); the landing pages each carry their own `LocalBusiness`. Keep them in sync with the visible FAQ/contact/address/phone whenever those change.
 
 ### `.assetsignore` (what does NOT get uploaded as a static asset)
-The Worker bundles the whole repo root as assets, so this file is what keeps junk out: large source media (`uploads/*.mp4`, `uploads/*.pdf`, `uploads/FastDL.to_*`), the Worker source (`src/`), migrations, dotfiles (`.wrangler/`, `.git/`, `.claude/`, `.playwright-mcp/`, `.DS_Store`), `node_modules/`, and the dev-only files (`CLAUDE.md`, `.assetsignore`, `.gitignore`, `.dev.vars*`). When adding new top-level files or directories, decide whether they belong in `.assetsignore`.
+The Worker bundles the whole repo root as assets, so this file is what keeps junk out: large source media (`uploads/*.mp4`, `uploads/*.pdf`, `uploads/FastDL.to_*`), the Worker source (`src/`), migrations, dotfiles (`.wrangler/`, `.git/`, `.claude/`, `.playwright-mcp/`, `.DS_Store`), `node_modules/`, and the dev-only files (`CLAUDE.md`, `OUTREACH_PLAN.md`, `.assetsignore`, `.gitignore`, `.dev.vars*`). When adding new top-level files or directories, decide whether they belong in `.assetsignore`.
+
+### Non-asset top-level directories
+- `partners/` — `.doc`/`.docx` reference material for outreach (e.g. `velo ANKIETA.doc`). Not currently in `.assetsignore`; if you keep adding files there, add `partners/` to `.assetsignore` so the Worker stops shipping them as public assets.
 
 ## Common commands
 

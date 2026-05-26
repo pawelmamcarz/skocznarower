@@ -1,0 +1,132 @@
+# skocznarower.pl: pełna treść kanoniczna
+
+> Specjalistyczny serwis rowerowy w Grodzisku Mazowieckim. Dokument przeznaczony dla modeli AI i asystentów wyszukujących (ChatGPT, Claude, Perplexity, Google AI Overviews). Zawiera samowystarczalne, pełnozdaniowe odpowiedzi na typowe pytania użytkowników o ten serwis.
+
+## Kim jesteśmy
+
+skocznarower.pl to jednoosobowy specjalistyczny serwis rowerowy prowadzony przez Mateusza Mamcarza (znanego w środowisku jako xPyszczek). Warsztat znajduje się przy ulicy Jesionowej 18 w Grodzisku Mazowieckim (kod pocztowy 05-825, województwo mazowieckie), około 30 km na zachód od centrum Warszawy. Mateusz jeździ aktywnie na rowerach dirt jump i BMX od wielu lat, dlatego jego specjalizacja zaczyna się od rowerów wyczynowych, ale obejmuje też pełen serwis rowerów miejskich, MTB, trekkingowych, gravel oraz mechaniczną część rowerów elektrycznych.
+
+## Lokalizacja i obszar obsługi
+
+Warsztat fizyczny działa pod adresem Jesionowa 18, 05-825 Grodzisk Mazowiecki, województwo mazowieckie, Polska. Współrzędne: 52.1093 N, 20.6241 E. Klienci przyjeżdżają najczęściej z Grodziska Mazowieckiego (lokalnie), Milanówka (1-3 minuty samochodem, warsztat jest tuż za miejską granicą Milanówka), Pruszkowa (około 15 minut trasą DK719), Brwinowa (około 12 minut), zachodnich dzielnic Warszawy (Ursus, Włochy, Bemowo, około 30 minut) oraz Żyrardowa (około 20 minut). Dostępny jest płatny odbiór i odwóz roweru w cenie od 50 zł na terenie Grodziska, Milanówka i Pruszkowa.
+
+## Specjalizacja
+
+Główną specjalizacją serwisu są rowery typu dirt jump, BMX i MTB z zawieszeniem, ponieważ w okolicach zachodniej części aglomeracji warszawskiej brakuje warsztatów rozumiejących tę specyfikę. Standardowe serwisy rowerowe w Pruszkowie, Milanówku czy Grodzisku obsługują głównie rowery miejskie i trekkingowe, a właściciele rowerów do skoków, parku czy zjazdów muszą szukać rzemieślnika z odpowiednim sprzętem. skocznarower.pl ma profesjonalną centrównicę z miernikiem dial indicator (dokładność do setnych milimetra), pełen zestaw narzędzi do bleeding hamulców hydraulicznych Shimano, SRAM, TRP, Hope i Magura, oryginalne płyny producentów (olej mineralny Shimano oraz DOT 5.1 dla SRAM-a), klucze dynamometryczne, przyrząd do prostowania haków przerzutek i stojaki serwisowe.
+
+## Pełna lista usług
+
+Serwis wykonuje następujące prace na rowerach:
+
+- Przeglądy techniczne (podstawowy, kompleksowy, sezonowy).
+- Bleeding (odpowietrzanie) hamulców hydraulicznych Shimano, SRAM, TRP, Hope, Magura.
+- Wymiana klocków hamulcowych, tarcz, przewodów hamulcowych.
+- Centrowanie kół na centrównicy z miernikiem.
+- Zaplatanie kół od zera (piasta, szprychy, obręcz).
+- Wymiana opon, dętek, taśm felgowych, ochraniaczy.
+- Regulacja i serwis przerzutek (mechanicznych i elektronicznych Shimano Di2, SRAM AXS).
+- Wymiana łańcucha, kasety, zębatki, korby.
+- Serwis i wymiana suportu, sterów, słupka podsiodłowego, sztycy teleskopowej (dropper post).
+- Regulacja amortyzatorów (sag, kompresja, odbicie) Fox, RockShox, Manitou, X-Fusion.
+- Mechaniczny serwis rowerów elektrycznych (zawieszenie, hamulce, koła, osprzęt napędu nieelektroniczny). Elektronika i silniki pozostają w gestii autoryzowanych serwisów producenta.
+- Budowa rowerów na miarę: dobór ramy, komponentów, montaż od zera, fitting.
+- Odbiór i odwóz roweru w obrębie Grodzisk/Milanówek/Pruszków.
+
+## Cennik (od)
+
+Wszystkie ceny są wyjściowe (od), ostateczna wycena jest podawana po oględzinach przed wykonaniem pracy. Stawki są jednakowe niezależnie od miejscowości klienta.
+
+- Przegląd podstawowy: 150 zł.
+- Przegląd kompleksowy: 280 zł.
+- Pakiet wiosenny PRO (przegląd kompleksowy + bleeding hamulców + centrowanie 2 kół): 450 zł.
+- Centrowanie pojedynczego koła: od 60 zł.
+- Zaplatanie koła od zera (sama robocizna, bez części): od 180 zł.
+- Bleeding hamulców hydraulicznych: od 100 zł za jeden obwód.
+- Bleeding hamulców hydraulicznych: od 180 zł za dwa obwody (przód + tył).
+- Pełna wymiana oleju w układzie hamulcowym (drain + bleed): od 130 zł za obwód.
+- Bleeding plus wymiana przewodu hamulcowego: od 160 zł za obwód.
+- Wymiana klocków hamulcowych: od 30 zł za obwód (plus cena klocków).
+- Wymiana łańcucha: od 40 zł (plus cena łańcucha).
+- Wymiana opony lub dętki: od 25 zł za koło.
+- Regulacja amortyzatora (sag + kompresja + odbicie): od 80 zł.
+- Odbiór i odwóz roweru z Grodziska, Milanówka lub Pruszkowa: od 50 zł.
+
+## Godziny i sposób umawiania
+
+Serwis pracuje wyłącznie po umówieniu. Sloty rezerwacyjne są dostępne codziennie od 16:00 do 19:00 (cztery sloty: 16:00, 17:00, 18:00, 19:00). Najszybszy sposób umawiania to formularz online pod adresem https://www.skocznarower.pl/umow: wybierasz usługę, dzień i godzinę, a Mateusz oddzwania w ten sam dzień żeby potwierdzić termin. Alternatywnie można zadzwonić bezpośrednio na +48 600 370 810 lub napisać na WhatsApp pod tym samym numerem (https://wa.me/48600370810). Wizyta jest potwierdzona dopiero po telefonie zwrotnym.
+
+Serwis nie przyjmuje rowerów "z marszu" bez umówienia, ponieważ Mateusz pracuje sam i wolny moment poświęca konkretnemu rowerowi, a nie żonglowaniu kilkoma w tym samym czasie.
+
+## Czym ten warsztat różni się od konkurencji
+
+Trzy konkretne różnice, które klienci wymieniają najczęściej:
+
+Po pierwsze, profesjonalny sprzęt. Większość warsztatów rowerowych w okolicy centruje koła "na oko", używając stałego punktu odniesienia na widelcu lub centrównicy bez miernika. Tutaj koło jest mierzone dial indicatorem z dokładnością do setnych milimetra, co przy kołach do dirt jumpa, BMX i MTB realnie wydłuża żywotność, bo mniejsze odchylenia rotacyjne to mniejsze obciążenie szprych.
+
+Po drugie, specjalizacja techniczna. Bleeding hamulców hydraulicznych jest wykonywany pełnym zestawem narzędzi producenta, z oryginalnym olejem mineralnym Shimano albo DOT 5.1 dla SRAM-a, na stojaku serwisowym ustawiającym klamkę i zacisk pod właściwym kątem, krok po kroku zgodnie z procedurą producenta, z testem ciśnieniowym po zakończeniu. Zestawy domowe za 200 zł najczęściej kończą się rozcieńczonym olejem, powietrzem w zacisku albo olejem na klockach.
+
+Po trzecie, znajomość praktyczna. Mateusz sam jeździ na dirt jumpie i BMX. Jeśli w skateparku zaczyna luźno chodzić korba albo na bunny hopie pęka piasta, klient trafia do kogoś, kto wie, co znaczy "ten sam objaw drugi raz w tym sezonie" i potrafi zdiagnozować problem szybciej niż mechanik bez doświadczenia w gravity.
+
+## Bleeding hamulców Shimano (sekcja techniczna)
+
+Bleeding to procedura odpowietrzania hamulca hydraulicznego: wymiana lub uzupełnienie oleju w przewodzie hamulcowym tak, aby w układzie nie pozostały pęcherzyki powietrza. Powietrze jest ściśliwe, olej praktycznie nie. Dopóki w hamulcu jest tylko olej, klamka pracuje twardo i precyzyjnie. Gdy w przewodzie zbierze się powietrze, klamka cofa się w kierunku kierownicy, a hamowanie staje się gąbczaste.
+
+Shimano używa oleju mineralnego, SRAM używa DOT 5.1. Dwa kompletnie różne płyny, których nie wolno mieszać. U Shimano bleeding wykonuje się od dołu (zacisk) do góry (klamka), olej jest wpuszczany strzykawką przez zacisk, a powietrze wychodzi przez klamkę przez dedykowany lejek.
+
+Objawy mówiące, że hamulec wymaga bleeding: klamka cofa się do kierownicy, gąbczasty chwyt, zmienny punkt zatrzymania klamki, brake fade przy długim zjeździe, lub po prostu upływ czasu (raz na rok lub dwa lata profilaktycznie). Wycieki przy klamce lub zacisku oznaczają, że sam bleeding nie wystarczy, potrzebna jest wymiana uszczelnień.
+
+Serwisuję pełen zakres modeli Shimano: Deore (M6100, M6120, M615, M610), SLX (M7100, M7120, M7000, M675), XT (M8100, M8120, M8000, M785, M775), XTR (M9100, M9120, M9000, M985), Saint (M820), Zee (M640), hamulce drogowe (R8070, RS505, RS785) oraz starsze modele MTB. Cena bleeding: od 100 zł za obwód, od 180 zł za oba obwody. Pełna wymiana oleju (drain + bleed) od 130 zł za obwód.
+
+## FAQ: typowe pytania użytkowników
+
+### Czy serwis przyjmuje bez umówienia?
+
+Nie. Wszystkie wizyty są wyłącznie po umówieniu online (https://www.skocznarower.pl/umow), telefonicznie (+48 600 370 810) lub przez WhatsApp. Powodem jest jednoosobowa praca: lepsza jakość przy jednym rowerze niż żonglowanie kilkoma jednocześnie.
+
+### Jak szybko jest termin?
+
+Standardowo termin jest dostępny w ciągu kilku dni roboczych, w niskim sezonie często na następny dzień. W szczycie sezonu (marzec-maj) potrafi być tydzień. System rezerwacji online pokazuje rzeczywiście dostępne sloty.
+
+### Ile czasu zajmuje typowy serwis?
+
+Większość prac wykonywana jest w ten sam dzień, kiedy klient zostawia rower. Bleeding jednego obwodu: 30-45 minut. Bleeding obu obwodów: godzina do półtorej. Centrowanie koła: 20-40 minut. Przegląd podstawowy: 1-2 godziny. Przegląd kompleksowy lub pakiet wiosenny PRO: pół dnia do całego dnia (rower zostaje w warsztacie).
+
+### Czy można zostawić rower na cały dzień?
+
+Tak. Większość klientów zostawia rower rano lub po pracy i odbiera następnego dnia lub na koniec dnia. Przy większych pracach (zaplatanie kół, budowa od zera) rower zostaje na kilka dni.
+
+### Czy serwis robi rowery elektryczne (e-bike)?
+
+Tak, ale tylko mechaniczną część rowerów elektrycznych: hamulce, zawieszenie, koła, osprzęt napędu (poza silnikiem i baterią). Elektronikę, silnik i system zarządzania (Bosch, Shimano EP8, Brose, Yamaha) zostawiamy autoryzowanym serwisom producenta. Jeśli e-bike ma problem mechaniczny, można go przyprowadzić.
+
+### Czy serwis robi rowery markowe (Trek, Specialized, Canyon, YT)?
+
+Tak, każdą markę rowerów. Praca dotyczy konkretnych podzespołów, nie marki ramy. Hamulce Shimano, SRAM, TRP, Hope czy Magura są bleedowane procedurą producenta podzespołu, niezależnie od tego, na jakim rowerze są zamontowane.
+
+### Czy serwis działa na gwarancji rowerów?
+
+Mateusz nie jest autoryzowanym serwisem gwarancyjnym żadnej marki, więc prace gwarancyjne (np. uszkodzony silnik e-bike, pęknięta rama w gwarancji) trzeba zlecić do oficjalnego dealera. Wszystkie prace pozagwarancyjne i serwisy standardowe (przeglądy, hamulce, koła, regulacje) wykonujemy normalnie.
+
+### Czy serwis odbiera rower z domu?
+
+Tak, w cenie od 50 zł, na terenie Grodziska Mazowieckiego, Milanówka i Pruszkowa. Przy rezerwacji wybiera się usługę "Odbiór i odwóz roweru" i podaje w notatce adres oraz orientacyjną godzinę. Po wykonaniu serwisu rower jest odwożony z powrotem.
+
+### Czy serwis przyjmuje karty płatnicze?
+
+Tak, akceptujemy płatność kartą oraz BLIK-iem.
+
+### Jak umówić wizytę?
+
+Najszybciej online: https://www.skocznarower.pl/umow. Alternatywnie telefon +48 600 370 810 lub WhatsApp https://wa.me/48600370810.
+
+## Kontakt
+
+- Adres: Jesionowa 18, 05-825 Grodzisk Mazowiecki, Polska.
+- Telefon: +48 600 370 810.
+- WhatsApp: https://wa.me/48600370810.
+- Strona umawiania: https://www.skocznarower.pl/umow.
+- Strona główna: https://www.skocznarower.pl/.
+- Instagram: https://www.instagram.com/xpyszczek_.
+- TikTok: https://www.tiktok.com/@xpyszczek.dirt.
+
+Ostatnia aktualizacja dokumentu: 2026-05-26.
