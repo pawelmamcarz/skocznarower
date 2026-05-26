@@ -19,10 +19,10 @@ Marketing site + bookings app for **skocznarower.pl**, a bicycle service shop in
 - Routed to both `skocznarower.pl/*` and `www.skocznarower.pl/*`. Apex requests get a 301 to `www`. Removing either route in `wrangler.jsonc` breaks the redirect.
 - `wrangler.jsonc` sets `assets.run_worker_first: true`, so the Worker sees every request first. `/api/*` and `/admin*` are handled in the Worker; everything else falls through to `env.ASSETS.fetch(request)`, which serves the `*.html` files by extensionless path (e.g. `/umow` → `umow.html`).
 - **Sources of truth that mirror the UI** live as constants at the top of `src/index.js`:
-  - `SERVICES` — service list and price labels (must match the `<select>` and pricing copy in `umow.html` / `index.html`).
+  - `SERVICES` — service list and price labels. Must match the `<select>` in `umow.html`, the visible cennik in `index.html` (`.price-row` sekcja), **i** dodatkowe powierzchnie marketingowe: `serwis-rowerow-pruszkow.html` (Service+OfferCatalog JSON-LD + visible cennik list + FAQPage answer + visible FAQ), `serwis-rowerow-milanowek.html` (te same 4), `bleeding-hamulcow-shimano.html` (Offer + FAQPage), `llms-full.txt` (sekcje `## Pełna lista usług` i `## Cennik`). SMS templates w `src/index.js` (seasonal blast ok. linii 1058) też mogą cytować ceny/pakiety.
   - `BIKE_TYPES` — bike-type whitelist for the form.
-  - `SCHEDULE` — opening-hours map keyed by day-of-week (0=Sun…6=Sat). Changes here change the available slots returned by `/api/availability`.
-  Touching any of these means re-checking the corresponding HTML.
+  - `SCHEDULE` — opening-hours map keyed by day-of-week (0=Sun…6=Sat). Changes here change the available slots returned by `/api/availability`. Synchronizuj też `openingHoursSpecification` w LocalBusiness JSON-LD na `index.html` (Google Knowledge Panel) oraz sekcję godzin w `llms-full.txt`.
+  Touching any of these means re-checking wszystkie powierzchnie powyżej. Nie dodawaj produktów (np. pakietów) do landingów/llms-full bez wpisu w `SERVICES`, bo klient nie zarezerwuje tego w formularzu.
 - Admin auth: HMAC-signed session cookie (`SESSION_SECRET`, falling back to `ADMIN_PASSWORD`). The `/admin` page lists bookings, lets you set final price, mark done/cancel, and block slots/days in `blocked_slots`. A second tab **Współpraca** (anchor `#outreach`) is an outreach tracker over `outreach_contacts`: add/send/respond/close/reopen, status filter by channel (A brand / B distributor / C shop). Routes: `POST /admin/outreach` (action-based, redirects to `/admin#outreach`).
 - `scheduled()` runs on the `0 8 * * *` cron (08:00 UTC ≈ 09:00–10:00 Warsaw depending on DST):
   - SMS reminder 24h before each `confirmed` booking (sets `reminder_sent_at`).
