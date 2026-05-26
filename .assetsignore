@@ -10,6 +10,7 @@ src/
 migrations/
 CLAUDE.md
 OUTREACH_PLAN.md
+partners/
 .assetsignore
 .gitignore
 .dev.vars

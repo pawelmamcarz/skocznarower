@@ -81,9 +81,8 @@
       "name": "Cennik podstawowy",
       "itemListElement": [
         { "@type": "Offer", "name": "Przegląd podstawowy", "price": "150", "priceCurrency": "PLN", "priceSpecification": { "@type": "PriceSpecification", "minPrice": "150", "priceCurrency": "PLN" } },
-        { "@type": "Offer", "name": "Przegląd kompleksowy", "price": "280", "priceCurrency": "PLN", "priceSpecification": { "@type": "PriceSpecification", "minPrice": "280", "priceCurrency": "PLN" } },
-        { "@type": "Offer", "name": "Pakiet wiosenny PRO", "price": "450", "priceCurrency": "PLN" },
-        { "@type": "Offer", "name": "Centrowanie koła", "price": "60", "priceCurrency": "PLN", "priceSpecification": { "@type": "PriceSpecification", "minPrice": "60", "priceCurrency": "PLN" } },
+        { "@type": "Offer", "name": "Przegląd kompleksowy", "price": "340", "priceCurrency": "PLN", "priceSpecification": { "@type": "PriceSpecification", "minPrice": "340", "priceCurrency": "PLN" } },
+        { "@type": "Offer", "name": "Centrowanie koła", "price": "120", "priceCurrency": "PLN", "priceSpecification": { "@type": "PriceSpecification", "minPrice": "120", "priceCurrency": "PLN" } },
         { "@type": "Offer", "name": "Bleeding hamulców hydraulicznych za obwód", "price": "100", "priceCurrency": "PLN", "priceSpecification": { "@type": "PriceSpecification", "minPrice": "100", "priceCurrency": "PLN" } },
         { "@type": "Offer", "name": "Odbiór i odwóz roweru z Pruszkowa", "price": "50", "priceCurrency": "PLN", "priceSpecification": { "@type": "PriceSpecification", "minPrice": "50", "priceCurrency": "PLN" } }
       ]
@@ -133,7 +132,7 @@
         "name": "Ile kosztuje przegląd roweru dla klienta z Pruszkowa?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Przegląd podstawowy zaczyna się od 150 zł, przegląd kompleksowy od 280 zł, pakiet wiosenny PRO (kompleksowy + bleeding hamulców + centrowanie 2 kół) kosztuje 450 zł. Ceny są jednakowe niezależnie od miejscowości klienta."
+          "text": "Przegląd podstawowy zaczyna się od 150 zł, przegląd kompleksowy od 340 zł. Centrowanie koła od 120 zł, bleeding hamulców hydraulicznych od 100 zł za obwód, zaplatanie koła od 180 zł robocizny. Ceny są jednakowe niezależnie od miejscowości klienta."
         }
       },
       {
@@ -215,6 +214,9 @@
       font-size: 12px; letter-spacing: .25em; text-transform: uppercase;
       color: var(--accent); margin-bottom: 18px;
     }
+    .breadcrumb { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+    .breadcrumb a { color: var(--accent); text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
     h1.display {
       font-family: var(--fd);
       font-size: clamp(44px, 7vw, 84px);
@@ -306,6 +308,7 @@
 <div class="container">
 
 <header class="hero">
+  <nav class="breadcrumb" aria-label="breadcrumb"><a href="/">Strona główna</a> › Serwis rowerów Pruszków</nav>
   <p class="eyebrow">Pruszków</p>
   <h1 class="display">Serwis rowerów<br><em>Pruszków</em></h1>
   <p class="lead">Z Pruszkowa do nas jest 15 minut samochodem. Naprawiam dirt jumpy, BMX-y, MTB, rowery miejskie i część mechaniczną e-bike. Profesjonalna centrównica z miernikiem, bleeding hamulców hydraulicznych, budowa rowerów na miarę. Klienci z Pruszkowa to spora część moich rezerwacji, bo w samym mieście brakuje serwisu z taką specjalizacją.</p>
@@ -353,9 +356,8 @@
   <p>Ceny są takie same niezależnie od tego, skąd jesteś. Kilka popularnych pozycji:</p>
   <ul>
     <li>Przegląd podstawowy: <strong>od 150 zł</strong></li>
-    <li>Przegląd kompleksowy: <strong>od 280 zł</strong></li>
-    <li>Pakiet wiosenny PRO (przegląd + bleeding + centrowanie 2 kół): <strong>450 zł</strong></li>
-    <li>Centrowanie koła: <strong>od 60 zł</strong></li>
+    <li>Przegląd kompleksowy: <strong>od 340 zł</strong></li>
+    <li>Centrowanie koła: <strong>od 120 zł</strong></li>
     <li>Zaplatanie koła (robocizna): <strong>od 180 zł</strong></li>
     <li>Bleeding hamulców hydraulicznych: <strong>od 100 zł za obwód</strong></li>
     <li>Odbiór i odwóz roweru z Pruszkowa: <strong>od 50 zł</strong></li>
@@ -374,7 +376,7 @@
   <h3>Ile się dojeżdża z Pruszkowa?</h3>
   <p>Około 15 minut samochodem trasą DK719. W godzinach szczytu może być 20 minut, ale w weekend i wieczorem to spokojnie 12-15 minut.</p>
 
-  <h3>Mam rower w bagażniku, można zostawić od ręki?</h3>
+  <h3>Czy mogę przywieźć rower bez umawiania, od ręki?</h3>
   <p>Nie. Pracuję sam i tylko po umówieniu. Najpierw <a href="/umow">umów termin online</a>, oddzwonię, ustalimy dzień i godzinę. Dzięki temu mam czas zająć się Twoim rowerem rzetelnie, a nie między kolejnymi wizytami.</p>
 
   <h3>Czy odbierasz rower z Pruszkowa?</h3>
@@ -384,7 +386,7 @@
   <p>Robię część mechaniczną dowolnego e-bike: zawieszenie, hamulce, koła, osprzęt. Elektronikę i silnik zostawiam autoryzowanym serwisom. Jeśli e-bike ma problem mechaniczny, jestem w stanie pomóc.</p>
 
   <h3>Ile kosztuje przegląd roweru dla klienta z Pruszkowa?</h3>
-  <p>Przegląd podstawowy zaczyna się od 150 zł, kompleksowy od 280 zł, a pakiet wiosenny PRO (kompleksowy + bleeding + centrowanie 2 kół) kosztuje 450 zł. Ceny są jednakowe niezależnie od miejscowości klienta. Pełny <a href="/#cennik">cennik</a> jest na stronie głównej.</p>
+  <p>Przegląd podstawowy zaczyna się od 150 zł, kompleksowy od 340 zł. Ceny są jednakowe niezależnie od miejscowości klienta. Pełny <a href="/#cennik">cennik</a> jest na stronie głównej.</p>
 
   <h3>Robisz rowery markowe (Trek, Specialized, Canyon, YT)?</h3>
   <p>Tak, serwisujemy każdą markę rowerów. Praca dotyczy konkretnych podzespołów, nie marki ramy. Hamulce Shimano, SRAM, TRP, Hope, Magura są bleedowane procedurą producenta podzespołu, niezależnie od marki ramy. Nie jesteśmy autoryzowanym serwisem gwarancyjnym, więc prace gwarancyjne zlecaj do oficjalnego dealera, prace pozagwarancyjne robimy bez problemu.</p>

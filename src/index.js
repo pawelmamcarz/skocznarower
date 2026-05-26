@@ -1062,8 +1062,6 @@ Wiosna pełną parą. To dobry moment, żeby rower wrócił do formy: przegląd,
 
 Wybierasz termin tutaj: https://www.skocznarower.pl/umow
 
-Pakiet wiosenny PRO (przegląd kompleksowy + bleeding 1 obwodu + centrowanie 2 kół) jest dostępny taniej niż usługi osobno.
-
 Do zobaczenia w warsztacie,
 Mateusz / skocznarower.pl
 Jesionowa 18, Grodzisk Mazowiecki

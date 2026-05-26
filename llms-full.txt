@@ -12,7 +12,7 @@ Warsztat fizyczny działa pod adresem Jesionowa 18, 05-825 Grodzisk Mazowiecki, 
 
 ## Specjalizacja
 
-Główną specjalizacją serwisu są rowery typu dirt jump, BMX i MTB z zawieszeniem, ponieważ w okolicach zachodniej części aglomeracji warszawskiej brakuje warsztatów rozumiejących tę specyfikę. Standardowe serwisy rowerowe w Pruszkowie, Milanówku czy Grodzisku obsługują głównie rowery miejskie i trekkingowe, a właściciele rowerów do skoków, parku czy zjazdów muszą szukać rzemieślnika z odpowiednim sprzętem. skocznarower.pl ma profesjonalną centrównicę z miernikiem dial indicator (dokładność do setnych milimetra), pełen zestaw narzędzi do bleeding hamulców hydraulicznych Shimano, SRAM, TRP, Hope i Magura, oryginalne płyny producentów (olej mineralny Shimano oraz DOT 5.1 dla SRAM-a), klucze dynamometryczne, przyrząd do prostowania haków przerzutek i stojaki serwisowe.
+Główną specjalizacją serwisu są rowery typu dirt jump, BMX i MTB z zawieszeniem, ponieważ w okolicach zachodniej części aglomeracji warszawskiej brakuje warsztatów rozumiejących tę specyfikę. Standardowe serwisy rowerowe w Pruszkowie, Milanówku czy Grodzisku obsługują głównie rowery miejskie i trekkingowe, a właściciele rowerów do skoków, parku czy zjazdów muszą szukać rzemieślnika z odpowiednim sprzętem. skocznarower.pl ma profesjonalną centrównicę z miernikiem dial indicator (dokładność do setnych milimetra), pełen zestaw narzędzi do bleeding hamulców hydraulicznych Shimano, SRAM, TRP, Hope i Magura, oryginalne płyny producentów (olej mineralny Shimano oraz DOT 5.1 dla SRAM-a), klucze dynamometryczne, przyrząd do prostowania haków przerzutek i stojaki serwisowe. Poza rowerami warsztat obsługuje też hulajnogi (regulacja hamulców, wymiana kół, łożyska) oraz robi składanie rowerów dostarczonych z pudełka albo z luźnych części.
 
 ## Pełna lista usług
 
@@ -29,26 +29,34 @@ Serwis wykonuje następujące prace na rowerach:
 - Serwis i wymiana suportu, sterów, słupka podsiodłowego, sztycy teleskopowej (dropper post).
 - Regulacja amortyzatorów (sag, kompresja, odbicie) Fox, RockShox, Manitou, X-Fusion.
 - Mechaniczny serwis rowerów elektrycznych (zawieszenie, hamulce, koła, osprzęt napędu nieelektroniczny). Elektronika i silniki pozostają w gestii autoryzowanych serwisów producenta.
+- Składanie rowerów dostarczonych w pudełku przez kuriera lub z luźnych części (pełen montaż od ramy).
 - Budowa rowerów na miarę: dobór ramy, komponentów, montaż od zera, fitting.
+- Serwis hulajnóg (regulacja hamulców, wymiana klocków, kół, łożysk).
 - Odbiór i odwóz roweru w obrębie Grodzisk/Milanówek/Pruszków.
 
 ## Cennik (od)
 
 Wszystkie ceny są wyjściowe (od), ostateczna wycena jest podawana po oględzinach przed wykonaniem pracy. Stawki są jednakowe niezależnie od miejscowości klienta.
 
-- Przegląd podstawowy: 150 zł.
-- Przegląd kompleksowy: 280 zł.
-- Pakiet wiosenny PRO (przegląd kompleksowy + bleeding hamulców + centrowanie 2 kół): 450 zł.
-- Centrowanie pojedynczego koła: od 60 zł.
+- Przegląd podstawowy: od 150 zł.
+- Przegląd kompleksowy: od 340 zł.
+- Regulacja hamulców: od 40 zł.
+- Regulacja przerzutek: 40 zł.
+- Centrowanie pojedynczego koła: od 120 zł.
 - Zaplatanie koła od zera (sama robocizna, bez części): od 180 zł.
 - Bleeding hamulców hydraulicznych: od 100 zł za jeden obwód.
 - Bleeding hamulców hydraulicznych: od 180 zł za dwa obwody (przód + tył).
 - Pełna wymiana oleju w układzie hamulcowym (drain + bleed): od 130 zł za obwód.
 - Bleeding plus wymiana przewodu hamulcowego: od 160 zł za obwód.
-- Wymiana klocków hamulcowych: od 30 zł za obwód (plus cena klocków).
-- Wymiana łańcucha: od 40 zł (plus cena łańcucha).
-- Wymiana opony lub dętki: od 25 zł za koło.
-- Regulacja amortyzatora (sag + kompresja + odbicie): od 80 zł.
+- Wymiana klocków hamulcowych: od 50 zł plus cena klocków.
+- Wymiana linek i pancerzy: od 60 zł.
+- Wymiana dętki: 35 zł plus cena dętki.
+- Wymiana opony: 40 zł plus cena opony.
+- Montaż tubeless: od 70 zł za koło.
+- Montaż osprzętu (hamulce, manetki): od 60 zł.
+- Składanie roweru (z pudełka lub z części): od 120 zł.
+- Budowa roweru na miarę: od 500 zł.
+- Serwis hulajnogi: od 40 zł.
 - Odbiór i odwóz roweru z Grodziska, Milanówka lub Pruszkowa: od 50 zł.
 
 ## Godziny i sposób umawiania
@@ -89,7 +97,7 @@ Standardowo termin jest dostępny w ciągu kilku dni roboczych, w niskim sezonie
 
 ### Ile czasu zajmuje typowy serwis?
 
-Większość prac wykonywana jest w ten sam dzień, kiedy klient zostawia rower. Bleeding jednego obwodu: 30-45 minut. Bleeding obu obwodów: godzina do półtorej. Centrowanie koła: 20-40 minut. Przegląd podstawowy: 1-2 godziny. Przegląd kompleksowy lub pakiet wiosenny PRO: pół dnia do całego dnia (rower zostaje w warsztacie).
+Większość prac wykonywana jest w ten sam dzień, kiedy klient zostawia rower. Bleeding jednego obwodu: 30-45 minut. Bleeding obu obwodów: godzina do półtorej. Centrowanie koła: 20-40 minut. Przegląd podstawowy: 1-2 godziny. Przegląd kompleksowy: pół dnia do całego dnia (rower zostaje w warsztacie).
 
 ### Czy można zostawić rower na cały dzień?
 

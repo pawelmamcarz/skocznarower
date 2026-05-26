@@ -81,9 +81,8 @@
       "name": "Cennik podstawowy",
       "itemListElement": [
         { "@type": "Offer", "name": "Przegląd podstawowy", "price": "150", "priceCurrency": "PLN", "priceSpecification": { "@type": "PriceSpecification", "minPrice": "150", "priceCurrency": "PLN" } },
-        { "@type": "Offer", "name": "Przegląd kompleksowy", "price": "280", "priceCurrency": "PLN", "priceSpecification": { "@type": "PriceSpecification", "minPrice": "280", "priceCurrency": "PLN" } },
-        { "@type": "Offer", "name": "Pakiet wiosenny PRO", "price": "450", "priceCurrency": "PLN" },
-        { "@type": "Offer", "name": "Centrowanie koła", "price": "60", "priceCurrency": "PLN", "priceSpecification": { "@type": "PriceSpecification", "minPrice": "60", "priceCurrency": "PLN" } },
+        { "@type": "Offer", "name": "Przegląd kompleksowy", "price": "340", "priceCurrency": "PLN", "priceSpecification": { "@type": "PriceSpecification", "minPrice": "340", "priceCurrency": "PLN" } },
+        { "@type": "Offer", "name": "Centrowanie koła", "price": "120", "priceCurrency": "PLN", "priceSpecification": { "@type": "PriceSpecification", "minPrice": "120", "priceCurrency": "PLN" } },
         { "@type": "Offer", "name": "Bleeding hamulców hydraulicznych za obwód", "price": "100", "priceCurrency": "PLN", "priceSpecification": { "@type": "PriceSpecification", "minPrice": "100", "priceCurrency": "PLN" } },
         { "@type": "Offer", "name": "Odbiór i odwóz roweru z Milanówka", "price": "50", "priceCurrency": "PLN", "priceSpecification": { "@type": "PriceSpecification", "minPrice": "50", "priceCurrency": "PLN" } }
       ]
@@ -133,7 +132,7 @@
         "name": "Ile kosztuje przegląd roweru dla klienta z Milanówka?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Przegląd podstawowy zaczyna się od 150 zł, przegląd kompleksowy od 280 zł, pakiet wiosenny PRO (kompleksowy + bleeding hamulców + centrowanie 2 kół) kosztuje 450 zł. Ceny są jednakowe niezależnie od tego, skąd jedziesz."
+          "text": "Przegląd podstawowy zaczyna się od 150 zł, przegląd kompleksowy od 340 zł. Centrowanie koła od 120 zł, bleeding hamulców hydraulicznych od 100 zł za obwód, zaplatanie koła od 180 zł robocizny. Ceny są jednakowe niezależnie od tego, skąd jedziesz."
         }
       },
       {
@@ -209,6 +208,9 @@
     .container { max-width: 880px; margin: 0 auto; padding: 0 32px; }
     .hero { padding: 64px 0 48px; }
     .eyebrow { font-size: 12px; letter-spacing: .25em; text-transform: uppercase; color: var(--accent); margin-bottom: 18px; }
+    .breadcrumb { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+    .breadcrumb a { color: var(--accent); text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
     h1.display { font-family: var(--fd); font-size: clamp(44px, 7vw, 84px); line-height: .94; letter-spacing: .01em; margin-bottom: 24px; }
     h1.display em { color: var(--accent); font-style: normal; }
     .lead { font-size: 18px; color: #ccc; max-width: 680px; line-height: 1.6; }
@@ -270,6 +272,7 @@
 <div class="container">
 
 <header class="hero">
+  <nav class="breadcrumb" aria-label="breadcrumb"><a href="/">Strona główna</a> › Serwis rowerów Milanówek</nav>
   <p class="eyebrow">Milanówek</p>
   <h1 class="display">Serwis rowerów<br><em>Milanówek</em></h1>
   <p class="lead">Serwis stoi minutę od granicy Milanówka. Dosłownie minutę: ulica Jesionowa 18 jest tuż za miejską granicą Grodziska, w bezpośrednim sąsiedztwie Milanówka. Naprawiam rowery dirt jump, BMX, MTB, e-bike (część mechaniczna), rowery miejskie i hulajnogi. Profesjonalna centrównica z miernikiem, bleeding hamulców, budowa rowerów na miarę.</p>
@@ -316,9 +319,8 @@
   <p>Ceny są jednakowe niezależnie od tego, skąd jedziesz:</p>
   <ul>
     <li>Przegląd podstawowy: <strong>od 150 zł</strong></li>
-    <li>Przegląd kompleksowy: <strong>od 280 zł</strong></li>
-    <li>Pakiet wiosenny PRO: <strong>450 zł</strong> (przegląd + bleeding + centrowanie 2 kół)</li>
-    <li>Centrowanie koła: <strong>od 60 zł</strong></li>
+    <li>Przegląd kompleksowy: <strong>od 340 zł</strong></li>
+    <li>Centrowanie koła: <strong>od 120 zł</strong></li>
     <li>Zaplatanie koła: <strong>od 180 zł</strong> robocizny</li>
     <li>Bleeding hamulców: <strong>od 100 zł</strong> za obwód</li>
     <li>Odbiór i odwóz roweru z Milanówka: <strong>od 50 zł</strong></li>
@@ -347,7 +349,7 @@
   <p>Najszybciej przez <a href="/umow">formularz online</a>. Wybierasz usługę, dzień i godzinę, oddzwonię żeby potwierdzić. Można też zadzwonić (<a href="tel:600370810">600 370 810</a>) albo napisać na <a href="https://wa.me/48600370810" target="_blank" rel="noopener">WhatsAppie</a>.</p>
 
   <h3>Ile kosztuje przegląd roweru dla klienta z Milanówka?</h3>
-  <p>Przegląd podstawowy zaczyna się od 150 zł, kompleksowy od 280 zł, a pakiet wiosenny PRO (kompleksowy + bleeding + centrowanie 2 kół) kosztuje 450 zł. Ceny są jednakowe niezależnie od tego, skąd jedziesz. Pełny <a href="/#cennik">cennik</a> jest na stronie głównej.</p>
+  <p>Przegląd podstawowy zaczyna się od 150 zł, kompleksowy od 340 zł. Ceny są jednakowe niezależnie od tego, skąd jedziesz. Pełny <a href="/#cennik">cennik</a> jest na stronie głównej.</p>
 
   <h3>Robisz rowery markowe (Trek, Specialized, Canyon, YT)?</h3>
   <p>Tak, serwisujemy każdą markę rowerów. Praca dotyczy konkretnych podzespołów, nie marki ramy. Hamulce Shimano, SRAM, TRP, Hope, Magura są bleedowane procedurą producenta podzespołu, niezależnie od tego, na jakiej ramie są zamontowane. Nie jesteśmy autoryzowanym serwisem gwarancyjnym, więc prace gwarancyjne zlecaj do oficjalnego dealera.</p>
