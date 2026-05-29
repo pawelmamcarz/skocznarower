@@ -2046,23 +2046,9 @@
       const r = await fetch('/api/next-slot', { headers: { 'Accept': 'application/json' } });
       if (!r.ok) return;
       const d = await r.json();
-      if (!d || !d.date || !d.time) return;
-
-      const tz = 'Europe/Warsaw';
-      const todayStr = new Date().toLocaleDateString('sv-SE', { timeZone: tz });
-      const t = new Date(todayStr + 'T12:00:00Z');
-      t.setUTCDate(t.getUTCDate() + 1);
-      const tomorrowStr = t.toLocaleDateString('sv-SE', { timeZone: tz });
-
-      let label;
-      if (d.date === todayStr) label = 'dziś o ' + d.time;
-      else if (d.date === tomorrowStr) label = 'jutro o ' + d.time;
-      else {
-        const human = new Date(d.date + 'T12:00:00Z')
-          .toLocaleDateString('pl-PL', { weekday: 'short', day: 'numeric', month: 'long' });
-        label = human + ', ' + d.time;
-      }
-      document.getElementById('next-slot-when').textContent = label;
+      // Etykieta liczona po stronie serwera (jedno źródło logiki dat warszawskich).
+      if (!d || !d.label) return;
+      document.getElementById('next-slot-when').textContent = d.label;
       el.hidden = false;
     } catch (_) {}
   })();

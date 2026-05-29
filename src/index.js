@@ -162,71 +162,64 @@ async function apiSeasonalReminder(request, env) {
   return json({ ok: true, message: 'Zapisany, przypomnę mailem przed sezonem.' });
 }
 
-async function apiAvailability(env, dateStr) {
-  if (!isValidDate(dateStr)) return json({ error: 'Bad date' }, 400);
-
-  const today = todayInWarsaw();
-  if (dateStr < today) return json({ slots: [] });
-
-  const dow = dayOfWeek(dateStr);
-  const allSlots = SCHEDULE[dow] || [];
-  if (allSlots.length === 0) return json({ slots: [] });
-
-  const [bookedRes, blockedRes] = await Promise.all([
-    env.DB.prepare(
-      "SELECT time_slot FROM bookings WHERE date = ?1 AND status != 'cancelled'"
-    ).bind(dateStr).all(),
-    env.DB.prepare(
-      'SELECT time_slot FROM blocked_slots WHERE date = ?1'
-    ).bind(dateStr).all(),
-  ]);
-
-  const taken = new Set((bookedRes.results || []).map(r => r.time_slot));
-  const blocked = new Set((blockedRes.results || []).map(r => r.time_slot));
-  if (blocked.has('all')) return json({ slots: [] });
-
-  const slots = allSlots.map(s => ({
-    time: s,
-    available: !taken.has(s) && !blocked.has(s),
-  }));
-  return json({ slots });
-}
-
-// Najbliższy wolny termin w najbliższych ~3 tygodniach, dla nudge'a na stronie głównej.
-async function apiNextSlot(env) {
-  const today = todayInWarsaw();
-  const HORIZON = 21;
-  const horizonEnd = addDaysWarsaw(HORIZON);
-
+// Wczytuje zajęte i zablokowane sloty z zakresu dat do Setów (klucze "YYYY-MM-DD HH:MM").
+async function loadSlotMaps(env, fromDate, toDate) {
   const [bookedRes, blockedRes] = await Promise.all([
     env.DB.prepare(
       "SELECT date, time_slot FROM bookings WHERE date >= ?1 AND date <= ?2 AND status != 'cancelled'"
-    ).bind(today, horizonEnd).all(),
+    ).bind(fromDate, toDate).all(),
     env.DB.prepare(
       'SELECT date, time_slot FROM blocked_slots WHERE date >= ?1 AND date <= ?2'
-    ).bind(today, horizonEnd).all(),
+    ).bind(fromDate, toDate).all(),
   ]);
-
   const taken = new Set((bookedRes.results || []).map(r => `${r.date} ${r.time_slot}`));
   const blocked = new Set((blockedRes.results || []).map(r => `${r.date} ${r.time_slot}`));
   const blockedDays = new Set((blockedRes.results || []).filter(r => r.time_slot === 'all').map(r => r.date));
+  return { taken, blocked, blockedDays };
+}
 
-  // Bieżąca godzina w Warszawie, żeby nie proponować slotu który już dziś minął.
-  const nowHour = Number(new Date().toLocaleString('en-GB', { timeZone: 'Europe/Warsaw', hour: '2-digit', hour12: false }));
+// Jedno źródło prawdy o dostępności: wolne godziny SCHEDULE dla danej daty wg Setów z loadSlotMaps.
+function freeSlotsForDate(date, taken, blocked, blockedDays) {
+  if (blockedDays.has(date)) return [];
+  return (SCHEDULE[dayOfWeek(date)] || [])
+    .filter(t => !taken.has(`${date} ${t}`) && !blocked.has(`${date} ${t}`));
+}
 
-  for (let i = 0; i < HORIZON; i++) {
+async function apiAvailability(env, dateStr) {
+  if (!isValidDate(dateStr)) return json({ error: 'Bad date' }, 400);
+  if (dateStr < todayInWarsaw()) return json({ slots: [] });
+
+  const allSlots = SCHEDULE[dayOfWeek(dateStr)] || [];
+  if (allSlots.length === 0) return json({ slots: [] });
+
+  const maps = await loadSlotMaps(env, dateStr, dateStr);
+  if (maps.blockedDays.has(dateStr)) return json({ slots: [] });
+
+  const free = new Set(freeSlotsForDate(dateStr, maps.taken, maps.blocked, maps.blockedDays));
+  const slots = allSlots.map(time => ({ time, available: free.has(time) }));
+  return json({ slots });
+}
+
+// Najbliższy wolny termin dla nudge'a na stronie głównej.
+// Najwcześniejszy bookowalny dzień to jutro, spójnie z min daty w formularzu /umow.
+async function apiNextSlot(env) {
+  const HORIZON = 21;
+  const start = addDaysWarsaw(1);
+  const end = addDaysWarsaw(HORIZON);
+  const maps = await loadSlotMaps(env, start, end);
+
+  for (let i = 1; i <= HORIZON; i++) {
     const date = addDaysWarsaw(i);
-    if (blockedDays.has(date)) continue;
-    const slots = SCHEDULE[dayOfWeek(date)] || [];
-    for (const s of slots) {
-      if (i === 0 && Number(s.slice(0, 2)) <= nowHour) continue;
-      const key = `${date} ${s}`;
-      if (!taken.has(key) && !blocked.has(key)) {
-        return json({ date, time: s });
-      }
+    const free = freeSlotsForDate(date, maps.taken, maps.blocked, maps.blockedDays);
+    if (free.length) {
+      const time = free[0];
+      const label = date === start
+        ? `jutro o ${time}`
+        : `${new Date(date + 'T12:00:00Z').toLocaleDateString('pl-PL', { weekday: 'short', day: 'numeric', month: 'long', timeZone: 'UTC' })}, ${time}`;
+      return json({ date, time, label });
     }
   }
-  return json({ date: null, time: null });
+  return json({ date: null, time: null, label: null });
 }
 
 async function apiCreateBooking(request, env, ctx) {
@@ -272,8 +265,9 @@ async function apiCreateBooking(request, env, ctx) {
       body.notes?.trim() || null,
     ).run();
   } catch (e) {
-    // Unikalny indeks idx_bookings_active_slot łapie wyścig dwóch równoległych rezerwacji
-    if (/UNIQUE|constraint/i.test(String(e?.message || e))) {
+    // Unikalny indeks idx_bookings_active_slot łapie wyścig dwóch równoległych rezerwacji.
+    // Dopasowanie zawężone do "UNIQUE constraint", żeby nie maskować NOT NULL/CHECK jako 409.
+    if (/UNIQUE constraint/i.test(String(e?.message || e))) {
       return json({ error: 'Slot zajęty, wybierz inny' }, 409);
     }
     throw e;
@@ -514,10 +508,18 @@ async function adminUpdateBooking(request, env) {
   const action = String(form.get('action') || '');
   if (!id) return new Response('Bad', { status: 400 });
 
-  if (action === 'confirm') {
-    await env.DB.prepare("UPDATE bookings SET status='confirmed' WHERE id=?1").bind(id).run();
-  } else if (action === 'done') {
-    await env.DB.prepare("UPDATE bookings SET status='done' WHERE id=?1").bind(id).run();
+  if (action === 'confirm' || action === 'done') {
+    // Oba statusy są aktywne (!= cancelled), więc przywrócenie anulowanej rezerwacji,
+    // której slot zajęła inna, narusza idx_bookings_active_slot. Mapujemy to na czytelny 409.
+    const status = action === 'confirm' ? 'confirmed' : 'done';
+    try {
+      await env.DB.prepare('UPDATE bookings SET status=?1 WHERE id=?2').bind(status, id).run();
+    } catch (e) {
+      if (/UNIQUE constraint/i.test(String(e?.message || e))) {
+        return new Response('Slot zajęty przez inną rezerwację', { status: 409 });
+      }
+      throw e;
+    }
   } else if (action === 'cancel') {
     await env.DB.prepare("UPDATE bookings SET status='cancelled' WHERE id=?1").bind(id).run();
   } else if (action === 'delete') {
@@ -666,7 +668,7 @@ function renderDashboard({ bookings, blocked, filter, today, reviewsProfile, rev
           <input type="hidden" name="id" value="${escapeHtml(b.id)}">
           <input type="hidden" name="back" value="${backEsc}">
           ${b.status === 'pending' ? '<button name="action" value="confirm" class="btn-ok">Potwierdź</button>' : ''}
-          ${b.status !== 'done' ? '<button name="action" value="done" class="btn-ok">Zrobione</button>' : ''}
+          ${b.status !== 'done' && b.status !== 'cancelled' ? '<button name="action" value="done" class="btn-ok">Zrobione</button>' : ''}
           ${b.status !== 'cancelled' ? '<button name="action" value="cancel" class="btn-warn">Anuluj</button>' : ''}
           <button name="action" value="delete" class="btn-del" onclick="return confirm(\'Usunąć rezerwację?\')">Usuń</button>
         </form>
