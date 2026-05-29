@@ -367,6 +367,37 @@
     .hero-spec strong { color: var(--white); }
     .hero-divider { width: 1px; height: 18px; background: rgba(255,255,255,.2); }
 
+    .next-slot {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin-top: 22px;
+      padding: 9px 16px;
+      border-radius: 999px;
+      background: rgba(159,226,46,.08);
+      border: 1px solid rgba(159,226,46,.32);
+      color: var(--white);
+      font-size: 13px;
+      letter-spacing: .02em;
+      text-decoration: none;
+      transition: background .15s, border-color .15s, transform .15s;
+    }
+    .next-slot:hover { background: rgba(159,226,46,.16); border-color: var(--accent); transform: translateY(-1px); }
+    .next-slot strong { color: var(--accent); font-weight: 700; }
+    .next-slot-go { color: var(--accent); font-weight: 700; }
+    .next-slot-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 0 rgba(159,226,46,.6);
+      animation: nextSlotPulse 2s infinite;
+    }
+    @keyframes nextSlotPulse {
+      0% { box-shadow: 0 0 0 0 rgba(159,226,46,.55); }
+      70% { box-shadow: 0 0 0 7px rgba(159,226,46,0); }
+      100% { box-shadow: 0 0 0 0 rgba(159,226,46,0); }
+    }
+    @media (prefers-reduced-motion: reduce) { .next-slot-dot { animation: none; } }
+
     /* ─── BUTTONS ────────────────────────────────────────── */
     .btn {
       display: inline-flex;
@@ -1244,6 +1275,12 @@
         WhatsApp
       </a>
     </div>
+
+    <a href="/umow" class="next-slot" id="next-slot" hidden>
+      <span class="next-slot-dot" aria-hidden="true"></span>
+      <span>Najbliższy wolny termin: <strong id="next-slot-when"></strong></span>
+      <span class="next-slot-go" aria-hidden="true">→</span>
+    </a>
   </div>
 </section>
 
@@ -2000,6 +2037,35 @@
       remMsg.hidden = false;
     }
   }
+
+  // --- Najbliższy wolny termin (live z /api/next-slot, pill chowa się gdy brak / błąd) ---
+  (async function loadNextSlot() {
+    const el = document.getElementById('next-slot');
+    if (!el) return;
+    try {
+      const r = await fetch('/api/next-slot', { headers: { 'Accept': 'application/json' } });
+      if (!r.ok) return;
+      const d = await r.json();
+      if (!d || !d.date || !d.time) return;
+
+      const tz = 'Europe/Warsaw';
+      const todayStr = new Date().toLocaleDateString('sv-SE', { timeZone: tz });
+      const t = new Date(todayStr + 'T12:00:00Z');
+      t.setUTCDate(t.getUTCDate() + 1);
+      const tomorrowStr = t.toLocaleDateString('sv-SE', { timeZone: tz });
+
+      let label;
+      if (d.date === todayStr) label = 'dziś o ' + d.time;
+      else if (d.date === tomorrowStr) label = 'jutro o ' + d.time;
+      else {
+        const human = new Date(d.date + 'T12:00:00Z')
+          .toLocaleDateString('pl-PL', { weekday: 'short', day: 'numeric', month: 'long' });
+        label = human + ', ' + d.time;
+      }
+      document.getElementById('next-slot-when').textContent = label;
+      el.hidden = false;
+    } catch (_) {}
+  })();
 
   // --- Google reviews (live z /api/reviews, sekcja chowa się gdy brak danych) ---
   (async function loadReviews() {

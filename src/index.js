@@ -82,6 +82,9 @@ async function handleApi(request, env, url, ctx) {
   if (url.pathname === '/api/availability' && request.method === 'GET') {
     return await apiAvailability(env, url.searchParams.get('date'));
   }
+  if (url.pathname === '/api/next-slot' && request.method === 'GET') {
+    return await apiNextSlot(env);
+  }
   if (url.pathname === '/api/bookings' && request.method === 'POST') {
     return await apiCreateBooking(request, env, ctx);
   }
@@ -187,6 +190,43 @@ async function apiAvailability(env, dateStr) {
     available: !taken.has(s) && !blocked.has(s),
   }));
   return json({ slots });
+}
+
+// Najbliższy wolny termin w najbliższych ~3 tygodniach, dla nudge'a na stronie głównej.
+async function apiNextSlot(env) {
+  const today = todayInWarsaw();
+  const HORIZON = 21;
+  const horizonEnd = addDaysWarsaw(HORIZON);
+
+  const [bookedRes, blockedRes] = await Promise.all([
+    env.DB.prepare(
+      "SELECT date, time_slot FROM bookings WHERE date >= ?1 AND date <= ?2 AND status != 'cancelled'"
+    ).bind(today, horizonEnd).all(),
+    env.DB.prepare(
+      'SELECT date, time_slot FROM blocked_slots WHERE date >= ?1 AND date <= ?2'
+    ).bind(today, horizonEnd).all(),
+  ]);
+
+  const taken = new Set((bookedRes.results || []).map(r => `${r.date} ${r.time_slot}`));
+  const blocked = new Set((blockedRes.results || []).map(r => `${r.date} ${r.time_slot}`));
+  const blockedDays = new Set((blockedRes.results || []).filter(r => r.time_slot === 'all').map(r => r.date));
+
+  // Bieżąca godzina w Warszawie, żeby nie proponować slotu który już dziś minął.
+  const nowHour = Number(new Date().toLocaleString('en-GB', { timeZone: 'Europe/Warsaw', hour: '2-digit', hour12: false }));
+
+  for (let i = 0; i < HORIZON; i++) {
+    const date = addDaysWarsaw(i);
+    if (blockedDays.has(date)) continue;
+    const slots = SCHEDULE[dayOfWeek(date)] || [];
+    for (const s of slots) {
+      if (i === 0 && Number(s.slice(0, 2)) <= nowHour) continue;
+      const key = `${date} ${s}`;
+      if (!taken.has(key) && !blocked.has(key)) {
+        return json({ date, time: s });
+      }
+    }
+  }
+  return json({ date: null, time: null });
 }
 
 async function apiCreateBooking(request, env, ctx) {

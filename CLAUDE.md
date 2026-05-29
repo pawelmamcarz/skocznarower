@@ -11,6 +11,7 @@ Marketing site + bookings app for **skocznarower.pl**, a bicycle service shop in
 ### Pages (static HTML at the repo root)
 - `index.html` — main marketing page. CSS and JS are inlined; do not split into separate files unless asked. Section anchors: `#o-mnie`, `#uslugi`, `#cennik`, `#faq`, `#kontakt`.
 - `umow.html` — booking flow, served at `/umow`. Calls `GET /api/availability?date=` then `POST /api/bookings`.
+- `index.html` also calls `GET /api/next-slot` to show a "najbliższy wolny termin" nudge pill in the hero (reuses `SCHEDULE`/booking/`blocked_slots`; scans ~21 days, skips today's past hours). The pill stays hidden on error or when nothing is free.
 - `serwis-rowerow-pruszkow.html`, `serwis-rowerow-milanowek.html`, `bleeding-hamulcow-shimano.html` — SEO landing pages, each with its own `LocalBusiness` JSON-LD.
 - `uploads/` holds every image referenced by the pages. New images go here and are served at `/uploads/<name>`.
 - `sitemap.xml` + `robots.txt` are static. The sitemap lists every public page above — when adding/removing a page or meaningfully changing content, update it and bump `<lastmod>`.
