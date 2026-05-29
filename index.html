@@ -153,39 +153,6 @@
   }
   </script>
 
-  <!-- TODO: Schema.org Review/AggregateRating, odkomentuj po zebraniu min. 5 realnych opinii Google.
-       Co zrobić:
-         1. Wpisz REALNĄ ratingValue (np. 4.9) i reviewCount (np. 12) zgodne z Google Business.
-         2. W tablicy "review" wpisz 3-5 prawdziwych cytatów (autor + tekst + data).
-         3. Usuń otaczający komentarz HTML.
-       Schema dopuszcza wiele bloków JSON-LD na stronie, więc nie trzeba edytować LocalBusiness powyżej.
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": "skocznarower.pl – Serwis Rowerowy",
-    "url": "https://www.skocznarower.pl",
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.9",
-      "reviewCount": "12",
-      "bestRating": "5",
-      "worstRating": "1"
-    },
-    "review": [
-      {
-        "@type": "Review",
-        "author": {"@type": "Person", "name": "Imię Klienta"},
-        "datePublished": "2026-05-01",
-        "reviewRating": {"@type": "Rating", "ratingValue": "5", "bestRating": "5"},
-        "reviewBody": "Tekst opinii z Google."
-      }
-    ]
-  }
-  </script>
-  -->
-
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
@@ -722,64 +689,6 @@
     }
     .footer-brand em { color: var(--accent); font-style: normal; }
 
-    /* ─── TWEAKS PANEL ───────────────────────────────────── */
-    .tweaks {
-      position: fixed;
-      bottom: 24px; right: 24px;
-      z-index: 1000;
-      background: #1e1e1e;
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 10px;
-      padding: 22px 20px 18px;
-      width: 256px;
-      display: none;
-      box-shadow: 0 12px 48px rgba(0,0,0,.7);
-    }
-    .tweaks.open { display: block; }
-    .tweaks-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 18px;
-    }
-    .tweaks-title {
-      font-family: var(--fd);
-      font-size: 16px;
-      letter-spacing: .1em;
-      color: var(--white);
-    }
-    .tweaks-close {
-      background: none; border: none;
-      color: var(--muted);
-      font-size: 20px;
-      cursor: pointer;
-      line-height: 1;
-      padding: 0 2px;
-    }
-    .tweaks-close:hover { color: var(--white); }
-    .tweaks-lbl {
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: .18em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 10px;
-    }
-    .tweaks-section { margin-bottom: 16px; }
-    .color-row {
-      display: flex;
-      gap: 8px;
-    }
-    .cswatch {
-      width: 30px; height: 30px;
-      border-radius: 50%;
-      border: 3px solid transparent;
-      cursor: pointer;
-      transition: border-color .15s;
-      outline: none;
-    }
-    .cswatch.active { border-color: var(--white); }
-
     /* ─── REVEAL ANIMATION ───────────────────────────────── */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(22px); }
@@ -1278,7 +1187,6 @@
       .contact-grid { grid-template-columns: 1fr; gap: 44px; }
       footer { padding: 20px; flex-direction: column; align-items: flex-start; }
       .mobile-bar { display: block; }
-      .tweaks { right: 12px; bottom: 80px; width: calc(100% - 24px); }
       .dirt-section { padding: 60px 20px 40px; }
     }
   </style>
@@ -1380,7 +1288,7 @@
     </div>
 
     <div class="about-photo-wrap reveal" data-delay="2">
-      <img class="about-photo" src="uploads/photo-1778431658856.jpeg" alt="Mateusz Mamcarz xPyszczek, serwis rowerowy Grodzisk Mazowiecki">
+      <img class="about-photo" src="uploads/photo-1778431658856.jpeg" width="1200" height="900" loading="lazy" decoding="async" alt="Mateusz Mamcarz xPyszczek, serwis rowerowy Grodzisk Mazowiecki">
       <div class="about-badge">@XPYSZCZEK_</div>
     </div>
   </div>
@@ -2023,27 +1931,6 @@
 
 
 <!-- ═══════════════════════════════════════════════
-     TWEAKS PANEL
-════════════════════════════════════════════════ -->
-<div class="tweaks" id="tweaksPanel">
-  <div class="tweaks-head">
-    <span class="tweaks-title">TWEAKS</span>
-    <button class="tweaks-close" id="tweaksClose" aria-label="Zamknij">×</button>
-  </div>
-
-  <div class="tweaks-section">
-    <div class="tweaks-lbl">Kolor akcentu</div>
-    <div class="color-row">
-      <button class="cswatch active" style="background:#9fe22e" data-color="#9fe22e" data-dim="rgba(159,226,46,.10)" title="Zielony" aria-label="Zielony"></button>
-      <button class="cswatch" style="background:#ff5c1a" data-color="#ff5c1a" data-dim="rgba(255,92,26,.10)" title="Pomarańczowy" aria-label="Pomarańczowy"></button>
-      <button class="cswatch" style="background:#00d4ff" data-color="#00d4ff" data-dim="rgba(0,212,255,.10)" title="Cyan" aria-label="Cyan"></button>
-      <button class="cswatch" style="background:#e8e0d0" data-color="#e8e0d0" data-dim="rgba(232,224,208,.10)" title="Kość słoniowa" aria-label="Kość słoniowa"></button>
-    </div>
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════════════
      SCRIPTS
 ════════════════════════════════════════════════ -->
 <script>
@@ -2225,40 +2112,6 @@
       if (kind === 'umow_cta' && typeof fbq === 'function') fbq('track', 'InitiateCheckout', { content_category: 'booking' });
     } catch (_) {}
   }, { passive: true });
-
-  // --- Tweaks panel protocol ---
-  const panel = document.getElementById('tweaksPanel');
-  const closeBtn = document.getElementById('tweaksClose');
-
-  window.addEventListener('message', e => {
-    if (e.data?.type === '__activate_edit_mode')   panel.classList.add('open');
-    if (e.data?.type === '__deactivate_edit_mode') panel.classList.remove('open');
-  });
-
-  closeBtn.addEventListener('click', () => {
-    panel.classList.remove('open');
-    window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*');
-  });
-
-  window.parent.postMessage({ type: '__edit_mode_available' }, '*');
-
-  // --- Color swatches ---
-  document.querySelectorAll('.cswatch').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.cswatch').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const color = btn.dataset.color;
-      const dim   = btn.dataset.dim;
-      document.documentElement.style.setProperty('--accent', color);
-      document.documentElement.style.setProperty('--accent-dim', dim);
-      // Update SVG logo strokes
-      document.querySelectorAll('.logo-icon [stroke="#9fe22e"], .logo-icon [fill="#9fe22e"]').forEach(el => {
-        if (el.hasAttribute('stroke') && el.getAttribute('stroke') !== 'none') el.setAttribute('stroke', color);
-        if (el.hasAttribute('fill') && el.getAttribute('fill') !== 'none') el.setAttribute('fill', color);
-      });
-      window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { accentColor: color } }, '*');
-    });
-  });
 </script>
 
 <script>
@@ -2273,7 +2126,6 @@
   const scrollGround = svg.querySelector('.scroll-ground');
   const riderPos = svg.querySelector('.rider-pos');
   const riderRot = svg.querySelector('.rider-rot');
-  const riderTilt = svg.querySelector('.rider-tilt');
   const progressFill = svg.querySelector('.progress-fill');
   const scoreNum = svg.querySelector('#score-num');
   const bonus = svg.querySelector('#bonus-display');
@@ -2467,14 +2319,13 @@
 
     const angle = airborne ? airRotation : Math.atan(groundSlope(currX)) * 180 / Math.PI;
     riderRot.setAttribute('transform', `rotate(${angle})`);
-    if (riderTilt) riderTilt.setAttribute('transform', '');
 
     if (progressFill) {
       const p = currX / PATTERN_W;
       progressFill.setAttribute('transform', `scale(${p}, 1)`);
     }
 
-    requestAnimationFrame(loop);
+    if (running) requestAnimationFrame(loop);
   }
 
   // ── Input ──
@@ -2507,7 +2358,18 @@
     else if (e.key === 'ArrowLeft') press('brake', false);
   });
 
-  requestAnimationFrame(loop);
+  // ── Pętla działa tylko gdy scena jest na ekranie (oszczędza CPU/baterię) ──
+  let running = false;
+  function startLoop() {
+    if (running) return;
+    running = true;
+    lastTime = performance.now();
+    requestAnimationFrame(loop);
+  }
+  const visObs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) startLoop(); else running = false; });
+  }, { threshold: 0.01 });
+  visObs.observe(scene);
 })();
 </script>
 

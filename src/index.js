@@ -9,6 +9,7 @@ const SERVICES = [
   { id: 'przeglad-podstawowy',  name: 'Przegląd podstawowy',                       price: 'od 150 zł' },
   { id: 'przeglad-kompleksowy', name: 'Przegląd kompleksowy',                      price: 'od 340 zł' },
   { id: 'regulacja',            name: 'Regulacja (hamulce / przerzutki)',          price: 'od 40 zł' },
+  { id: 'bleeding',             name: 'Bleeding hamulców hydraulicznych',          price: 'od 100 zł' },
   { id: 'wymiana-czesci',       name: 'Wymiana części (klocki, linki, dętka...)',  price: 'od 35 zł + część' },
   { id: 'kolo-centrowanie',     name: 'Centrowanie koła',                          price: 'od 120 zł' },
   { id: 'kolo-naprawa',         name: 'Naprawa koła',                              price: 'od 35 zł' },
@@ -41,7 +42,7 @@ const SCHEDULE = {
 };
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     if (url.hostname === 'skocznarower.pl') {
@@ -50,7 +51,7 @@ export default {
     }
 
     try {
-      if (url.pathname.startsWith('/api/')) return await handleApi(request, env, url);
+      if (url.pathname.startsWith('/api/')) return await handleApi(request, env, url, ctx);
       if (url.pathname === '/admin' || url.pathname.startsWith('/admin/')) {
         return await handleAdmin(request, env, url);
       }
@@ -77,12 +78,12 @@ export default {
 
 // ─── API ────────────────────────────────────────────────────────────────────
 
-async function handleApi(request, env, url) {
+async function handleApi(request, env, url, ctx) {
   if (url.pathname === '/api/availability' && request.method === 'GET') {
     return await apiAvailability(env, url.searchParams.get('date'));
   }
   if (url.pathname === '/api/bookings' && request.method === 'POST') {
-    return await apiCreateBooking(request, env);
+    return await apiCreateBooking(request, env, ctx);
   }
   if (url.pathname === '/api/reminders' && request.method === 'POST') {
     return await apiSeasonalReminder(request, env);
@@ -188,7 +189,7 @@ async function apiAvailability(env, dateStr) {
   return json({ slots });
 }
 
-async function apiCreateBooking(request, env) {
+async function apiCreateBooking(request, env, ctx) {
   let body;
   try { body = await request.json(); }
   catch { return json({ error: 'Bad JSON' }, 400); }
@@ -218,20 +219,30 @@ async function apiCreateBooking(request, env) {
   const id = crypto.randomUUID();
   const now = Date.now();
 
-  await env.DB.prepare(
-    `INSERT INTO bookings (id, created_at, date, time_slot, service_type, bike_type,
-       customer_name, customer_phone, customer_email, notes, status)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'pending')`
-  ).bind(
-    id, now, body.date, body.time_slot,
-    body.service_type, body.bike_type,
-    body.customer_name.trim(), normalizePhone(body.customer_phone),
-    body.customer_email?.trim() || null,
-    body.notes?.trim() || null,
-  ).run();
+  try {
+    await env.DB.prepare(
+      `INSERT INTO bookings (id, created_at, date, time_slot, service_type, bike_type,
+         customer_name, customer_phone, customer_email, notes, status)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'pending')`
+    ).bind(
+      id, now, body.date, body.time_slot,
+      body.service_type, body.bike_type,
+      body.customer_name.trim(), normalizePhone(body.customer_phone),
+      body.customer_email?.trim() || null,
+      body.notes?.trim() || null,
+    ).run();
+  } catch (e) {
+    // Unikalny indeks idx_bookings_active_slot łapie wyścig dwóch równoległych rezerwacji
+    if (/UNIQUE|constraint/i.test(String(e?.message || e))) {
+      return json({ error: 'Slot zajęty, wybierz inny' }, 409);
+    }
+    throw e;
+  }
 
-  // Notyfikacja email, best-effort, błąd nie zatrzymuje rezerwacji
-  sendNotifications(env, { id, ...body }).catch(e => console.error('Mail error', e));
+  // Notyfikacja email, best-effort, błąd nie zatrzymuje rezerwacji.
+  // waitUntil utrzymuje izolat przy życiu do końca wysyłki maila.
+  const mail = sendNotifications(env, { id, ...body }).catch(e => console.error('Mail error', e));
+  if (ctx?.waitUntil) ctx.waitUntil(mail);
 
   return json({
     ok: true,
@@ -267,8 +278,9 @@ async function sendNotifications(env, b) {
   const service = SERVICES.find(s => s.id === b.service_type)?.name || b.service_type;
   const from = env.FROM_EMAIL || 'rezerwacje@skocznarower.pl';
 
-  // do właściciela
+  // do właściciela, w osobnym try/catch żeby błąd nie zablokował maila do klienta
   if (env.NOTIFY_EMAIL) {
+    try {
     await resendSend(env.RESEND_API_KEY, {
       from,
       to: env.NOTIFY_EMAIL,
@@ -289,10 +301,12 @@ Panel: https://www.skocznarower.pl/admin
 ID:    ${b.id}
 `,
     });
+    } catch (e) { console.error('Mail do właściciela error', e); }
   }
 
   // do klienta, tylko jeśli podał email
   if (b.customer_email) {
+    try {
     await resendSend(env.RESEND_API_KEY, {
       from,
       to: b.customer_email,
@@ -312,6 +326,7 @@ Mateusz / skocznarower.pl
 Jesionowa 18, Grodzisk Mazowiecki
 `,
     });
+    } catch (e) { console.error('Mail do klienta error', e); }
   }
 }
 
@@ -967,7 +982,8 @@ function isValidDate(s) {
 }
 
 function dayOfWeek(dateStr) {
-  return new Date(dateStr + 'T12:00:00+02:00').getUTCDay();
+  // Data kalendarzowa bez pory dnia, więc UTC jest deterministyczne (bez DST).
+  return new Date(dateStr + 'T00:00:00Z').getUTCDay();
 }
 
 function todayInWarsaw() {
@@ -1016,11 +1032,14 @@ async function sendDailyReminders(env) {
 
 async function sendFollowUps(env) {
   const threeDaysAgo = addDaysWarsaw(-3);
+  const thirtyDaysAgo = addDaysWarsaw(-30);
+  // Dolne okno daty, żeby pierwszy cron po wdrożeniu nie wysłał prośby o opinię
+  // do wszystkich historycznych wizyt naraz.
   const rows = await env.DB.prepare(
     `SELECT id, customer_name, customer_phone
      FROM bookings
-     WHERE date <= ?1 AND status = 'done' AND feedback_sent_at IS NULL`
-  ).bind(threeDaysAgo).all();
+     WHERE date <= ?1 AND date >= ?2 AND status = 'done' AND feedback_sent_at IS NULL`
+  ).bind(threeDaysAgo, thirtyDaysAgo).all();
 
   const reviewLink = env.REVIEW_LINK || 'https://www.skocznarower.pl/';
   for (const b of rows.results || []) {
