@@ -524,9 +524,12 @@ async function adminUpdateBooking(request, env) {
     await env.DB.prepare('DELETE FROM bookings WHERE id=?1').bind(id).run();
   } else if (action === 'price') {
     const raw = String(form.get('final_price') || '').replace(',', '.').trim();
-    const price = raw === '' ? null : Math.round(parseFloat(raw));
-    if (price !== null && (isNaN(price) || price < 0 || price > 100000)) {
-      return new Response('Bad price', { status: 400 });
+    let price = null;
+    if (raw !== '') {
+      // Ścisły format, żeby "12abc" nie przeszło jako 12 przez parseFloat.
+      if (!/^\d+(\.\d+)?$/.test(raw)) return new Response('Bad price', { status: 400 });
+      price = Math.round(parseFloat(raw));
+      if (price < 0 || price > 100000) return new Response('Bad price', { status: 400 });
     }
     await env.DB.prepare('UPDATE bookings SET final_price=?1 WHERE id=?2').bind(price, id).run();
   } else {
@@ -640,7 +643,7 @@ function renderDashboard({ bookings, blocked, filter, today, reviewsProfile, rev
         <div class="muted">${escapeHtml(b.bike_type)}</div>
       </td>
       <td>
-        <a href="tel:${b.customer_phone}">${escapeHtml(b.customer_phone)}</a>
+        <a href="tel:${escapeHtml(b.customer_phone)}">${escapeHtml(b.customer_phone)}</a>
         ${b.customer_email ? `<div class="muted"><a href="mailto:${escapeHtml(b.customer_email)}">${escapeHtml(b.customer_email)}</a></div>` : ''}
       </td>
       <td>
@@ -650,7 +653,7 @@ function renderDashboard({ bookings, blocked, filter, today, reviewsProfile, rev
       <td class="price-est"><span class="muted">${escapeHtml(estPrice)}</span></td>
       <td class="price-final">
         <form method="post" action="/admin/booking" class="price-form">
-          <input type="hidden" name="id" value="${b.id}">
+          <input type="hidden" name="id" value="${escapeHtml(b.id)}">
           <input type="hidden" name="action" value="price">
           <input type="hidden" name="back" value="${backEsc}">
           <input type="number" name="final_price" value="${finalVal}" min="0" max="100000" step="1" placeholder="zł" class="price-input">
@@ -660,7 +663,7 @@ function renderDashboard({ bookings, blocked, filter, today, reviewsProfile, rev
       <td><span class="badge badge-${b.status}">${statusLabel(b.status)}</span></td>
       <td class="actions">
         <form method="post" action="/admin/booking" style="display:inline">
-          <input type="hidden" name="id" value="${b.id}">
+          <input type="hidden" name="id" value="${escapeHtml(b.id)}">
           <input type="hidden" name="back" value="${backEsc}">
           ${b.status === 'pending' ? '<button name="action" value="confirm" class="btn-ok">Potwierdź</button>' : ''}
           ${b.status !== 'done' ? '<button name="action" value="done" class="btn-ok">Zrobione</button>' : ''}
@@ -799,31 +802,31 @@ function renderOutreachSection(outreach) {
       <td class="actions" style="white-space:nowrap;">
         ${o.status === 'planned' ? `
           <form method="post" action="/admin/outreach" style="display:inline">
-            <input type="hidden" name="id" value="${o.id}">
+            <input type="hidden" name="id" value="${escapeHtml(o.id)}">
             <button name="action" value="sent" class="btn-ok">Wysłałem</button>
           </form>` : ''}
         ${o.status === 'sent' ? `
           <form method="post" action="/admin/outreach" style="display:inline; margin-right:4px;" onsubmit="this.querySelector('input[name=response]').value = prompt('Co odpisali? (skrót)') || ''; if(!this.querySelector('input[name=response]').value) return false;">
-            <input type="hidden" name="id" value="${o.id}">
+            <input type="hidden" name="id" value="${escapeHtml(o.id)}">
             <input type="hidden" name="response" value="">
             <button name="action" value="responded" class="btn-ok">Odpisali</button>
           </form>
           <form method="post" action="/admin/outreach" style="display:inline">
-            <input type="hidden" name="id" value="${o.id}">
+            <input type="hidden" name="id" value="${escapeHtml(o.id)}">
             <button name="action" value="closed" class="btn-warn">Brak odp.</button>
           </form>` : ''}
         ${o.status === 'responded' ? `
           <form method="post" action="/admin/outreach" style="display:inline">
-            <input type="hidden" name="id" value="${o.id}">
+            <input type="hidden" name="id" value="${escapeHtml(o.id)}">
             <button name="action" value="closed" class="btn-warn">Zamknij</button>
           </form>` : ''}
         ${o.status === 'closed' ? `
           <form method="post" action="/admin/outreach" style="display:inline">
-            <input type="hidden" name="id" value="${o.id}">
+            <input type="hidden" name="id" value="${escapeHtml(o.id)}">
             <button name="action" value="reopen" class="btn-ok">Odśwież</button>
           </form>` : ''}
         <form method="post" action="/admin/outreach" style="display:inline" onsubmit="return confirm('Usunąć kontakt?')">
-          <input type="hidden" name="id" value="${o.id}">
+          <input type="hidden" name="id" value="${escapeHtml(o.id)}">
           <button name="action" value="delete" class="btn-del">×</button>
         </form>
       </td>
@@ -956,17 +959,25 @@ async function isAdmin(request, env) {
   return await verifySessionCookie(cookie, env);
 }
 
+// Sekret do podpisu sesji. Bez SESSION_SECRET ani ADMIN_PASSWORD nie ma autoryzacji
+// (login i tak wymaga ADMIN_PASSWORD), więc nie używamy publicznego fallbacku.
+function sessionSecret(env) {
+  return env.SESSION_SECRET || env.ADMIN_PASSWORD || null;
+}
+
 async function makeSessionCookie(env) {
   const exp = Date.now() + 7 * 24 * 3600 * 1000;
   const payload = b64url(JSON.stringify({ exp }));
-  const sig = await hmac(env.SESSION_SECRET || env.ADMIN_PASSWORD || 'dev-secret', payload);
+  const sig = await hmac(sessionSecret(env), payload);
   return `${payload}.${sig}`;
 }
 
 async function verifySessionCookie(cookie, env) {
+  const secret = sessionSecret(env);
+  if (!secret) return false;
   const [payload, sig] = cookie.split('.');
   if (!payload || !sig) return false;
-  const expected = await hmac(env.SESSION_SECRET || env.ADMIN_PASSWORD || 'dev-secret', payload);
+  const expected = await hmac(secret, payload);
   if (!timingSafeEqual(sig, expected)) return false;
   try {
     const { exp } = JSON.parse(b64urlDecode(payload));

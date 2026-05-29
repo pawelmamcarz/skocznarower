@@ -8,6 +8,15 @@
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://www.skocznarower.pl/umow">
 
+  <!-- Open Graph -->
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://www.skocznarower.pl/umow">
+  <meta property="og:title"       content="Umów wizytę | Serwis Rowerowy Grodzisk Mazowiecki">
+  <meta property="og:description" content="Wybierz usługę, datę i godzinę. Oddzwonię, żeby potwierdzić. Rezerwacja zajmuje minutę. Tel: 600 370 810.">
+  <meta property="og:image"       content="https://www.skocznarower.pl/uploads/photo-1778431658856.jpeg">
+  <meta property="og:locale"      content="pl_PL">
+  <meta name="twitter:card"       content="summary_large_image">
+
   <link rel="icon" type="image/png" sizes="32x32" href="/uploads/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/uploads/favicon-192.png">
   <link rel="icon" type="image/png" href="/uploads/favicon.png">
@@ -269,6 +278,7 @@
       font-size: 15px;
     }
     .input:focus, .textarea:focus, .date-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+    .input[aria-invalid="true"] { border-color: #ff5c5c; }
     .textarea { min-height: 90px; resize: vertical; line-height: 1.5; }
 
     .submit-row {
@@ -381,23 +391,23 @@
 
   <section class="step">
     <div class="step-num">01 · Usługa</div>
-    <h2 class="step-title">Co robimy?</h2>
-    <div class="choices" id="services">
+    <h2 class="step-title" id="t-service">Co robimy?</h2>
+    <div class="choices" id="services" role="radiogroup" aria-labelledby="t-service">
       <!-- wypełniane JS-em -->
     </div>
   </section>
 
   <section class="step">
     <div class="step-num">02 · Sprzęt</div>
-    <h2 class="step-title">Jaki rower?</h2>
-    <div class="choices" id="bike-types">
+    <h2 class="step-title" id="t-bike">Jaki rower?</h2>
+    <div class="choices" id="bike-types" role="radiogroup" aria-labelledby="t-bike">
       <!-- wypełniane JS-em -->
     </div>
   </section>
 
   <section class="step">
     <div class="step-num">03 · Termin</div>
-    <h2 class="step-title">Kiedy przyjedziesz?</h2>
+    <h2 class="step-title" id="t-termin">Kiedy przyjedziesz?</h2>
     <div class="date-row">
       <input id="date" class="date-input" type="date" required>
     </div>
@@ -435,7 +445,7 @@
       <span class="submit-note">Po wysłaniu oddzwonię żeby potwierdzić.</span>
     </div>
 
-    <div id="alert" hidden></div>
+    <div id="alert" role="alert" aria-live="assertive" hidden></div>
   </section>
 
 </form>
@@ -527,7 +537,7 @@ function renderSlots(slots) {
   }
   const anyAvailable = slots.some(s => s.available);
   slotsArea.innerHTML = `
-    <div class="slots">
+    <div class="slots" role="radiogroup" aria-labelledby="t-termin">
       ${slots.map(s => `
         <label class="slot ${s.available ? '' : 'disabled'}">
           <input type="radio" name="slot" value="${s.time}" ${s.available ? '' : 'disabled'}>
@@ -550,6 +560,15 @@ function showAlert(msg, kind = 'error') {
   alertBox.hidden = false;
 }
 
+// Pokaż błąd i przenieś focus na pierwsze problematyczne pole (a11y).
+function fail(msg, focusEl) {
+  showAlert(msg);
+  if (focusEl) {
+    focusEl.focus({ preventScroll: true });
+    focusEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   alertBox.hidden = true;
@@ -563,12 +582,16 @@ form.addEventListener('submit', async (e) => {
   const email   = $('#email').value.trim();
   const notes   = $('#notes').value.trim();
 
-  if (!service) return showAlert('Wybierz usługę.');
-  if (!bike)    return showAlert('Wybierz typ roweru.');
-  if (!date)    return showAlert('Wybierz datę.');
-  if (!slot)    return showAlert('Wybierz godzinę.');
-  if (name.length < 2) return showAlert('Wpisz imię.');
-  if (!/[0-9]{9}/.test(phone.replace(/[^0-9+]/g, ''))) return showAlert('Wpisz prawidłowy telefon.');
+  const nameEl = $('#name'), phoneEl = $('#phone');
+  nameEl.removeAttribute('aria-invalid');
+  phoneEl.removeAttribute('aria-invalid');
+
+  if (!service) return fail('Wybierz usługę.', form.querySelector('input[name="service"]'));
+  if (!bike)    return fail('Wybierz typ roweru.', form.querySelector('input[name="bike"]'));
+  if (!date)    return fail('Wybierz datę.', dateInput);
+  if (!slot)    return fail('Wybierz godzinę.', form.querySelector('input[name="slot"]:not([disabled])') || dateInput);
+  if (name.length < 2) { nameEl.setAttribute('aria-invalid', 'true'); return fail('Wpisz imię.', nameEl); }
+  if (!/[0-9]{9}/.test(phone.replace(/[^0-9+]/g, ''))) { phoneEl.setAttribute('aria-invalid', 'true'); return fail('Wpisz prawidłowy telefon.', phoneEl); }
 
   submitBtn.disabled = true;
   submitBtn.textContent = 'Wysyłam...';
