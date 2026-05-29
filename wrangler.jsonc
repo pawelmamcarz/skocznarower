@@ -27,8 +27,10 @@
     }
   ],
   // Cron 08:00 UTC = 09:00 lub 10:00 czasu Warszawy (zależnie od DST).
-  // Handler scheduled() wysyła SMS przypominające (24h przed) i prośby o opinię (3 dni po wizycie).
-  // Wymaga sekretów: SMS_API_LOGIN, SMS_API_PASSWORD (SerwerSMS). Bez nich Worker tylko loguje wiadomości do console.
+  // Handler scheduled() wysyła SMS przypominające (24h przed wizytą) i prośby o opinię (3 dni po wizycie),
+  // sezonowy mailing 15 marca oraz odświeża opinie Google z Places API.
+  // SMS przez SMSAPI (sekret SMSAPI_TOKEN), mail przez Resend (RESEND_API_KEY),
+  // opinie przez GOOGLE_PLACES_API_KEY. Bez tych sekretów Worker tylko loguje (dry-run) i kontynuuje.
   "triggers": {
     "crons": ["0 8 * * *"]
   },
