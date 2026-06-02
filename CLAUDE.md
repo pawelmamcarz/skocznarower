@@ -44,7 +44,7 @@ Each public page has its own JSON-LD. On `index.html` there are two (`FAQPage`, 
 The Worker bundles the whole repo root as assets, so this file is what keeps junk out: large source media (`uploads/*.mp4`, `uploads/*.pdf`, `uploads/FastDL.to_*`), the Worker source (`src/`), migrations, dotfiles (`.wrangler/`, `.git/`, `.claude/`, `.playwright-mcp/`, `.DS_Store`), `node_modules/`, and the dev-only files (`CLAUDE.md`, `OUTREACH_PLAN.md`, `.assetsignore`, `.gitignore`, `.dev.vars*`). When adding new top-level files or directories, decide whether they belong in `.assetsignore`.
 
 ### Non-asset top-level directories
-- `partners/` — `.doc`/`.docx` reference material for outreach (e.g. `velo ANKIETA.doc`). Not currently in `.assetsignore`; if you keep adding files there, add `partners/` to `.assetsignore` so the Worker stops shipping them as public assets.
+- `partners/` — `.doc`/`.docx` reference material for outreach (e.g. `velo ANKIETA.doc`). Already in `.assetsignore`, so the Worker does not ship it as a public asset; keep new outreach docs here rather than at the repo root.
 
 ## Common commands
 
