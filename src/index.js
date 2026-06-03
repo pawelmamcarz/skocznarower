@@ -55,6 +55,7 @@ export default {
       if (url.pathname === '/admin' || url.pathname.startsWith('/admin/')) {
         return await handleAdmin(request, env, url);
       }
+      if (url.pathname === '/r') return await handleQuickAction(request, env, url);
     } catch (e) {
       console.error('Worker error', e);
       return json({ error: 'Server error' }, 500);
@@ -273,9 +274,10 @@ async function apiCreateBooking(request, env, ctx) {
     throw e;
   }
 
-  // Notyfikacja email, best-effort, błąd nie zatrzymuje rezerwacji.
-  // waitUntil utrzymuje izolat przy życiu do końca wysyłki maila.
-  const mail = sendNotifications(env, { id, ...body }).catch(e => console.error('Mail error', e));
+  // Notyfikacja email + SMS, best-effort, błąd nie zatrzymuje rezerwacji.
+  // Wpis do kalendarza powstaje dopiero przy potwierdzeniu przez Mateusza w /admin.
+  // waitUntil utrzymuje izolat przy życiu do końca wysyłki.
+  const mail = sendNotifications(env, { id, ...body }).catch(e => console.error('Mail/SMS error', e));
   if (ctx?.waitUntil) ctx.waitUntil(mail);
 
   return json({
@@ -307,9 +309,24 @@ function normalizePhone(p) {
 // ─── EMAIL (Resend) ─────────────────────────────────────────────────────────
 
 async function sendNotifications(env, b) {
+  const service = SERVICES.find(s => s.id === b.service_type)?.name || b.service_type;
+
+  // SMS do właściciela o nowej rezerwacji, niezależnie od maila i fail-soft.
+  // Numer w env.OWNER_PHONE, fallback na stały numer Mateusza.
+  // Link prowadzi do strony z przyciskami Potwierdź / Odrzuć (bez logowania).
+  // Treść bez polskich znaków, żeby liczyć się jako tańszy GSM-7.
+  try {
+    const link = await bookingActionLink(env, b.id);
+    const tail = link ? `Potwierdz/odrzuc: ${link}` : 'Panel: skocznarower.pl/admin';
+    await sendSms(
+      env,
+      env.OWNER_PHONE || '600370810',
+      `Nowa rezerwacja: ${b.date} ${b.time_slot}, ${b.customer_name}, tel ${b.customer_phone}. ${tail}`,
+    );
+  } catch (e) { console.error('SMS do właściciela error', e); }
+
   if (!env.RESEND_API_KEY) return;
 
-  const service = SERVICES.find(s => s.id === b.service_type)?.name || b.service_type;
   const from = env.FROM_EMAIL || 'rezerwacje@skocznarower.pl';
 
   // do właściciela, w osobnym try/catch żeby błąd nie zablokował maila do klienta
@@ -377,6 +394,237 @@ async function resendSend(apiKey, payload) {
     const t = await r.text();
     throw new Error(`Resend ${r.status}: ${t}`);
   }
+}
+
+// ─── GOOGLE CALENDAR ─────────────────────────────────────────────────────────
+//
+// Wpis do kalendarza "pyszczka" powstaje, gdy Mateusz potwierdzi rezerwację w /admin.
+// Uwierzytelnianie przez konto serwisowe Google (bez domeny Workspace):
+//   1. Google Cloud Console → utwórz konto serwisowe, włącz "Google Calendar API",
+//      pobierz klucz JSON (pola client_email, private_key).
+//   2. W Google Calendar udostępnij kalendarz "pyszczka" adresowi konta serwisowego
+//      z prawem "Wprowadzanie zmian w wydarzeniach".
+//   3. Ustaw sekrety/zmienne Workera:
+//        GOOGLE_SA_EMAIL        = client_email z JSON
+//        GOOGLE_SA_PRIVATE_KEY  = private_key z JSON (z \n; kod sam je rozwinie)
+//        GOOGLE_CALENDAR_ID     = id kalendarza "pyszczka" (z ustawień kalendarza)
+// Bez tych wartości funkcja loguje dry-run i zwraca null (rezerwacja działa dalej).
+
+const CAL_TZ = 'Europe/Warsaw';
+const CAL_DURATION_MIN = 60; // domyślny czas wizyty
+
+/** Tworzy wydarzenie w kalendarzu. Zwraca id eventu albo null (dry-run/błąd miękki). */
+async function addToCalendar(env, b) {
+  const calId = env.GOOGLE_CALENDAR_ID;
+  const service = SERVICES.find(s => s.id === b.service_type)?.name || b.service_type;
+  const summary = `${service}, ${b.customer_name}`;
+  const description =
+    `Usluga: ${service}\n` +
+    `Rower: ${b.bike_type}\n` +
+    `Klient: ${b.customer_name}\n` +
+    `Telefon: ${b.customer_phone}\n` +
+    (b.customer_email ? `Email: ${b.customer_email}\n` : '') +
+    `Notatka: ${b.notes || 'brak'}\n` +
+    `Panel: https://www.skocznarower.pl/admin`;
+
+  const start = `${b.date}T${b.time_slot}:00`;
+  const end = `${b.date}T${addMinutesToTime(b.time_slot, CAL_DURATION_MIN)}:00`;
+
+  if (!env.GOOGLE_SA_EMAIL || !env.GOOGLE_SA_PRIVATE_KEY || !calId) {
+    console.log('[Kalendarz dry-run] →', summary, start, '-', end);
+    return null;
+  }
+
+  const token = await getGoogleAccessToken(env, 'https://www.googleapis.com/auth/calendar');
+  const r = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events`,
+    {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        summary,
+        description,
+        start: { dateTime: start, timeZone: CAL_TZ },
+        end: { dateTime: end, timeZone: CAL_TZ },
+      }),
+    },
+  );
+  if (!r.ok) throw new Error(`Calendar insert ${r.status}: ${await r.text()}`);
+  const data = await r.json();
+  return data.id || null;
+}
+
+/** Usuwa wydarzenie z kalendarza. Brak sekretów = dry-run. */
+async function deleteCalendarEvent(env, eventId) {
+  const calId = env.GOOGLE_CALENDAR_ID;
+  if (!env.GOOGLE_SA_EMAIL || !env.GOOGLE_SA_PRIVATE_KEY || !calId) {
+    console.log('[Kalendarz dry-run] usuń', eventId);
+    return;
+  }
+  const token = await getGoogleAccessToken(env, 'https://www.googleapis.com/auth/calendar');
+  const r = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events/${encodeURIComponent(eventId)}`,
+    { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } },
+  );
+  // 410 = już usunięte, traktujemy jako sukces.
+  if (!r.ok && r.status !== 410) throw new Error(`Calendar delete ${r.status}: ${await r.text()}`);
+}
+
+/** Dodaje minuty do "HH:MM" i zwraca "HH:MM" (w obrębie doby, sloty są w godzinach pracy). */
+function addMinutesToTime(hhmm, mins) {
+  const [h, m] = hhmm.split(':').map(Number);
+  const total = (h * 60 + m + mins) % (24 * 60);
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
+/**
+ * Pobiera access token Google przez flow konta serwisowego (JWT bearer, RS256).
+ * Podpis JWT robi Web Crypto z klucza PKCS8 (private_key z JSON konta serwisowego).
+ */
+async function getGoogleAccessToken(env, scope) {
+  const now = Math.floor(Date.now() / 1000);
+  const header = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
+  const claim = b64url(JSON.stringify({
+    iss: env.GOOGLE_SA_EMAIL,
+    scope,
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600,
+  }));
+  const unsigned = `${header}.${claim}`;
+
+  const key = await importPkcs8(env.GOOGLE_SA_PRIVATE_KEY);
+  const sig = await crypto.subtle.sign(
+    'RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(unsigned),
+  );
+  const jwt = `${unsigned}.${b64urlBytes(new Uint8Array(sig))}`;
+
+  const r = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion: jwt,
+    }),
+  });
+  if (!r.ok) throw new Error(`Google token ${r.status}: ${await r.text()}`);
+  const data = await r.json();
+  if (!data.access_token) throw new Error('Google token: brak access_token');
+  return data.access_token;
+}
+
+async function importPkcs8(pem) {
+  // Sekret może mieć literalne \n zamiast nowych linii, rozwijamy oba przypadki.
+  const body = String(pem)
+    .replace(/\\n/g, '\n')
+    .replace(/-----BEGIN PRIVATE KEY-----/, '')
+    .replace(/-----END PRIVATE KEY-----/, '')
+    .replace(/\s/g, '');
+  const der = Uint8Array.from(atob(body), c => c.charCodeAt(0));
+  return crypto.subtle.importKey(
+    'pkcs8', der.buffer,
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false, ['sign'],
+  );
+}
+
+// ─── SZYBKA AKCJA Z SMS (potwierdź / odrzuć) ────────────────────────────────
+//
+// SMS do Mateusza zawiera link /r?id=<id>&t=<token>. Token to HMAC(id) na sekrecie
+// sesji, więc linku nie da się zgadnąć. GET tylko pokazuje stronę z dwoma
+// przyciskami (skanery linków w SMS-ach nie odpalą akcji), a samo potwierdzenie
+// / odrzucenie idzie POST-em.
+
+/** Token podpisujący link akcji. Skrócony HMAC, wystarczający dla tej operacji. */
+async function bookingToken(env, id) {
+  const secret = sessionSecret(env);
+  if (!secret) return null;
+  return (await hmac(secret, `r:${id}`)).slice(0, 24);
+}
+
+/** Pełny link do potwierdzenia/odrzucenia rezerwacji. Null bez sekretu sesji. */
+async function bookingActionLink(env, id) {
+  const t = await bookingToken(env, id);
+  if (!t) return null;
+  return `https://www.skocznarower.pl/r?id=${id}&t=${t}`;
+}
+
+async function handleQuickAction(request, env, url) {
+  const id = url.searchParams.get('id') || '';
+  const token = url.searchParams.get('t') || '';
+  const expected = await bookingToken(env, id);
+  if (!id || !expected || !timingSafeEqual(token, expected)) {
+    return htmlPage('Link nieprawidłowy', '<p>Ten link jest nieprawidłowy lub wygasł.</p>');
+  }
+
+  const b = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
+  if (!b) return htmlPage('Nie znaleziono', '<p>Rezerwacja nie istnieje.</p>');
+
+  const service = SERVICES.find(s => s.id === b.service_type)?.name || b.service_type;
+  const summary =
+    `<p><strong>${esc(b.customer_name)}</strong>, tel. ${esc(b.customer_phone)}</p>` +
+    `<p>${esc(b.date)}, godz. ${esc(b.time_slot)}<br>${esc(service)}, ${esc(b.bike_type)}</p>` +
+    (b.notes ? `<p>Notatka: ${esc(b.notes)}</p>` : '');
+
+  if (request.method === 'POST') {
+    const form = await request.formData();
+    const action = String(form.get('action') || '');
+    // Ponowna walidacja tokenu z formularza, na wypadek innego id w polu.
+    if (action === 'confirm') {
+      const res = await confirmBooking(env, id);
+      if (res.error === 'slot') {
+        return htmlPage('Slot zajęty', summary + '<p>Ten termin zajęła już inna rezerwacja.</p>');
+      }
+      return htmlPage('Potwierdzono ✓', summary + '<p>Rezerwacja potwierdzona, trafiła do kalendarza.</p>');
+    }
+    if (action === 'cancel') {
+      await cancelBooking(env, id);
+      return htmlPage('Odrzucono', summary + '<p>Rezerwacja odrzucona i anulowana.</p>');
+    }
+    return htmlPage('Błąd', '<p>Nieznana akcja.</p>');
+  }
+
+  // GET: pokaż stan i przyciski (POST). Dla już rozstrzygniętych tylko informacja.
+  if (b.status === 'confirmed') {
+    return htmlPage('Już potwierdzona', summary + '<p>Ta rezerwacja jest już potwierdzona.</p>');
+  }
+  if (b.status === 'cancelled') {
+    return htmlPage('Anulowana', summary + '<p>Ta rezerwacja jest już anulowana.</p>');
+  }
+  if (b.status === 'done') {
+    return htmlPage('Zrealizowana', summary + '<p>Ta rezerwacja jest oznaczona jako zrealizowana.</p>');
+  }
+
+  const hidden = `<input type="hidden" name="id" value="${esc(id)}"><input type="hidden" name="t" value="${esc(token)}">`;
+  const buttons =
+    `<form method="POST" style="display:inline">${hidden}<button name="action" value="confirm" class="ok">Potwierdź</button></form>` +
+    `<form method="POST" style="display:inline">${hidden}<button name="action" value="cancel" class="no">Odrzuć</button></form>`;
+  return htmlPage('Nowa rezerwacja', summary + `<div class="btns">${buttons}</div>`);
+}
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
+function htmlPage(title, bodyHtml) {
+  return new Response(
+    `<!doctype html><html lang="pl"><head><meta charset="utf-8">` +
+    `<meta name="viewport" content="width=device-width, initial-scale=1">` +
+    `<meta name="robots" content="noindex">` +
+    `<title>${esc(title)}, skocznarower.pl</title><style>` +
+    `body{font-family:system-ui,-apple-system,sans-serif;max-width:30rem;margin:2rem auto;padding:0 1rem;color:#1a1a1a;line-height:1.5}` +
+    `h1{font-size:1.4rem}` +
+    `.btns{margin-top:1.5rem;display:flex;gap:.75rem}` +
+    `button{font-size:1rem;padding:.8rem 1.4rem;border:0;border-radius:.6rem;cursor:pointer;color:#fff}` +
+    `button.ok{background:#16794a}button.no{background:#b3261e}` +
+    `a{color:#16794a}</style></head><body>` +
+    `<h1>${esc(title)}</h1>${bodyHtml}` +
+    `<p style="margin-top:2rem"><a href="https://www.skocznarower.pl/admin">Panel /admin</a></p>` +
+    `</body></html>`,
+    { headers: { 'Content-Type': 'text/html; charset=utf-8' } },
+  );
 }
 
 // ─── ADMIN ──────────────────────────────────────────────────────────────────
@@ -508,12 +756,14 @@ async function adminUpdateBooking(request, env) {
   const action = String(form.get('action') || '');
   if (!id) return new Response('Bad', { status: 400 });
 
-  if (action === 'confirm' || action === 'done') {
-    // Oba statusy są aktywne (!= cancelled), więc przywrócenie anulowanej rezerwacji,
+  if (action === 'confirm') {
+    const res = await confirmBooking(env, id);
+    if (res.error === 'slot') return new Response('Slot zajęty przez inną rezerwację', { status: 409 });
+  } else if (action === 'done') {
+    // 'done' jest aktywny (!= cancelled), więc przywrócenie anulowanej rezerwacji,
     // której slot zajęła inna, narusza idx_bookings_active_slot. Mapujemy to na czytelny 409.
-    const status = action === 'confirm' ? 'confirmed' : 'done';
     try {
-      await env.DB.prepare('UPDATE bookings SET status=?1 WHERE id=?2').bind(status, id).run();
+      await env.DB.prepare("UPDATE bookings SET status='done' WHERE id=?1").bind(id).run();
     } catch (e) {
       if (/UNIQUE constraint/i.test(String(e?.message || e))) {
         return new Response('Slot zajęty przez inną rezerwację', { status: 409 });
@@ -521,9 +771,13 @@ async function adminUpdateBooking(request, env) {
       throw e;
     }
   } else if (action === 'cancel') {
-    await env.DB.prepare("UPDATE bookings SET status='cancelled' WHERE id=?1").bind(id).run();
+    await cancelBooking(env, id);
   } else if (action === 'delete') {
+    const b = await env.DB.prepare('SELECT gcal_event_id FROM bookings WHERE id=?1').bind(id).first();
     await env.DB.prepare('DELETE FROM bookings WHERE id=?1').bind(id).run();
+    if (b?.gcal_event_id) {
+      try { await deleteCalendarEvent(env, b.gcal_event_id); } catch (e) { console.error('Kalendarz delete error', e); }
+    }
   } else if (action === 'price') {
     const raw = String(form.get('final_price') || '').replace(',', '.').trim();
     let price = null;
@@ -540,6 +794,40 @@ async function adminUpdateBooking(request, env) {
   let back = String(form.get('back') || '/admin');
   if (!back.startsWith('/') || back.startsWith('//')) back = '/admin';
   return new Response('', { status: 302, headers: { 'Location': back } });
+}
+
+// Wspólna logika dla panelu admina i linku z SMS-a.
+
+/** Potwierdza rezerwację i dodaje wpis do kalendarza (raz). Zwraca {ok} albo {error:'slot'}. */
+async function confirmBooking(env, id) {
+  // Status aktywny (!= cancelled), więc przywrócenie anulowanej rezerwacji,
+  // której slot zajęła inna, narusza idx_bookings_active_slot. Mapujemy to na 'slot'.
+  try {
+    await env.DB.prepare("UPDATE bookings SET status='confirmed' WHERE id=?1").bind(id).run();
+  } catch (e) {
+    if (/UNIQUE constraint/i.test(String(e?.message || e))) return { error: 'slot' };
+    throw e;
+  }
+  // Wpis do kalendarza, best-effort, tylko raz. Błąd kalendarza nie psuje potwierdzenia.
+  const b = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
+  if (b && !b.gcal_event_id) {
+    try {
+      const eventId = await addToCalendar(env, b);
+      if (eventId) {
+        await env.DB.prepare('UPDATE bookings SET gcal_event_id=?1 WHERE id=?2').bind(eventId, id).run();
+      }
+    } catch (e) { console.error('Kalendarz error', e); }
+  }
+  return { ok: true };
+}
+
+/** Anuluje rezerwację i usuwa wpis z kalendarza, jeśli istniał. */
+async function cancelBooking(env, id) {
+  const b = await env.DB.prepare('SELECT gcal_event_id FROM bookings WHERE id=?1').bind(id).first();
+  await env.DB.prepare("UPDATE bookings SET status='cancelled', gcal_event_id=NULL WHERE id=?1").bind(id).run();
+  if (b?.gcal_event_id) {
+    try { await deleteCalendarEvent(env, b.gcal_event_id); } catch (e) { console.error('Kalendarz delete error', e); }
+  }
 }
 
 async function adminBlockSlot(request, env) {

@@ -11,6 +11,17 @@ FROM_EMAIL=rezerwacje@skocznarower.pl
 # Token wygenerujesz w panelu SMSAPI → Ustawienia → Token API (OAuth)
 SMSAPI_TOKEN=
 SMS_SENDER=Info
+# Numer Mateusza dostający SMS o każdej nowej rezerwacji (fallback 600370810 w kodzie)
+OWNER_PHONE=600370810
+
+# Google Calendar (opcjonalne, bez tych trzech wpis do kalendarza idzie tylko do logów)
+# Wpis powstaje, gdy Mateusz potwierdzi rezerwację w /admin.
+# 1. Google Cloud Console: konto serwisowe + włącz "Google Calendar API" + pobierz klucz JSON
+# 2. Udostępnij kalendarz "pyszczka" adresowi konta serwisowego (prawo "Wprowadzanie zmian w wydarzeniach")
+# 3. GOOGLE_CALENDAR_ID: ustawienia kalendarza "pyszczka" → "Integracja kalendarza" → identyfikator
+GOOGLE_SA_EMAIL=
+GOOGLE_SA_PRIVATE_KEY=
+GOOGLE_CALENDAR_ID=
 
 # Google Places API (opcjonalne, bez tych dwóch sekcja opinii zostaje schowana)
 # GOOGLE_PLACE_ID: znajdź w https://developers.google.com/maps/documentation/places/web-service/place-id
