@@ -28,3 +28,9 @@ GOOGLE_CALENDAR_ID=
 # GOOGLE_PLACES_API_KEY: Google Cloud Console, włącz "Places API (New)", zrób klucz, ogranicz do Places API + domeny
 GOOGLE_PLACES_API_KEY=
 GOOGLE_PLACE_ID=
+
+# Kanał głosowy / agent AI na numerze wirtualnym (opcjonalne).
+# Sekret dzielony z platformą głosową (Vapi/Retell/Telnyx/...); chroni /api/voice/*.
+# Bez niego trasy /api/voice/* zwracają 401 (czyli kanał głosowy jest wyłączony).
+# Wygeneruj losowy ciąg, np. openssl rand -hex 32.
+VOICE_API_SECRET=

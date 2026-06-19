@@ -41,6 +41,11 @@ const SCHEDULE = {
   6: ['16:00','17:00','18:00','19:00'],
 };
 
+// Publiczny numer pokazywany klientom w SMS/mailach (jeden punkt edycji po stronie Workera).
+// To NIE jest OWNER_PHONE: SMS o nowej rezerwacji do właściciela idzie osobno (patrz sendNotifications),
+// i ten numer zostaje na komórce Mateusza, nawet gdy numer publiczny zmienimy na wirtualny.
+const PUBLIC_PHONE_DISPLAY = '22 181 15 07';
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -80,6 +85,31 @@ export default {
 // ─── API ────────────────────────────────────────────────────────────────────
 
 async function handleApi(request, env, url, ctx) {
+  // Kanał głosowy (agent AI dzwoniący na numer wirtualny) woła Worker server-to-server.
+  // Cała przestrzeń /api/voice/* jest za sekretem VOICE_API_SECRET (stałoczasowe porównanie).
+  // Bez ustawionego sekretu trasy zwracają 401 (jak /admin: brak publicznego fallbacku).
+  // json() nie wysyła nagłówków CORS, więc przeglądarka tego nie odczyta; bez preflightu.
+  if (url.pathname.startsWith('/api/voice/')) {
+    const provided = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '')
+      || request.headers.get('X-Voice-Secret') || '';
+    if (!env.VOICE_API_SECRET || !timingSafeEqual(provided, env.VOICE_API_SECRET)) {
+      return json({ error: 'unauthorized' }, 401);
+    }
+    if (url.pathname === '/api/voice/availability' && request.method === 'GET') {
+      return await apiVoiceAvailability(env, url.searchParams.get('date'));
+    }
+    if (url.pathname === '/api/voice/next-slot' && request.method === 'GET') {
+      return await apiNextSlot(env);
+    }
+    if (url.pathname === '/api/voice/config' && request.method === 'GET') {
+      return apiVoiceConfig();
+    }
+    if (url.pathname === '/api/voice/bookings' && request.method === 'POST') {
+      return await apiVoiceCreateBooking(request, env, ctx);
+    }
+    return json({ error: 'Not found' }, 404);
+  }
+
   if (url.pathname === '/api/availability' && request.method === 'GET') {
     return await apiAvailability(env, url.searchParams.get('date'));
   }
@@ -228,27 +258,42 @@ async function apiCreateBooking(request, env, ctx) {
   try { body = await request.json(); }
   catch { return json({ error: 'Bad JSON' }, 400); }
 
+  const res = await createBookingCore(env, ctx, body);
+  if (!res.ok) return json({ error: res.error }, res.status);
+  return json({
+    ok: true,
+    id: res.id,
+    message: 'Rezerwacja przyjęta. Skontaktuję się z Tobą, żeby potwierdzić.',
+  });
+}
+
+// Rdzeń tworzenia rezerwacji, wspólny dla formularza web (/api/bookings)
+// i kanału głosowego (/api/voice/bookings). Zwraca { ok:true, id }
+// albo { ok:false, status, error }. Walidacja, kontrola kolizji (z unikalnym
+// indeksem idx_bookings_active_slot jako backstopem wyścigu) oraz powiadomienia
+// są identyczne dla obu wejść, więc kanał głosowy nie może podwójnie zabookować slotu.
+async function createBookingCore(env, ctx, body) {
   const errors = validateBooking(body);
-  if (errors.length) return json({ error: errors[0] }, 400);
+  if (errors.length) return { ok: false, status: 400, error: errors[0] };
 
   const dow = dayOfWeek(body.date);
   if (!SCHEDULE[dow]?.includes(body.time_slot)) {
-    return json({ error: 'Nieprawidłowy slot' }, 400);
+    return { ok: false, status: 400, error: 'Nieprawidłowy slot' };
   }
   if (body.date < todayInWarsaw()) {
-    return json({ error: 'Nie można umówić wstecz' }, 400);
+    return { ok: false, status: 400, error: 'Nie można umówić wstecz' };
   }
 
   // Konflikt slotu
   const conflict = await env.DB.prepare(
     "SELECT id FROM bookings WHERE date = ?1 AND time_slot = ?2 AND status != 'cancelled' LIMIT 1"
   ).bind(body.date, body.time_slot).first();
-  if (conflict) return json({ error: 'Slot zajęty, wybierz inny' }, 409);
+  if (conflict) return { ok: false, status: 409, error: 'Slot zajęty, wybierz inny' };
 
   const blocked = await env.DB.prepare(
     "SELECT 1 FROM blocked_slots WHERE date = ?1 AND (time_slot = ?2 OR time_slot = 'all') LIMIT 1"
   ).bind(body.date, body.time_slot).first();
-  if (blocked) return json({ error: 'Termin niedostępny' }, 409);
+  if (blocked) return { ok: false, status: 409, error: 'Termin niedostępny' };
 
   const id = crypto.randomUUID();
   const now = Date.now();
@@ -269,7 +314,7 @@ async function apiCreateBooking(request, env, ctx) {
     // Unikalny indeks idx_bookings_active_slot łapie wyścig dwóch równoległych rezerwacji.
     // Dopasowanie zawężone do "UNIQUE constraint", żeby nie maskować NOT NULL/CHECK jako 409.
     if (/UNIQUE constraint/i.test(String(e?.message || e))) {
-      return json({ error: 'Slot zajęty, wybierz inny' }, 409);
+      return { ok: false, status: 409, error: 'Slot zajęty, wybierz inny' };
     }
     throw e;
   }
@@ -280,10 +325,52 @@ async function apiCreateBooking(request, env, ctx) {
   const mail = sendNotifications(env, { id, ...body }).catch(e => console.error('Mail/SMS error', e));
   if (ctx?.waitUntil) ctx.waitUntil(mail);
 
+  return { ok: true, id };
+}
+
+// ─── KANAŁ GŁOSOWY (agent AI dzwoniący na numer wirtualny) ───────────────────
+// Wszystkie poniższe są wołane wyłącznie zza bramki VOICE_API_SECRET w handleApi.
+
+// Wolne godziny na dany dzień (tylko wolne, format przyjazny dla TTS).
+async function apiVoiceAvailability(env, dateStr) {
+  if (!isValidDate(dateStr)) return json({ error: 'Bad date' }, 400);
+  if (dateStr < todayInWarsaw()) return json({ date: dateStr, free: [] });
+  const maps = await loadSlotMaps(env, dateStr, dateStr);
+  return json({ date: dateStr, free: freeSlotsForDate(dateStr, maps.taken, maps.blocked, maps.blockedDays) });
+}
+
+// Stałe (usługi/ceny/typy/godziny) jako jedno źródło prawdy dla promptu agenta,
+// żeby nie hardkodować cennika w drugim miejscu (spójne z inwariantem z CLAUDE.md).
+function apiVoiceConfig() {
+  return json({
+    services: SERVICES,
+    bike_types: BIKE_TYPES,
+    schedule: SCHEDULE,
+    address: 'Jesionowa 18, 05-825 Grodzisk Mazowiecki',
+    booking_url: 'https://www.skocznarower.pl/umow',
+  });
+}
+
+// Tworzy rezerwację z rozmowy telefonicznej. Ten sam rdzeń co web (createBookingCore):
+// identyczna walidacja, kontrola kolizji (+ unikalny indeks) i powiadomienia (SMS + mail
+// do właściciela). Rezerwacja zostaje 'pending', kalendarz dopiero po potwierdzeniu w /admin.
+async function apiVoiceCreateBooking(request, env, ctx) {
+  let body;
+  try { body = await request.json(); }
+  catch { return json({ error: 'Bad JSON' }, 400); }
+
+  // Oznacz źródło telefoniczne w notatce, żeby rezerwacje z agenta były rozpoznawalne w /admin.
+  const baseNote = (body.notes && String(body.notes).trim()) || '';
+  const notes = baseNote ? `[tel] ${baseNote}` : '[tel] rezerwacja telefoniczna (agent)';
+
+  const res = await createBookingCore(env, ctx, { ...body, notes });
+  if (!res.ok) return json({ error: res.error }, res.status);
+
+  const service = SERVICES.find(s => s.id === body.service_type)?.name || body.service_type;
   return json({
     ok: true,
-    id,
-    message: 'Rezerwacja przyjęta. Skontaktuję się z Tobą, żeby potwierdzić.',
+    id: res.id,
+    confirmation: `Zarezerwowane: ${service}, ${body.date} o ${body.time_slot}. Oddzwonimy, żeby potwierdzić.`,
   });
 }
 
@@ -371,7 +458,7 @@ Data:    ${b.date}, godz. ${b.time_slot}
 Usługa:  ${service}
 Rower:   ${b.bike_type}
 
-Jeśli coś się zmieni, zadzwoń: 600 370 810.
+Jeśli coś się zmieni, zadzwoń: ${PUBLIC_PHONE_DISPLAY}.
 
 Mateusz / skocznarower.pl
 Jesionowa 18, Grodzisk Mazowiecki
@@ -1362,7 +1449,7 @@ async function sendDailyReminders(env) {
   ).bind(tomorrow).all();
 
   for (const b of rows.results || []) {
-    const text = `Cześć ${b.customer_name.split(' ')[0]}! Przypomnienie: jutro o ${b.time_slot} wizyta w skocznarower.pl, Jesionowa 18 Grodzisk Maz. Jakby coś: 600 370 810.`;
+    const text = `Cześć ${b.customer_name.split(' ')[0]}! Przypomnienie: jutro o ${b.time_slot} wizyta w skocznarower.pl, Jesionowa 18 Grodzisk Maz. Jakby coś: ${PUBLIC_PHONE_DISPLAY}.`;
     const ok = await sendSms(env, b.customer_phone, text);
     if (ok) {
       await env.DB.prepare('UPDATE bookings SET reminder_sent_at = ?1 WHERE id = ?2')
@@ -1425,7 +1512,7 @@ Wybierasz termin tutaj: https://www.skocznarower.pl/umow
 Do zobaczenia w warsztacie,
 Mateusz / skocznarower.pl
 Jesionowa 18, Grodzisk Mazowiecki
-Tel. 600 370 810
+Tel. ${PUBLIC_PHONE_DISPLAY}
 `,
       });
       await env.DB.prepare('UPDATE seasonal_reminders SET sent_at = ?1 WHERE id = ?2')
