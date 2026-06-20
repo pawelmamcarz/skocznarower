@@ -4,21 +4,27 @@ Gotowiec do wklejenia w panelu Telnyx (AI Assistants). Agent odbiera połączeni
 
 ---
 
-## STATUS: skonfigurowane i działające (stan na 2026-06-20)
+## STATUS: skonfigurowane, oczekuje na aktywację numeru (stan na 2026-06-20)
 
-Numer wirtualny: **+48 22 181 15 07** (Telnyx, warszawski geograficzny). Repo na `master`, commit z tą funkcją: `172eb9f` (na origin).
+Numer wirtualny: **+48 22 181 15 07** (Telnyx, warszawski geograficzny). Repo na `master`, commit z tą funkcją: `172eb9f` (na origin). ID asystenta: `assistant-a9bfe9cf-7b53-462c-9a91-150b33f6cefa`.
 
-Konfiguracja asystenta Telnyx została **dokończona przez właściciela w panelu Telnyx** (nie przez Playwright/MCP). Sekcje 1-6 niżej zostają jako referencja, gdyby trzeba było odtworzyć lub zmienić ustawienia.
+Konfiguracja asystenta w panelu Telnyx została **dokończona przez Playwright/MCP** (sesja 2026-06-20). Sekcje 1-6 niżej zostają jako referencja, gdyby trzeba było odtworzyć lub zmienić ustawienia.
 
 **Gotowe i na żywo:**
 - Numer publiczny podmieniony wszędzie (strony, JSON-LD `telephone`, `tel:`, llms.txt/llms-full.txt) na +48 22 181 15 07. WhatsApp (`wa.me`) i `OWNER_PHONE` zostają na komórce `600370810` (świadomie).
 - Baner trybu wakacyjnego (znika sam po 2026-07-12).
 - Endpointy `/api/voice/*` za sekretem `VOICE_API_SECRET` (na żywo: bez sekretu 401). Booking idzie wspólnym `createBookingCore` (rezerwacja `pending`, notatka `[tel]`, SMS+mail do właściciela).
 - Konto Telnyx + numer kupiony; `VOICE_API_SECRET` ustawiony w produkcji.
-- **AI Assistant `skocznarower`** utworzony z promptem i 4 narzędziami (`get_next_slot`, `get_availability`, `create_booking`, `transfer_to_human`).
-- Numer **+48 22 181 15 07 podpięty na inbound** do asystenta.
-- **Transfer do człowieka** ustawiony (numer fallback w panelu Telnyx).
-- **Test na żywo przeszedł OK** (rezerwacja `pending` z `[tel]` w `/admin`).
+- **AI Assistant `skocznarower`** (model `anthropic/claude-haiku-4-5`): prompt, greeting i 5 narzędzi (`get_next_slot`, `get_availability`, `create_booking`, `transfer_to_human`, Hang Up). Zapisany jako wersja Main (live traffic).
+- **`create_booking`**: body przez Advanced mode (schemat JSON) z enumami zsynchronizowanymi 1:1 z `SERVICES`/`BIKE_TYPES`/sloty w `src/index.js`.
+- **Transfer do człowieka** (`transfer_to_human`): z `+48221811507` na fallback `+48600370810`.
+- Numer **podpięty na inbound** do połączenia asystenta (`SIP Connection/Application = ai-assistant-a9bfe9cf-...` w zakładce Voice numeru).
+- **Wszystkie 3 webhooki przetestowane z panelu (status 200):** `get_next_slot` → `{date,time,label}`, `get_availability?date=` → `{free:[...]}`, `create_booking` → `{ok:true,id,confirmation}` (testowa rezerwacja `pending` z `[tel]` powstała i została usunięta z D1, slot zwolniony).
+
+**DO DOKOŃCZENIA (poza panelem konfiguracji):**
+- ⚠️ Numer ma status **„Req. Pending / Required for calls"**, czyli niezakończony wymóg regulacyjny dla numeru geograficznego PL (dokumenty/adres firmy). Dopóki Telnyx tego nie zatwierdzi, numer może nie odbierać realnych połączeń. To proces po stronie właściciela/Telnyxa, nie da się go ustawić klikaniem.
+- Prawdziwy telefon na numer (gdy aktywny): umów wizytę głosowo + powiedz „chcę człowieka" → transfer na `+48600370810`.
+- Opcjonalnie sprawdzić głos/język TTS asystenta (pl-PL) w sekcji „Voice & Language".
 
 Sekret `VOICE_API_SECRET` celowo nie jest w repo; przy zmianach narzędzi Telnyx wklejaj go tylko w nagłówki `Authorization`, nie zapisuj do plików.
 
