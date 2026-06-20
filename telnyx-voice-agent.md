@@ -2,6 +2,30 @@
 
 Gotowiec do wklejenia w panelu Telnyx (AI Assistants). Agent odbiera połączenia na numerze wirtualnym, umawia wizyty przez nasze endpointy `/api/voice/*` i przełącza do człowieka na żądanie. Dev-only (nie jest publikowany jako asset, patrz `.assetsignore`).
 
+---
+
+## HANDOFF: stan na 2026-06-20 (do dokończenia na innej maszynie)
+
+Numer wirtualny: **+48 22 181 15 07** (Telnyx, warszawski geograficzny). Repo na `master`, ostatni commit z tą funkcją: `172eb9f` (wypchnięty na origin).
+
+**Zrobione i NA ŻYWO (wdrożone `wrangler deploy`):**
+- Numer publiczny podmieniony wszędzie (strony, JSON-LD `telephone`, `tel:`, llms.txt/llms-full.txt) na +48 22 181 15 07.
+- WhatsApp (`wa.me`) i `OWNER_PHONE` zostają na komórce `600370810` (świadomie).
+- Baner trybu wakacyjnego (znika sam po 2026-07-12).
+- Endpointy `/api/voice/*` za sekretem `VOICE_API_SECRET` (zweryfikowane na żywo: bez sekretu 401, `/api/next-slot` 200). Booking idzie wspólnym `createBookingCore` (rezerwacja `pending`, notatka `[tel]`, SMS+mail do właściciela).
+
+**Zrobione przez właściciela:** konto Telnyx + numer kupiony; `VOICE_API_SECRET` ustawiony w produkcji (`wrangler secret put`).
+
+**DO DOKOŃCZENIA (po to jest ten plik):** skonfigurować AI Assistant w panelu Telnyx wg sekcji niżej, podpiąć numer na inbound, dodać transfer do człowieka, przetestować. Można to zrobić Playwrightem (MCP) na maszynie, gdzie jest dostępny.
+
+**Instrukcja dla następnej sesji Claude (z Playwright MCP):**
+1. Cel: utworzyć asystenta `skocznarower` i podpiąć numer +48 22 181 15 07 na połączenia przychodzące, plus transfer do człowieka.
+2. Sekretu `VOICE_API_SECRET` NIE ma w repo (celowo). Poproś użytkownika, żeby go podał, i wklejaj go tylko w nagłówki `Authorization` narzędzi Telnyx. Nie zapisuj go do plików.
+3. Logowanie do Telnyx (login + 2FA) wykonuje użytkownik w sterowanej przeglądarce. Kroki billingowe / przypisanie numeru potwierdzaj z użytkownikiem.
+4. Brakująca wartość do ustalenia z użytkownikiem: **numer fallback „człowiek"** (US/VoIP) do narzędzia Transfer.
+5. Wartości pól: sekcja „Pole po polu" na końcu tego pliku; prompt i schematy narzędzi: sekcje 1-2.
+6. Test końcowy: web widget w builderze → rezerwacja `pending` z `[tel]` w `/admin`; potem prawdziwy telefon; „chcę człowieka" → transfer.
+
 ## 0. Zanim zaczniesz
 
 1. Konto Telnyx, kup numer PL: https://telnyx.com/phone-numbers/poland (geograficzny +48, ok. $1/mies.; do aktywacji podaj adres firmy: Jesionowa 18, 05-825 Grodzisk Mazowiecki).
@@ -131,4 +155,40 @@ Powitanie: "Serwis rowerowy skocznarower, w czym mogę pomóc?"
 ## 5. Faza przejściowa (przed włączeniem AI)
 
 Zanim agent będzie przetestowany, ustaw numer na zwykłe przekierowanie do wybranego numeru albo pocztę głosową z transkrypcją na adres `NOTIFY_EMAIL`. Numer publiczny i tak podmieniamy na stronie (Faza 0B). Agenta włączasz, gdy działa pewnie; transfer do człowieka zostaw zawsze jako wyjście awaryjne.
-```
+
+## 6. Pole po polu (dla Playwright/automatyzacji)
+
+Stałe: Base URL `https://www.skocznarower.pl`. Sekret = `<VOICE_API_SECRET>` (poproś użytkownika, nie ma go w repo). Nagłówek do każdego webhooka: pole Name `Authorization`, pole Value `Bearer <VOICE_API_SECRET>`.
+
+**Asystent** (`AI, Storage and Compute` → `AI Assistants` → Create → blank):
+- Name: `skocznarower`
+- Model: mocny wielojęzyczny (OpenAI GPT-4o/4.1 jako integration secret, albo najmocniejszy open; sprawdź polski)
+- Instructions: cały prompt z sekcji 2
+- Greeting: `Serwis rowerowy skocznarower, w czym mogę pomóc?`
+- Voice & Language: język `Polski (pl)`, głos polski (NaturalHD/ElevenLabs)
+
+**Tool 1 — get_next_slot** (add tool → Webhook):
+- Name: `get_next_slot` | Description: `Najbliższy wolny termin wizyty.`
+- Method: `GET` | URL: `https://www.skocznarower.pl/api/voice/next-slot` | Timeout: `5000`
+- Headers: `Authorization` = `Bearer <VOICE_API_SECRET>` | Query/Body: brak
+
+**Tool 2 — get_availability** (Webhook):
+- Name: `get_availability` | Description: `Wolne godziny w danym dniu.`
+- Method: `GET` | URL: `https://www.skocznarower.pl/api/voice/availability` | Timeout: `5000`
+- Headers: `Authorization` = `Bearer <VOICE_API_SECRET>`
+- Query Parameters: `date` (string, required) `Dzień YYYY-MM-DD, jutro lub później`
+
+**Tool 3 — create_booking** (Webhook):
+- Name: `create_booking` | Description: `Tworzy rezerwację wizyty (pending).`
+- Method: `POST` | URL: `https://www.skocznarower.pl/api/voice/bookings` | Timeout: `6000`
+- Headers: `Authorization` = `Bearer <VOICE_API_SECRET>`, `Content-Type` = `application/json`
+- Body Parameters: schemat JSON z sekcji 1 (service_type enum, bike_type enum, date, time_slot enum, customer_name, customer_phone, customer_email?, notes?)
+
+**Tool 4 — Transfer** (add tool → Transfer):
+- From number: `+48221811507` (numer musi mieć outbound voice profile / connection)
+- Target name: `czlowiek` | To number: `<NUMER_FALLBACK>` (do podania przez użytkownika)
+
+**Podpięcie numeru (inbound):** zakładka `Calling` → `Assign Numbers` → zaznacz `+48 22 181 15 07`.
+
+**Test:** web widget w builderze (poproś o przegląd podstawowy MTB na jutro) → w `/admin` rezerwacja `pending` z notatką `[tel]`; potem prawdziwy telefon; „chcę człowieka" → transfer.
+
