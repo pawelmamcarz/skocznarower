@@ -4,27 +4,23 @@ Gotowiec do wklejenia w panelu Telnyx (AI Assistants). Agent odbiera połączeni
 
 ---
 
-## HANDOFF: stan na 2026-06-20 (do dokończenia na innej maszynie)
+## STATUS: skonfigurowane i działające (stan na 2026-06-20)
 
-Numer wirtualny: **+48 22 181 15 07** (Telnyx, warszawski geograficzny). Repo na `master`, ostatni commit z tą funkcją: `172eb9f` (wypchnięty na origin).
+Numer wirtualny: **+48 22 181 15 07** (Telnyx, warszawski geograficzny). Repo na `master`, commit z tą funkcją: `172eb9f` (na origin).
 
-**Zrobione i NA ŻYWO (wdrożone `wrangler deploy`):**
-- Numer publiczny podmieniony wszędzie (strony, JSON-LD `telephone`, `tel:`, llms.txt/llms-full.txt) na +48 22 181 15 07.
-- WhatsApp (`wa.me`) i `OWNER_PHONE` zostają na komórce `600370810` (świadomie).
+Konfiguracja asystenta Telnyx została **dokończona przez właściciela w panelu Telnyx** (nie przez Playwright/MCP). Sekcje 1-6 niżej zostają jako referencja, gdyby trzeba było odtworzyć lub zmienić ustawienia.
+
+**Gotowe i na żywo:**
+- Numer publiczny podmieniony wszędzie (strony, JSON-LD `telephone`, `tel:`, llms.txt/llms-full.txt) na +48 22 181 15 07. WhatsApp (`wa.me`) i `OWNER_PHONE` zostają na komórce `600370810` (świadomie).
 - Baner trybu wakacyjnego (znika sam po 2026-07-12).
-- Endpointy `/api/voice/*` za sekretem `VOICE_API_SECRET` (zweryfikowane na żywo: bez sekretu 401, `/api/next-slot` 200). Booking idzie wspólnym `createBookingCore` (rezerwacja `pending`, notatka `[tel]`, SMS+mail do właściciela).
+- Endpointy `/api/voice/*` za sekretem `VOICE_API_SECRET` (na żywo: bez sekretu 401). Booking idzie wspólnym `createBookingCore` (rezerwacja `pending`, notatka `[tel]`, SMS+mail do właściciela).
+- Konto Telnyx + numer kupiony; `VOICE_API_SECRET` ustawiony w produkcji.
+- **AI Assistant `skocznarower`** utworzony z promptem i 4 narzędziami (`get_next_slot`, `get_availability`, `create_booking`, `transfer_to_human`).
+- Numer **+48 22 181 15 07 podpięty na inbound** do asystenta.
+- **Transfer do człowieka** ustawiony (numer fallback w panelu Telnyx).
+- **Test na żywo przeszedł OK** (rezerwacja `pending` z `[tel]` w `/admin`).
 
-**Zrobione przez właściciela:** konto Telnyx + numer kupiony; `VOICE_API_SECRET` ustawiony w produkcji (`wrangler secret put`).
-
-**DO DOKOŃCZENIA (po to jest ten plik):** skonfigurować AI Assistant w panelu Telnyx wg sekcji niżej, podpiąć numer na inbound, dodać transfer do człowieka, przetestować. Można to zrobić Playwrightem (MCP) na maszynie, gdzie jest dostępny.
-
-**Instrukcja dla następnej sesji Claude (z Playwright MCP):**
-1. Cel: utworzyć asystenta `skocznarower` i podpiąć numer +48 22 181 15 07 na połączenia przychodzące, plus transfer do człowieka.
-2. Sekretu `VOICE_API_SECRET` NIE ma w repo (celowo). Poproś użytkownika, żeby go podał, i wklejaj go tylko w nagłówki `Authorization` narzędzi Telnyx. Nie zapisuj go do plików.
-3. Logowanie do Telnyx (login + 2FA) wykonuje użytkownik w sterowanej przeglądarce. Kroki billingowe / przypisanie numeru potwierdzaj z użytkownikiem.
-4. Brakująca wartość do ustalenia z użytkownikiem: **numer fallback „człowiek"** (US/VoIP) do narzędzia Transfer.
-5. Wartości pól: sekcja „Pole po polu" na końcu tego pliku; prompt i schematy narzędzi: sekcje 1-2.
-6. Test końcowy: web widget w builderze → rezerwacja `pending` z `[tel]` w `/admin`; potem prawdziwy telefon; „chcę człowieka" → transfer.
+Sekret `VOICE_API_SECRET` celowo nie jest w repo; przy zmianach narzędzi Telnyx wklejaj go tylko w nagłówki `Authorization`, nie zapisuj do plików.
 
 ## 0. Zanim zaczniesz
 
