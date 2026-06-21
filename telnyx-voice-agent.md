@@ -22,7 +22,11 @@ Konfiguracja asystenta w panelu Telnyx została **dokończona przez Playwright/M
 - **Wszystkie 3 webhooki przetestowane z panelu (status 200):** `get_next_slot` → `{date,time,label}`, `get_availability?date=` → `{free:[...]}`, `create_booking` → `{ok:true,id,confirmation}` (testowa rezerwacja `pending` z `[tel]` powstała i została usunięta z D1, slot zwolniony).
 
 **DO DOKOŃCZENIA (poza panelem konfiguracji):**
-- ⚠️ Numer ma status **„Req. Pending / Required for calls"**, czyli niezakończony wymóg regulacyjny dla numeru geograficznego PL (dokumenty/adres firmy). Dopóki Telnyx tego nie zatwierdzi, numer może nie odbierać realnych połączeń. To proces po stronie właściciela/Telnyxa, nie da się go ustawić klikaniem.
+- ⚠️ **Wymóg regulacyjny numeru („Req. Pending").** To osobne od weryfikacji konta. Compliance → Requirement Groups było puste, więc utworzyłem grupę **`50776853-dbef-42fa-9fc6-855762398b88`** (Poland / Local / Ordering, ref „skocznarower +48221811507", status Unapproved). Wypełnione i zapisane: Service Usage Description + adres geograficzny (Jesionowa 18, 05-825 Grodzisk Mazowiecki, strefa 22). **Do uzupełnienia przez właściciela, potem „Submit for Pre-approval":**
+  1. Contact Information: `Contact: Mateusz Mamcarz | Business: <nazwa z CEIDG lub N/A jeśli osoba prywatna> | Phone: +48600370810`.
+  2. Dokument tożsamości/firmy (PL): dowód/paszport (osoba) ALBO wydruk CEIDG/KRS (firma), kolor, ważny, wszystkie dane widoczne.
+  3. Proof of Address: rachunek/faktura ≤3 mies. (prąd/woda/gaz/internet/telefon STACJONARNY/operator telekom/polisa) z imieniem-nazwą + pełnym adresem + datą. NIE komórka, NIE zrzut ekranu, NIE starszy niż 3 mies.
+  Nazwa/imię na obu dokumentach musi się zgadzać z Contact Information i adresem. Telnyx odpowiada zwykle w 24h (pn-pt). Jeśli po akceptacji numer sam nie zmieni statusu, przypisz grupę do numeru/zamówienia albo napisz na „Chat with us" (podaj numer + ID grupy).
 - Prawdziwy telefon na numer (gdy aktywny): umów wizytę głosowo + powiedz „chcę człowieka" → transfer na `+48600370810`.
 - Opcjonalnie sprawdzić głos/język TTS asystenta (pl-PL) w sekcji „Voice & Language".
 
