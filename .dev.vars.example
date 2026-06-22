@@ -34,3 +34,20 @@ GOOGLE_PLACE_ID=
 # Bez niego trasy /api/voice/* zwracają 401 (czyli kanał głosowy jest wyłączony).
 # Wygeneruj losowy ciąg, np. openssl rand -hex 32.
 VOICE_API_SECRET=
+
+# Kanał WhatsApp (Cloud API w trybie coexistence na numerze 600370810). Opcjonalne.
+# Bez WHATSAPP_TOKEN + WHATSAPP_PHONE_NUMBER_ID wysyłka idzie tylko do logów (dry-run),
+# a webhook GET zwraca 403. Pełny przewodnik onboardingu: whatsapp-setup.md.
+WHATSAPP_TOKEN=
+WHATSAPP_PHONE_NUMBER_ID=
+# Token weryfikacyjny webhooka (sam wymyślasz, ten sam wpisujesz w panelu Meta). openssl rand -hex 16.
+WHATSAPP_VERIFY_TOKEN=
+# App Secret aplikacji Meta, do weryfikacji podpisu X-Hub-Signature-256 webhooka.
+WHATSAPP_APP_SECRET=
+# Opcjonalne nadpisania (domyślne wartości w kodzie):
+# WHATSAPP_API_BASE=graph.facebook.com
+# WHATSAPP_API_VERSION=v21.0
+# WHATSAPP_LANG=pl
+# WHATSAPP_TPL_CONFIRM=potwierdzenie_rezerwacji
+# WHATSAPP_TPL_REMINDER=przypomnienie_wizyty
+# WHATSAPP_AUTO_ACK=1   # auto-odpowiedź na przychodzące (domyślnie wyłączone)

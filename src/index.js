@@ -110,6 +110,25 @@ async function handleApi(request, env, url, ctx) {
     return json({ error: 'Not found' }, 404);
   }
 
+  // Kanał WhatsApp (Cloud API w trybie coexistence): webhook weryfikacyjny + odbiór wiadomości.
+  // GET to handshake Meta (zwraca hub.challenge); POST to wiadomości przychodzące (podpis X-Hub-Signature-256).
+  // Poza bramką VOICE_API_SECRET, bo to publiczny endpoint, który Meta woła sama.
+  if (url.pathname === '/api/whatsapp/webhook') {
+    if (request.method === 'GET') {
+      const mode = url.searchParams.get('hub.mode');
+      const token = url.searchParams.get('hub.verify_token') || '';
+      const challenge = url.searchParams.get('hub.challenge') || '';
+      if (mode === 'subscribe' && env.WHATSAPP_VERIFY_TOKEN && timingSafeEqual(token, env.WHATSAPP_VERIFY_TOKEN)) {
+        return new Response(challenge, { status: 200, headers: { 'Content-Type': 'text/plain' } });
+      }
+      return new Response('forbidden', { status: 403 });
+    }
+    if (request.method === 'POST') {
+      return await handleWhatsAppWebhook(request, env, ctx);
+    }
+    return json({ error: 'Not found' }, 404);
+  }
+
   if (url.pathname === '/api/availability' && request.method === 'GET') {
     return await apiAvailability(env, url.searchParams.get('date'));
   }
@@ -411,6 +430,30 @@ async function sendNotifications(env, b) {
       `Nowa rezerwacja: ${b.date} ${b.time_slot}, ${b.customer_name}, tel ${b.customer_phone}. ${tail}`,
     );
   } catch (e) { console.error('SMS do właściciela error', e); }
+
+  // Potwierdzenie do klienta przez WhatsApp (szablon utility), fail-soft.
+  // Wysyłamy tylko gdy kanał skonfigurowany (po onboardingu coexistence); inaczej pomijamy bez śladu.
+  if (env.WHATSAPP_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID) {
+    try {
+      const firstName = (b.customer_name || '').split(' ')[0] || b.customer_name;
+      await sendWhatsApp(env, b.customer_phone, {
+        type: 'template',
+        template: {
+          name: env.WHATSAPP_TPL_CONFIRM || 'potwierdzenie_rezerwacji',
+          language: { code: env.WHATSAPP_LANG || 'pl' },
+          components: [{
+            type: 'body',
+            parameters: [
+              { type: 'text', text: firstName },
+              { type: 'text', text: b.date },
+              { type: 'text', text: b.time_slot },
+              { type: 'text', text: service },
+            ],
+          }],
+        },
+      });
+    } catch (e) { console.error('WA potwierdzenie error', e); }
+  }
 
   if (!env.RESEND_API_KEY) return;
 
@@ -1371,6 +1414,16 @@ async function hmac(secret, data) {
   return b64urlBytes(new Uint8Array(sig));
 }
 
+// HMAC-SHA256 w hex, do weryfikacji podpisu webhooka WhatsApp (X-Hub-Signature-256: sha256=<hex>).
+async function hmacHex(secret, data) {
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data));
+  return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 function timingSafeEqual(a, b) {
   if (a.length !== b.length) return false;
   let r = 0;
@@ -1449,8 +1502,29 @@ async function sendDailyReminders(env) {
   ).bind(tomorrow).all();
 
   for (const b of rows.results || []) {
-    const text = `Cześć ${b.customer_name.split(' ')[0]}! Przypomnienie: jutro o ${b.time_slot} wizyta w skocznarower.pl, Jesionowa 18 Grodzisk Maz. Jakby coś: ${PUBLIC_PHONE_DISPLAY}.`;
-    const ok = await sendSms(env, b.customer_phone, text);
+    const firstName = b.customer_name.split(' ')[0];
+    // WhatsApp ma pierwszeństwo (jeśli kanał skonfigurowany), SMS jako fallback.
+    let ok = false;
+    if (env.WHATSAPP_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID) {
+      ok = await sendWhatsApp(env, b.customer_phone, {
+        type: 'template',
+        template: {
+          name: env.WHATSAPP_TPL_REMINDER || 'przypomnienie_wizyty',
+          language: { code: env.WHATSAPP_LANG || 'pl' },
+          components: [{
+            type: 'body',
+            parameters: [
+              { type: 'text', text: firstName },
+              { type: 'text', text: b.time_slot },
+            ],
+          }],
+        },
+      });
+    }
+    if (!ok) {
+      const text = `Cześć ${firstName}! Przypomnienie: jutro o ${b.time_slot} wizyta w skocznarower.pl, Jesionowa 18 Grodzisk Maz. Jakby coś: ${PUBLIC_PHONE_DISPLAY}.`;
+      ok = await sendSms(env, b.customer_phone, text);
+    }
     if (ok) {
       await env.DB.prepare('UPDATE bookings SET reminder_sent_at = ?1 WHERE id = ?2')
         .bind(Date.now(), b.id).run();
@@ -1566,6 +1640,104 @@ async function sendSms(env, phoneRaw, text) {
     console.error('SMS send exception', e);
     return false;
   }
+}
+
+// ─── WHATSAPP (Cloud API, tryb coexistence) ────────────────────────────────
+
+/**
+ * Wysyła wiadomość WhatsApp przez Cloud API (Meta Graph; 360dialog jest zgodny z tym kształtem).
+ * Wymaga env.WHATSAPP_TOKEN i env.WHATSAPP_PHONE_NUMBER_ID. Bez nich loguje dry-run i zwraca true.
+ * `message` to obiekt Graph bez messaging_product/to, np.:
+ *   { type:'text', text:{ body:'...' } }                                  // free-form (tylko w oknie 24h)
+ *   { type:'template', template:{ name, language:{code}, components:[...] } }  // szablon (poza oknem 24h)
+ * env.WHATSAPP_API_BASE domyślnie 'graph.facebook.com', env.WHATSAPP_API_VERSION domyślnie 'v21.0'
+ * (BSP typu 360dialog ma inny host/nagłówek auth, wtedy dostroić tutaj). Fail-soft jak sendSms.
+ */
+async function sendWhatsApp(env, phoneRaw, message) {
+  const phone = normalizePhone(phoneRaw);
+  const to = phone.startsWith('48') ? phone : (phone.length === 9 ? '48' + phone : phone);
+
+  if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_NUMBER_ID) {
+    console.log('[WA dry-run] →', to, JSON.stringify(message));
+    return true;
+  }
+
+  try {
+    const base = env.WHATSAPP_API_BASE || 'graph.facebook.com';
+    const ver = env.WHATSAPP_API_VERSION || 'v21.0';
+    const r = await fetch(`https://${base}/${ver}/${env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.WHATSAPP_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ messaging_product: 'whatsapp', to, ...message }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || data?.error) {
+      console.error('WA send failed', r.status, data?.error || data);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error('WA send exception', e);
+    return false;
+  }
+}
+
+/**
+ * Odbiera webhook WhatsApp Cloud API (wiadomości przychodzące + statusy doręczeń).
+ * Weryfikuje podpis X-Hub-Signature-256 (HMAC-SHA256 po WHATSAPP_APP_SECRET); bez sekretu pomija weryfikację (dev).
+ * Zawsze odpowiada 200 (Meta ponawia przy innym kodzie), cała logika fail-soft.
+ * W trybie coexistence rozmowy widzi też właściciel w aplikacji; tu logujemy, opcjonalnie zapisujemy do D1
+ * i (jeśli WHATSAPP_AUTO_ACK=1) odsyłamy jedną wiadomość naprowadzającą na formularz.
+ */
+async function handleWhatsAppWebhook(request, env, ctx) {
+  const raw = await request.text();
+
+  if (env.WHATSAPP_APP_SECRET) {
+    const provided = request.headers.get('X-Hub-Signature-256') || '';
+    const expected = 'sha256=' + await hmacHex(env.WHATSAPP_APP_SECRET, raw);
+    if (!timingSafeEqual(provided, expected)) {
+      console.error('WA webhook: zły podpis');
+      return new Response('forbidden', { status: 403 });
+    }
+  }
+
+  let body;
+  try { body = JSON.parse(raw); } catch { return json({ ok: true }); }
+
+  try {
+    for (const entry of body.entry || []) {
+      for (const change of entry.changes || []) {
+        const value = change.value || {};
+        for (const m of value.messages || []) {
+          const from = m.from;
+          const text = m.text?.body || `[${m.type}]`;
+          console.log('[WA inbound]', from, text);
+
+          // Zapis do D1 (tabela z migracji 0009); fail-soft, gdy migracja nie wgrana.
+          try {
+            await env.DB.prepare(
+              `INSERT OR IGNORE INTO whatsapp_messages (wa_message_id, direction, wa_phone, body, created_at)
+               VALUES (?1, 'in', ?2, ?3, ?4)`
+            ).bind(m.id || crypto.randomUUID(), from, text, Date.now()).run();
+          } catch (e) { console.error('WA store error', e); }
+
+          // Auto-ack: domyślnie wyłączony, bo w coexistence właściciel zwykle odpisuje ręcznie z aplikacji.
+          if (env.WHATSAPP_AUTO_ACK === '1' && m.type === 'text') {
+            const p = sendWhatsApp(env, from, {
+              type: 'text',
+              text: { body: 'Cześć! Najszybciej umówisz wizytę tutaj: skocznarower.pl/umow. Napisz, w czym pomóc, odpiszemy najszybciej jak się da.' },
+            }).catch(e => console.error('WA auto-ack error', e));
+            if (ctx?.waitUntil) ctx.waitUntil(p);
+          }
+        }
+      }
+    }
+  } catch (e) { console.error('WA webhook parse error', e); }
+
+  return json({ ok: true });
 }
 
 // ─── GOOGLE REVIEWS (Places API New) ───────────────────────────────────────
