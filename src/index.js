@@ -789,6 +789,18 @@ async function handleAdmin(request, env, url) {
   if (path === '/admin/booking-new' && request.method === 'POST') {
     return await adminCreateBooking(request, env);
   }
+  if (path === '/admin/zlecenie' && request.method === 'GET') {
+    return await adminBookingDetail(env, url);
+  }
+  if (path === '/admin/zlecenie' && request.method === 'POST') {
+    return await adminSaveFinance(request, env);
+  }
+  if (path === '/admin/rozliczenie' && request.method === 'GET') {
+    return await adminSettlement(env, url);
+  }
+  if (path === '/admin/rozliczenie' && request.method === 'POST') {
+    return await adminSettleAction(request, env);
+  }
   if (path === '/admin/block' && request.method === 'POST') {
     return await adminBlockSlot(request, env);
   }
@@ -1008,6 +1020,7 @@ async function adminCreateBooking(request, env) {
   const email = String(form.get('customer_email') || '').trim() || null;
   const service_type = String(form.get('service_type') || '').trim();
   const bike_type = String(form.get('bike_type') || '').trim();
+  const bike_model = String(form.get('bike_model') || '').trim().slice(0, 120) || null;
   const date = String(form.get('date') || '').trim();
   const time_slot = String(form.get('time_slot') || '').trim();
   const source = String(form.get('source') || '').trim();
@@ -1030,10 +1043,10 @@ async function adminCreateBooking(request, env) {
   const id = crypto.randomUUID();
   try {
     await env.DB.prepare(
-      `INSERT INTO bookings (id, created_at, date, time_slot, service_type, bike_type,
+      `INSERT INTO bookings (id, created_at, date, time_slot, service_type, bike_type, bike_model,
          customer_name, customer_phone, customer_email, notes, status)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'confirmed')`
-    ).bind(id, Date.now(), date, time_slot, service_type, bike_type, name, phone, email, notes).run();
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, 'confirmed')`
+    ).bind(id, Date.now(), date, time_slot, service_type, bike_type, bike_model, name, phone, email, notes).run();
   } catch (e) {
     if (/UNIQUE constraint/i.test(String(e?.message || e))) {
       return new Response('Ten slot ma już aktywną rezerwację (data + godzina). Zmień godzinę.', { status: 409 });
@@ -1051,6 +1064,274 @@ async function adminCreateBooking(request, env) {
   }
 
   return new Response('', { status: 302, headers: { 'Location': '/admin' } });
+}
+
+// ─── ROZLICZENIE MATEUSZ / PIOTR ────────────────────────────────────────────
+// Zysk do podziału = narzut na częściach (cena dla klienta - koszt) + robocizna.
+// Podział 75% Mateusz / 25% Piotr; gdy usługę robi Mateusz sam -> 100% dla niego.
+// Koszt części to zwrot (pass-through) dla tego, kto je kupił, nie zysk.
+const SPLIT_MATEUSZ = 0.75;
+const PAY_LABELS = { cash: 'gotówka', blik: 'BLIK 600370810', transfer: 'przelew' };
+const PERSON_LABELS = { piotr: 'Piotr', mateusz: 'Mateusz', klient: 'klient' };
+
+// Parsuje kwotę w zł z pola formularza. '' -> null (puste), błędny format -> undefined (sygnał błędu).
+function parseZl(raw) {
+  const s = String(raw ?? '').replace(',', '.').replace(/\s/g, '').trim();
+  if (s === '') return null;
+  if (!/^\d+(\.\d+)?$/.test(s)) return undefined;
+  const n = Math.round(parseFloat(s));
+  if (n < 0 || n > 1000000) return undefined;
+  return n;
+}
+
+// Kto fizycznie odebrał kasę: jawne paid_to, inaczej z metody (gotówka -> Piotr, BLIK/przelew -> Mateusz).
+function paymentHolder(b) {
+  if (b.paid_to === 'piotr' || b.paid_to === 'mateusz') return b.paid_to;
+  return b.payment_method === 'cash' ? 'piotr' : 'mateusz';
+}
+
+function computeSettlement(b) {
+  const partsCost = b.parts_cost || 0;
+  const partsCharged = b.parts_charged || 0;
+  const labor = b.labor_charge || 0;
+  const partsMarkup = partsCharged - partsCost;        // narzut na częściach
+  const profit = partsMarkup + labor;                  // zysk do podziału
+  const solo = b.service_by === 'mateusz';
+  const mateuszProfit = solo ? profit : Math.round(profit * SPLIT_MATEUSZ);
+  const piotrProfit = solo ? 0 : profit - mateuszProfit;
+  const partsBuyer = b.parts_by === 'piotr' ? 'piotr' : (b.parts_by === 'klient' ? 'klient' : 'mateusz');
+  const refundMateusz = partsBuyer === 'mateusz' ? partsCost : 0;
+  const refundPiotr = partsBuyer === 'piotr' ? partsCost : 0;
+  const owedMateusz = mateuszProfit + refundMateusz;   // ile należy się Mateuszowi z tego zlecenia
+  const owedPiotr = piotrProfit + refundPiotr;         // ile należy się Piotrowi
+  const paid = b.amount_paid || 0;
+  const holder = paymentHolder(b);
+  const collectedMateusz = holder === 'mateusz' ? paid : 0;
+  const collectedPiotr = holder === 'piotr' ? paid : 0;
+  const netMateusz = collectedMateusz - owedMateusz;   // dodatnie = trzyma nadwyżkę (powinien oddać)
+  const netPiotr = collectedPiotr - owedPiotr;
+  const total = partsCharged + labor;                  // wycena dla klienta
+  return {
+    partsCost, partsCharged, labor, partsMarkup, profit, solo,
+    mateuszProfit, piotrProfit, refundMateusz, refundPiotr, owedMateusz, owedPiotr,
+    paid, holder, collectedMateusz, collectedPiotr, netMateusz, netPiotr, total, partsBuyer,
+    hasFinance: b.parts_cost != null || b.parts_charged != null || b.labor_charge != null || b.amount_paid != null,
+  };
+}
+
+function zl(n) { return `${n} zł`; }
+
+// Wspólna powłoka HTML dla podstron panelu (ciemny motyw, te same style co dashboard).
+function adminShell(title, bodyHtml) {
+  return html(`<!doctype html><html lang="pl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escapeHtml(title)} · skocznarower.pl</title>
+<meta name="robots" content="noindex,nofollow">
+${ADMIN_STYLES}
+</head><body>
+<header class="topbar">
+  <h1>${escapeHtml(title)}</h1>
+  <div class="topbar-right">
+    <a href="/admin" class="logout">← Rezerwacje</a>
+    <a href="/admin/rozliczenie" class="logout">Rozliczenie</a>
+    <a href="/admin/logout" class="logout">Wyloguj</a>
+  </div>
+</header>
+${bodyHtml}
+</body></html>`);
+}
+
+// Strona szczegółów jednego zlecenia: dane + formularz finansowy + wyliczony podział.
+async function adminBookingDetail(env, url) {
+  const id = url.searchParams.get('id') || '';
+  const b = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
+  if (!b) return new Response('Nie ma takiego zlecenia', { status: 404 });
+  const saved = url.searchParams.get('saved') === '1';
+  const svc = SERVICES.find(s => s.id === b.service_type)?.name || b.service_type;
+  const s = computeSettlement(b);
+  const opt = (val, cur, label) => `<option value="${val}"${cur === val ? ' selected' : ''}>${escapeHtml(label)}</option>`;
+  const num = v => (v == null ? '' : v);
+
+  const splitBox = s.hasFinance ? `
+    <div class="calc">
+      <div class="calc-row"><span>Narzut na częściach</span><b>${zl(s.partsMarkup)}</b></div>
+      <div class="calc-row"><span>Robocizna</span><b>${zl(s.labor)}</b></div>
+      <div class="calc-row total"><span>Zysk do podziału</span><b>${zl(s.profit)}</b></div>
+      <div class="calc-row"><span>Mateusz${s.solo ? ' (usługa solo, 100%)' : ' (75%)'}</span><b>${zl(s.mateuszProfit)}</b></div>
+      <div class="calc-row"><span>Piotr${s.solo ? ' (0%)' : ' (25%)'}</span><b>${zl(s.piotrProfit)}</b></div>
+      <div class="calc-row"><span>Wycena dla klienta (części + robocizna)</span><b>${zl(s.total)}</b></div>
+      <div class="calc-row"><span>Zapłacono (${PAY_LABELS[b.payment_method] || 'brak metody'}, odbiera ${PERSON_LABELS[s.holder]})</span><b>${zl(s.paid)}</b></div>
+      ${b.amount_paid != null && s.paid !== s.total ? `<div class="calc-row warn"><span>Uwaga: zapłacono ≠ wycena</span><b>${zl(s.paid - s.total)}</b></div>` : ''}
+    </div>` : '<p class="muted">Uzupełnij kwoty, żeby zobaczyć podział.</p>';
+
+  const back = '/admin/zlecenie?id=' + encodeURIComponent(id);
+  const body = `
+<section class="card">
+  <h2>${escapeHtml(b.customer_name)} · ${b.date} ${b.time_slot} <span class="badge badge-${b.status}">${statusLabel(b.status)}</span></h2>
+  ${saved ? '<p class="muted" style="color:#9fe22e;">Zapisano.</p>' : ''}
+  <p class="muted">
+    ${escapeHtml(svc)} · ${escapeHtml(b.bike_type)}${b.bike_model ? ' · ' + escapeHtml(b.bike_model) : ''}<br>
+    <a href="tel:${escapeHtml(b.customer_phone)}">${escapeHtml(b.customer_phone)}</a>${b.customer_email ? ' · ' + escapeHtml(b.customer_email) : ''}
+    ${b.notes ? '<br>' + escapeHtml(b.notes) : ''}
+  </p>
+
+  <div class="detail-grid">
+    <form method="post" action="/admin/zlecenie" class="finance-form">
+      <input type="hidden" name="action" value="finance">
+      <input type="hidden" name="id" value="${escapeHtml(b.id)}">
+      <label>Model roweru<input type="text" name="bike_model" value="${escapeHtml(b.bike_model || '')}" maxlength="120" placeholder="np. Woom 3, Trek Marlin 5"></label>
+      <label>Kto wykonał usługę
+        <select name="service_by">${opt('piotr', b.service_by || 'piotr', 'Piotr')}${opt('mateusz', b.service_by, 'Mateusz (solo, 100%)')}</select>
+      </label>
+      <label>Koszt części (wydane)<input type="text" name="parts_cost" value="${num(b.parts_cost)}" inputmode="decimal" placeholder="zł"></label>
+      <label>Cena części dla klienta<input type="text" name="parts_charged" value="${num(b.parts_charged)}" inputmode="decimal" placeholder="zł (z narzutem)"></label>
+      <label>Kto kupił części
+        <select name="parts_by">${opt('mateusz', b.parts_by || 'mateusz', 'Mateusz')}${opt('piotr', b.parts_by, 'Piotr')}${opt('klient', b.parts_by, 'Klient sam')}</select>
+      </label>
+      <label>Robocizna (cena usługi)<input type="text" name="labor_charge" value="${num(b.labor_charge)}" inputmode="decimal" placeholder="zł"></label>
+      <label>Ile klient zapłacił<input type="text" name="amount_paid" value="${num(b.amount_paid)}" inputmode="decimal" placeholder="zł"></label>
+      <label>Metoda płatności
+        <select name="payment_method">${opt('', b.payment_method || '', '(brak)')}${opt('cash', b.payment_method, 'gotówka')}${opt('blik', b.payment_method, 'BLIK 600370810')}${opt('transfer', b.payment_method, 'przelew')}</select>
+      </label>
+      <label>Kasę odebrał (puste = z metody)
+        <select name="paid_to">${opt('', b.paid_to || '', 'auto z metody')}${opt('piotr', b.paid_to, 'Piotr')}${opt('mateusz', b.paid_to, 'Mateusz')}</select>
+      </label>
+      <label>Co zrobiono (do SMS)<input type="text" name="repair_summary" value="${escapeHtml(b.repair_summary || '')}" maxlength="300"></label>
+      <button type="submit">Zapisz</button>
+    </form>
+
+    <div class="calc-wrap">
+      <h3>Podział</h3>
+      ${splitBox}
+    </div>
+  </div>
+
+  <form method="post" action="/admin/booking" class="actions" style="margin-top:16px">
+    <input type="hidden" name="id" value="${escapeHtml(b.id)}">
+    <input type="hidden" name="back" value="${escapeHtml(back)}">
+    ${b.status !== 'in_progress' && b.status !== 'done' && b.status !== 'cancelled' ? '<button name="action" value="start" class="btn-ok">Przyjęto</button>' : ''}
+    ${b.status !== 'done' && b.status !== 'cancelled' ? '<button name="action" value="done" class="btn-ok">Zrobione</button>' : ''}
+    ${b.status !== 'cancelled' ? '<button name="action" value="cancel" class="btn-warn">Anuluj</button>' : ''}
+  </form>
+</section>`;
+  return adminShell('Zlecenie', body);
+}
+
+// Zapis pól finansowych zlecenia. Ustawia też final_price = wycena (części + robocizna),
+// żeby SMS „Koszt" i przychód w dashboardzie były spójne.
+async function adminSaveFinance(request, env) {
+  const form = await request.formData();
+  const id = String(form.get('id') || '');
+  if (!id) return new Response('Bad', { status: 400 });
+
+  const partsCost = parseZl(form.get('parts_cost'));
+  const partsCharged = parseZl(form.get('parts_charged'));
+  const labor = parseZl(form.get('labor_charge'));
+  const paid = parseZl(form.get('amount_paid'));
+  if ([partsCost, partsCharged, labor, paid].some(v => v === undefined)) {
+    return new Response('Nieprawidłowa kwota', { status: 400 });
+  }
+  const bikeModel = String(form.get('bike_model') || '').trim().slice(0, 120) || null;
+  const summary = String(form.get('repair_summary') || '').trim().slice(0, 300) || null;
+  const method = ['cash', 'blik', 'transfer'].includes(String(form.get('payment_method'))) ? String(form.get('payment_method')) : null;
+  const serviceBy = ['piotr', 'mateusz'].includes(String(form.get('service_by'))) ? String(form.get('service_by')) : 'piotr';
+  const partsBy = ['mateusz', 'piotr', 'klient'].includes(String(form.get('parts_by'))) ? String(form.get('parts_by')) : 'mateusz';
+  const paidTo = ['piotr', 'mateusz'].includes(String(form.get('paid_to'))) ? String(form.get('paid_to')) : null;
+
+  // final_price = wycena dla klienta (części + robocizna), gdy podano choć jedną z tych kwot.
+  const total = (partsCharged != null || labor != null) ? (partsCharged || 0) + (labor || 0) : null;
+
+  await env.DB.prepare(
+    `UPDATE bookings SET
+       bike_model=?2, parts_cost=?3, parts_charged=?4, labor_charge=?5, amount_paid=?6,
+       payment_method=?7, service_by=?8, parts_by=?9, paid_to=?10, repair_summary=?11,
+       final_price=COALESCE(?12, final_price)
+     WHERE id=?1`
+  ).bind(id, bikeModel, partsCost, partsCharged, labor, paid, method, serviceBy, partsBy, paidTo, summary, total).run();
+
+  return new Response('', { status: 302, headers: { 'Location': '/admin/zlecenie?id=' + encodeURIComponent(id) + '&saved=1' } });
+}
+
+// Strona rozliczeń: zlecenia 'done' z wyliczonym podziałem + zbiorcze saldo Mateusz/Piotr.
+async function adminSettlement(env, url) {
+  const showAll = url.searchParams.get('show') === 'all';
+  const where = showAll ? "WHERE status='done'" : "WHERE status='done' AND settled_at IS NULL";
+  const rows = (await env.DB.prepare(
+    `SELECT * FROM bookings ${where} ORDER BY date DESC, time_slot DESC LIMIT 500`
+  ).all()).results || [];
+
+  let sumPiotr = 0, sumMateusz = 0, netPiotr = 0, netMateusz = 0, missing = 0;
+  const lines = rows.map(b => {
+    const s = computeSettlement(b);
+    if (!s.hasFinance) { missing++; }
+    else {
+      sumPiotr += s.piotrProfit; sumMateusz += s.mateuszProfit;
+      netPiotr += s.netPiotr; netMateusz += s.netMateusz;
+    }
+    const det = '/admin/zlecenie?id=' + encodeURIComponent(b.id);
+    return `<tr class="${b.settled_at ? 'settled' : ''}">
+      <td><div class="date">${b.date}</div><div class="muted">${escapeHtml(b.customer_name)}</div></td>
+      <td>${s.hasFinance ? zl(s.total) : '<span class="muted">brak danych</span>'}</td>
+      <td>${s.hasFinance ? zl(s.profit) : '–'}</td>
+      <td>${s.hasFinance ? zl(s.mateuszProfit) : '–'}</td>
+      <td>${s.hasFinance ? zl(s.piotrProfit) : '–'}</td>
+      <td>${s.hasFinance ? `${PAY_LABELS[b.payment_method] || '?'} → ${PERSON_LABELS[s.holder]}` : '–'}</td>
+      <td class="actions">
+        <a href="${escapeHtml(det)}" class="btn-ok" style="text-decoration:none">Otwórz</a>
+        ${b.settled_at
+          ? `<form method="post" action="/admin/rozliczenie" style="display:inline"><input type="hidden" name="id" value="${escapeHtml(b.id)}"><button name="action" value="unsettle" class="btn-warn">Cofnij</button></form>`
+          : `<form method="post" action="/admin/rozliczenie" style="display:inline"><input type="hidden" name="id" value="${escapeHtml(b.id)}"><button name="action" value="settle" class="btn-ok">Rozliczone</button></form>`}
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Saldo: dodatnie net = osoba trzyma nadwyżkę i powinna oddać drugiej.
+  // Przelew ograniczony do mniejszej z (nadwyżka, niedobór), żeby przy nad/niedopłacie klienta
+  // nie kazać oddać więcej gotówki niż się fizycznie trzyma (resztę absorbuje nad/niedopłata).
+  const transfer = Math.min(Math.abs(netPiotr), Math.abs(netMateusz));
+  let saldoMsg;
+  if (netPiotr > 0 && netMateusz < 0 && transfer > 0) saldoMsg = `Piotr trzyma nadwyżkę i przekazuje Mateuszowi <b>${zl(transfer)}</b>.`;
+  else if (netMateusz > 0 && netPiotr < 0 && transfer > 0) saldoMsg = `Mateusz przekazuje Piotrowi <b>${zl(transfer)}</b>.`;
+  else if (netPiotr === 0 && netMateusz === 0) saldoMsg = 'Rozliczone do zera.';
+  else saldoMsg = `Saldo Piotr: ${zl(netPiotr)}, Mateusz: ${zl(netMateusz)}.`;
+
+  const body = `
+<section class="card">
+  <h2>Rozliczenie ${showAll ? '(wszystkie zrobione)' : '(nierozliczone)'}</h2>
+  <nav class="tabs" style="margin-bottom:12px">
+    <a href="/admin/rozliczenie" class="${!showAll ? 'active' : ''}">Nierozliczone</a>
+    <a href="/admin/rozliczenie?show=all" class="${showAll ? 'active' : ''}">Wszystkie</a>
+  </nav>
+  <div class="calc" style="max-width:420px;margin-bottom:18px">
+    <div class="calc-row"><span>Zysk Piotra (25% z jego zleceń)</span><b>${zl(sumPiotr)}</b></div>
+    <div class="calc-row"><span>Zysk Mateusza</span><b>${zl(sumMateusz)}</b></div>
+    <div class="calc-row total"><span>Do wyrównania</span></div>
+    <div class="calc-row"><span>${saldoMsg}</span></div>
+    ${missing ? `<div class="calc-row warn"><span>Zleceń bez danych finansowych</span><b>${missing}</b></div>` : ''}
+  </div>
+  ${rows.length === 0 ? '<p class="muted">Brak zleceń.</p>' : `
+  <table>
+    <thead><tr><th>Zlecenie</th><th>Wycena</th><th>Zysk</th><th>Mateusz</th><th>Piotr</th><th>Płatność</th><th></th></tr></thead>
+    <tbody>${lines}</tbody>
+  </table>`}
+  <p class="muted" style="margin-top:10px">„Rozliczone" chowa zlecenie z listy nierozliczonych po przekazaniu kasy. Kwoty edytujesz wchodząc w zlecenie (Otwórz).</p>
+</section>`;
+  return adminShell('Rozliczenie', body);
+}
+
+async function adminSettleAction(request, env) {
+  const form = await request.formData();
+  const id = String(form.get('id') || '');
+  const action = String(form.get('action') || '');
+  if (!id) return new Response('Bad', { status: 400 });
+  if (action === 'settle') {
+    await env.DB.prepare('UPDATE bookings SET settled_at=?1 WHERE id=?2').bind(Date.now(), id).run();
+  } else if (action === 'unsettle') {
+    await env.DB.prepare('UPDATE bookings SET settled_at=NULL WHERE id=?1').bind(id).run();
+  } else {
+    return new Response('Bad action', { status: 400 });
+  }
+  return new Response('', { status: 302, headers: { 'Location': '/admin/rozliczenie' } });
 }
 
 async function adminBlockSlot(request, env) {
@@ -1152,8 +1433,8 @@ function renderDashboard({ bookings, blocked, filter, today, reviewsProfile, rev
         <div class="time">${b.time_slot}</div>
       </td>
       <td>
-        <div class="name">${escapeHtml(b.customer_name)}</div>
-        <div class="muted">${escapeHtml(b.bike_type)}</div>
+        <div class="name"><a href="/admin/zlecenie?id=${escapeHtml(b.id)}" class="name-link">${escapeHtml(b.customer_name)}</a></div>
+        <div class="muted">${escapeHtml(b.bike_type)}${b.bike_model ? ` · ${escapeHtml(b.bike_model)}` : ''}</div>
       </td>
       <td>
         <a href="tel:${escapeHtml(b.customer_phone)}">${escapeHtml(b.customer_phone)}</a>
@@ -1175,6 +1456,7 @@ function renderDashboard({ bookings, blocked, filter, today, reviewsProfile, rev
       </td>
       <td><span class="badge badge-${b.status}">${statusLabel(b.status)}</span></td>
       <td class="actions">
+        <a href="/admin/zlecenie?id=${escapeHtml(b.id)}" class="btn-ok" style="text-decoration:none" title="Szczegóły, kwoty, rozliczenie">Otwórz</a>
         <form method="post" action="/admin/booking" style="display:inline">
           <input type="hidden" name="id" value="${escapeHtml(b.id)}">
           <input type="hidden" name="back" value="${backEsc}">
@@ -1203,6 +1485,7 @@ ${ADMIN_STYLES}
   <h1>Rezerwacje</h1>
   <div class="topbar-right">
     <span class="muted">Dziś: ${today}</span>
+    <a href="/admin/rozliczenie" class="logout">Rozliczenie</a>
     <a href="#outreach" class="logout">Współpraca</a>
     <a href="/admin/logout" class="logout">Wyloguj</a>
   </div>
@@ -1239,6 +1522,7 @@ ${ADMIN_STYLES}
       <option value="" disabled selected>Typ roweru…</option>
       ${BIKE_TYPES.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}
     </select>
+    <input type="text" name="bike_model" placeholder="Model roweru (opcjonalnie)" maxlength="120">
     <input type="date" name="date" required value="${today}">
     <input type="text" name="time_slot" placeholder="Godzina np. 17:00" pattern="[0-9]{2}:[0-9]{2}" required>
     <select name="source">
@@ -1475,6 +1759,24 @@ tr.status-done td { opacity: .65; }
 .block-form select { background: #0e0e0e; border: 1px solid #333; color: #fff; padding: 8px 12px; border-radius: 4px; font-size: 14px; }
 .summary-input { background: #0e0e0e; border: 1px solid #333; color: #fff; padding: 5px 8px; border-radius: 4px; font-size: 12px; width: 150px; margin-right: 4px; }
 .blocked-table { margin-top: 12px; }
+.name-link { color: #fff; text-decoration: none; border-bottom: 1px dotted #555; }
+.name-link:hover { color: #9fe22e; border-color: #9fe22e; }
+
+.detail-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; margin-top: 16px; }
+@media (max-width: 720px) { .detail-grid { grid-template-columns: 1fr; } }
+.finance-form { display: flex; flex-direction: column; gap: 10px; }
+.finance-form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: .04em; }
+.finance-form input, .finance-form select { background: #0e0e0e; border: 1px solid #333; color: #fff; padding: 9px 12px; border-radius: 4px; font-size: 14px; text-transform: none; letter-spacing: normal; }
+.finance-form button { align-self: flex-start; background: #9fe22e; color: #000; border: none; padding: 10px 22px; border-radius: 4px; font-weight: 700; cursor: pointer; margin-top: 4px; }
+.calc-wrap h3 { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+.calc { background: #0e0e0e; border: 1px solid #222; border-radius: 6px; padding: 12px 14px; }
+.calc-row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; font-size: 14px; border-bottom: 1px solid #1a1a1a; }
+.calc-row:last-child { border-bottom: 0; }
+.calc-row.total { border-top: 1px solid #333; border-bottom: 1px solid #333; font-weight: 700; color: #9fe22e; margin-top: 4px; }
+.calc-row.warn { color: #f4c542; }
+.calc-row b { color: #fff; white-space: nowrap; }
+.calc-row.total b { color: #9fe22e; }
+tr.settled td { opacity: .5; }
 
 body.login { display: flex; align-items: center; justify-content: center; }
 .login-box { background: #161616; border: 1px solid #222; border-radius: 8px; padding: 32px; width: 100%; max-width: 360px; }
