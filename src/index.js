@@ -793,7 +793,7 @@ async function handleAdmin(request, env, url) {
     return await adminBookingDetail(env, url);
   }
   if (path === '/admin/zlecenie' && request.method === 'POST') {
-    return await adminSaveFinance(request, env);
+    return await adminZleceniePost(request, env);
   }
   if (path === '/admin/rozliczenie' && request.method === 'GET') {
     return await adminSettlement(env, url);
@@ -909,7 +909,8 @@ async function adminUpdateBooking(request, env) {
     // Wszystkie te statusy są aktywne (!= cancelled), slot się nie zmienia, więc brak ryzyka kolizji.
     const b = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
     if (b && b.status !== 'in_progress' && b.status !== 'done') {
-      await env.DB.prepare("UPDATE bookings SET status='in_progress' WHERE id=?1").bind(id).run();
+      // accepted_at stempluje się tu (raz), ręczna korekta daty idzie przez adminSaveFinance.
+      await env.DB.prepare("UPDATE bookings SET status='in_progress', accepted_at=COALESCE(accepted_at, ?2) WHERE id=?1").bind(id, Date.now()).run();
       if (b.customer_phone) {
         await sendSms(env, b.customer_phone, repairAcceptedSms(b)).catch(e => console.error('SMS przyjęcie error', e));
       }
@@ -920,8 +921,8 @@ async function adminUpdateBooking(request, env) {
     const before = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
     const summary = String(form.get('repair_summary') || '').trim().slice(0, 300) || null;
     try {
-      await env.DB.prepare("UPDATE bookings SET status='done', repair_summary=COALESCE(?2, repair_summary) WHERE id=?1")
-        .bind(id, summary).run();
+      await env.DB.prepare("UPDATE bookings SET status='done', done_at=COALESCE(done_at, ?3), repair_summary=COALESCE(?2, repair_summary) WHERE id=?1")
+        .bind(id, summary, Date.now()).run();
     } catch (e) {
       if (/UNIQUE constraint/i.test(String(e?.message || e))) {
         return new Response('Slot zajęty przez inną rezerwację', { status: 409 });
@@ -1094,8 +1095,12 @@ function computeSettlement(b) {
   const partsCost = b.parts_cost || 0;
   const partsCharged = b.parts_charged || 0;
   const labor = b.labor_charge || 0;
-  const partsMarkup = partsCharged - partsCost;        // narzut na częściach
-  const profit = partsMarkup + labor;                  // zysk do podziału
+  const hasOverride = b.final_price_override != null;
+  // Cena dla klienta = ręczne nadpisanie, inaczej części + robocizna. Zysk do podziału liczony
+  // od efektywnej ceny (total - koszt części), więc ryczałt/rabat z nadpisania też dzieli się 75/25.
+  const total = hasOverride ? b.final_price_override : (partsCharged + labor);
+  const partsMarkup = partsCharged - partsCost;        // narzut na częściach (informacyjnie, bez nadpisania)
+  const profit = total - partsCost;                    // zysk do podziału
   const solo = b.service_by === 'mateusz';
   const mateuszProfit = solo ? profit : Math.round(profit * SPLIT_MATEUSZ);
   const piotrProfit = solo ? 0 : profit - mateuszProfit;
@@ -1110,16 +1115,66 @@ function computeSettlement(b) {
   const collectedPiotr = holder === 'piotr' ? paid : 0;
   const netMateusz = collectedMateusz - owedMateusz;   // dodatnie = trzyma nadwyżkę (powinien oddać)
   const netPiotr = collectedPiotr - owedPiotr;
-  const total = partsCharged + labor;                  // wycena dla klienta
   return {
-    partsCost, partsCharged, labor, partsMarkup, profit, solo,
+    partsCost, partsCharged, labor, partsMarkup, profit, solo, hasOverride,
     mateuszProfit, piotrProfit, refundMateusz, refundPiotr, owedMateusz, owedPiotr,
     paid, holder, collectedMateusz, collectedPiotr, netMateusz, netPiotr, total, partsBuyer,
-    hasFinance: b.parts_cost != null || b.parts_charged != null || b.labor_charge != null || b.amount_paid != null,
+    hasFinance: b.parts_cost != null || b.parts_charged != null || b.labor_charge != null || b.amount_paid != null || b.final_price_override != null,
   };
 }
 
 function zl(n) { return `${n} zł`; }
+
+// Data YYYY-MM-DD ze znacznika epoch ms, w strefie Warszawy.
+function warsawDate(ms) {
+  if (ms == null) return '';
+  return new Date(ms).toLocaleDateString('sv-SE', { timeZone: 'Europe/Warsaw' });
+}
+// Data + godzina ze znacznika epoch ms (do osi czasu komunikacji).
+function warsawDateTime(ms) {
+  if (ms == null) return '';
+  return new Date(ms).toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+// YYYY-MM-DD -> epoch ms w południe UTC (≈13-14 Warszawa), żeby render daty nie skakał przez DST.
+function dateToMs(dateStr) {
+  if (!isValidDate(dateStr)) return null;
+  const ms = Date.parse(dateStr + 'T12:00:00Z');
+  return Number.isNaN(ms) ? null : ms;
+}
+// Numer w formacie wa_phone (E.164 bez +, np. 48600370810) do dopasowania w whatsapp_messages.
+// Tolerancyjne na zapis +48 / 0048 / 9 cyfr.
+function waPhoneKey(phoneRaw) {
+  let p = String(phoneRaw || '').replace(/[^0-9]/g, '');   // same cyfry (gubi + i spacje)
+  if (p.startsWith('0048')) p = p.slice(2);                // 0048... -> 48...
+  if (p.length === 9) p = '48' + p;                        // lokalny 9-cyfrowy -> 48...
+  return p;
+}
+
+// Oś czasu komunikacji z klientem: odtworzone wychodzące SMS-y cyklu (ze znaczników czasu),
+// ręczne SMS-y z panelu (tabela messages) oraz przychodzące/wychodzące WhatsApp (po numerze).
+async function buildTimeline(env, b) {
+  const ev = [];
+  // Etykiety neutralne dla stempli statusu (accepted_at może być wpisane ręcznie, a lifecycle SMS
+  // jest best-effort). reminder/feedback stemplują się dopiero po udanej wysyłce, więc tam mówimy „SMS".
+  if (b.created_at) ev.push({ ts: b.created_at, label: 'Rezerwacja utworzona', body: null, tag: '' });
+  if (b.accepted_at) ev.push({ ts: b.accepted_at, label: 'Przyjęto do serwisu', body: null, tag: 'sms' });
+  if (b.done_at) ev.push({ ts: b.done_at, label: 'Oznaczono jako gotowe', body: null, tag: 'sms' });
+  if (b.reminder_sent_at) ev.push({ ts: b.reminder_sent_at, label: 'SMS wysłany: przypomnienie 24h', body: null, tag: 'sms' });
+  if (b.feedback_sent_at) ev.push({ ts: b.feedback_sent_at, label: 'SMS wysłany: prośba o opinię', body: null, tag: 'sms' });
+
+  try {
+    const msgs = (await env.DB.prepare('SELECT * FROM messages WHERE booking_id=?1 ORDER BY created_at DESC LIMIT 50').bind(b.id).all()).results || [];
+    for (const m of msgs) ev.push({ ts: m.created_at, label: 'SMS (panel) do klienta', body: m.body, tag: 'sms' });
+  } catch (e) { console.error('timeline messages error', e); }
+
+  try {
+    const wa = (await env.DB.prepare('SELECT * FROM whatsapp_messages WHERE wa_phone=?1 ORDER BY created_at DESC LIMIT 30').bind(waPhoneKey(b.customer_phone)).all()).results || [];
+    for (const w of wa) ev.push({ ts: w.created_at, label: 'WhatsApp ' + (w.direction === 'in' ? 'od klienta' : 'do klienta'), body: w.body, tag: 'wa po numerze' });
+  } catch (e) { console.error('timeline whatsapp error', e); }
+
+  ev.sort((a, c) => c.ts - a.ts);
+  return ev;
+}
 
 // Wspólna powłoka HTML dla podstron panelu (ciemny motyw, te same style co dashboard).
 function adminShell(title, bodyHtml) {
@@ -1141,70 +1196,96 @@ ${bodyHtml}
 </body></html>`);
 }
 
-// Strona szczegółów jednego zlecenia: dane + formularz finansowy + wyliczony podział.
+// Strona szczegółów jednego zlecenia: pełen widok naprawy (terminy, notatki, ceny, komunikacja).
 async function adminBookingDetail(env, url) {
   const id = url.searchParams.get('id') || '';
   const b = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
   if (!b) return new Response('Nie ma takiego zlecenia', { status: 404 });
   const saved = url.searchParams.get('saved') === '1';
+  const sent = url.searchParams.get('sent');
   const svc = SERVICES.find(s => s.id === b.service_type)?.name || b.service_type;
   const s = computeSettlement(b);
   const opt = (val, cur, label) => `<option value="${val}"${cur === val ? ' selected' : ''}>${escapeHtml(label)}</option>`;
   const num = v => (v == null ? '' : v);
+  const autoTotal = (b.parts_charged || 0) + (b.labor_charge || 0);
+  const timeline = await buildTimeline(env, b);
+  const back = '/admin/zlecenie?id=' + encodeURIComponent(id);
 
   const splitBox = s.hasFinance ? `
     <div class="calc">
-      <div class="calc-row"><span>Narzut na częściach</span><b>${zl(s.partsMarkup)}</b></div>
-      <div class="calc-row"><span>Robocizna</span><b>${zl(s.labor)}</b></div>
+      ${s.hasOverride
+        ? `<div class="calc-row"><span>Cena końcowa (nadpisana)</span><b>${zl(s.total)}</b></div>
+      <div class="calc-row"><span>minus koszt części</span><b>${zl(s.partsCost)}</b></div>`
+        : `<div class="calc-row"><span>Narzut na częściach</span><b>${zl(s.partsMarkup)}</b></div>
+      <div class="calc-row"><span>Robocizna</span><b>${zl(s.labor)}</b></div>`}
       <div class="calc-row total"><span>Zysk do podziału</span><b>${zl(s.profit)}</b></div>
       <div class="calc-row"><span>Mateusz${s.solo ? ' (usługa solo, 100%)' : ' (75%)'}</span><b>${zl(s.mateuszProfit)}</b></div>
       <div class="calc-row"><span>Piotr${s.solo ? ' (0%)' : ' (25%)'}</span><b>${zl(s.piotrProfit)}</b></div>
-      <div class="calc-row"><span>Wycena dla klienta (części + robocizna)</span><b>${zl(s.total)}</b></div>
+      <div class="calc-row"><span>Wycena dla klienta</span><b>${zl(s.total)}</b></div>
       <div class="calc-row"><span>Zapłacono (${PAY_LABELS[b.payment_method] || 'brak metody'}, odbiera ${PERSON_LABELS[s.holder]})</span><b>${zl(s.paid)}</b></div>
       ${b.amount_paid != null && s.paid !== s.total ? `<div class="calc-row warn"><span>Uwaga: zapłacono ≠ wycena</span><b>${zl(s.paid - s.total)}</b></div>` : ''}
     </div>` : '<p class="muted">Uzupełnij kwoty, żeby zobaczyć podział.</p>';
 
-  const back = '/admin/zlecenie?id=' + encodeURIComponent(id);
+  const timelineHtml = timeline.length ? timeline.map(e => `
+    <div class="tl-item${e.tag.startsWith('wa') ? ' tl-wa' : (e.tag === 'sms' ? ' tl-sms' : '')}">
+      <div class="tl-when">${warsawDateTime(e.ts)}</div>
+      <div class="tl-body"><b>${escapeHtml(e.label)}</b>${e.tag === 'wa po numerze' ? ' <span class="muted">(po numerze)</span>' : ''}${e.body ? `<div class="muted">${escapeHtml(e.body)}</div>` : ''}</div>
+    </div>`).join('') : '<p class="muted">Brak zarejestrowanej komunikacji.</p>';
+
   const body = `
 <section class="card">
   <h2>${escapeHtml(b.customer_name)} · ${b.date} ${b.time_slot} <span class="badge badge-${b.status}">${statusLabel(b.status)}</span></h2>
-  ${saved ? '<p class="muted" style="color:#9fe22e;">Zapisano.</p>' : ''}
+  ${saved ? '<p class="ok-msg">Zapisano.</p>' : ''}
+  ${sent === '1' ? '<p class="ok-msg">SMS wysłany.</p>' : ''}
+  ${sent === '0' ? '<p class="err-msg">Nie udało się wysłać SMS (sprawdź logi).</p>' : ''}
   <p class="muted">
-    ${escapeHtml(svc)} · ${escapeHtml(b.bike_type)}${b.bike_model ? ' · ' + escapeHtml(b.bike_model) : ''}<br>
-    <a href="tel:${escapeHtml(b.customer_phone)}">${escapeHtml(b.customer_phone)}</a>${b.customer_email ? ' · ' + escapeHtml(b.customer_email) : ''}
-    ${b.notes ? '<br>' + escapeHtml(b.notes) : ''}
+    <b>${escapeHtml(svc)}</b> · ${escapeHtml(b.bike_type)}${b.bike_model ? ' · ' + escapeHtml(b.bike_model) : ''}<br>
+    <a href="tel:${escapeHtml(b.customer_phone)}">${escapeHtml(b.customer_phone)}</a>${b.customer_email ? ' · <a href="mailto:' + escapeHtml(b.customer_email) + '">' + escapeHtml(b.customer_email) + '</a>' : ''}
   </p>
 
-  <div class="detail-grid">
-    <form method="post" action="/admin/zlecenie" class="finance-form">
-      <input type="hidden" name="action" value="finance">
-      <input type="hidden" name="id" value="${escapeHtml(b.id)}">
-      <label>Model roweru<input type="text" name="bike_model" value="${escapeHtml(b.bike_model || '')}" maxlength="120" placeholder="np. Woom 3, Trek Marlin 5"></label>
-      <label>Kto wykonał usługę
-        <select name="service_by">${opt('piotr', b.service_by || 'piotr', 'Piotr')}${opt('mateusz', b.service_by, 'Mateusz (solo, 100%)')}</select>
-      </label>
+  <form method="post" action="/admin/zlecenie" class="finance-form">
+    <input type="hidden" name="action" value="finance">
+    <input type="hidden" name="id" value="${escapeHtml(b.id)}">
+
+    <h4 class="sec-h">Terminy</h4>
+    <div class="f2">
+      <label>Termin przyjęcia<input type="date" name="accepted_date" value="${warsawDate(b.accepted_at)}"><span class="hint">auto przy „Przyjęto", możesz nadpisać</span></label>
+      <label>Oczekiwany odbiór<input type="date" name="expected_ready_date" value="${escapeHtml(b.expected_ready_date || '')}" min="${b.date}"></label>
+    </div>
+
+    <h4 class="sec-h">Naprawa i notatki</h4>
+    ${b.notes ? `<div class="ro-note"><span class="hint">Notatka klienta (z rezerwacji)</span>${escapeHtml(b.notes)}</div>` : ''}
+    <label>Notatki warsztatu / info o naprawie<textarea name="repair_info" rows="3" maxlength="2000" placeholder="diagnoza, użyte części, uwagi wewnętrzne">${escapeHtml(b.repair_info || '')}</textarea></label>
+    <label>Co zrobiono, krótko do SMS dla klienta<input type="text" name="repair_summary" value="${escapeHtml(b.repair_summary || '')}" maxlength="300" placeholder="np. odpowietrzone hamulce, wymiana klocków"></label>
+    <label>Model roweru<input type="text" name="bike_model" value="${escapeHtml(b.bike_model || '')}" maxlength="120" placeholder="np. Woom 3, Trek Marlin 5"></label>
+
+    <h4 class="sec-h">Ceny i płatność</h4>
+    <div class="f2">
       <label>Koszt części (wydane)<input type="text" name="parts_cost" value="${num(b.parts_cost)}" inputmode="decimal" placeholder="zł"></label>
       <label>Cena części dla klienta<input type="text" name="parts_charged" value="${num(b.parts_charged)}" inputmode="decimal" placeholder="zł (z narzutem)"></label>
-      <label>Kto kupił części
-        <select name="parts_by">${opt('mateusz', b.parts_by || 'mateusz', 'Mateusz')}${opt('piotr', b.parts_by, 'Piotr')}${opt('klient', b.parts_by, 'Klient sam')}</select>
-      </label>
       <label>Robocizna (cena usługi)<input type="text" name="labor_charge" value="${num(b.labor_charge)}" inputmode="decimal" placeholder="zł"></label>
+      <label>Cena końcowa dla klienta<input type="text" name="final_price_override" value="${num(b.final_price_override)}" inputmode="decimal" placeholder="auto: ${autoTotal} zł"><span class="hint">puste = auto (części + robocizna)</span></label>
       <label>Ile klient zapłacił<input type="text" name="amount_paid" value="${num(b.amount_paid)}" inputmode="decimal" placeholder="zł"></label>
       <label>Metoda płatności
         <select name="payment_method">${opt('', b.payment_method || '', '(brak)')}${opt('cash', b.payment_method, 'gotówka')}${opt('blik', b.payment_method, 'BLIK 600370810')}${opt('transfer', b.payment_method, 'przelew')}</select>
       </label>
+      <label>Kto wykonał usługę
+        <select name="service_by">${opt('piotr', b.service_by || 'piotr', 'Piotr')}${opt('mateusz', b.service_by, 'Mateusz (solo, 100%)')}</select>
+      </label>
+      <label>Kto kupił części
+        <select name="parts_by">${opt('mateusz', b.parts_by || 'mateusz', 'Mateusz')}${opt('piotr', b.parts_by, 'Piotr')}${opt('klient', b.parts_by, 'Klient sam')}</select>
+      </label>
       <label>Kasę odebrał (puste = z metody)
         <select name="paid_to">${opt('', b.paid_to || '', 'auto z metody')}${opt('piotr', b.paid_to, 'Piotr')}${opt('mateusz', b.paid_to, 'Mateusz')}</select>
       </label>
-      <label>Co zrobiono (do SMS)<input type="text" name="repair_summary" value="${escapeHtml(b.repair_summary || '')}" maxlength="300"></label>
-      <button type="submit">Zapisz</button>
-    </form>
-
-    <div class="calc-wrap">
-      <h3>Podział</h3>
-      ${splitBox}
     </div>
-  </div>
+    <button type="submit">Zapisz</button>
+  </form>
+
+  <details class="split-details">
+    <summary>Podział Mateusz / Piotr</summary>
+    ${splitBox}
+  </details>
 
   <form method="post" action="/admin/booking" class="actions" style="margin-top:16px">
     <input type="hidden" name="id" value="${escapeHtml(b.id)}">
@@ -1213,43 +1294,99 @@ async function adminBookingDetail(env, url) {
     ${b.status !== 'done' && b.status !== 'cancelled' ? '<button name="action" value="done" class="btn-ok">Zrobione</button>' : ''}
     ${b.status !== 'cancelled' ? '<button name="action" value="cancel" class="btn-warn">Anuluj</button>' : ''}
   </form>
+</section>
+
+<section class="card">
+  <h2>Komunikacja z klientem</h2>
+  <form method="post" action="/admin/zlecenie" class="sms-form">
+    <input type="hidden" name="action" value="send_sms">
+    <input type="hidden" name="id" value="${escapeHtml(b.id)}">
+    <textarea name="body" rows="2" maxlength="480" placeholder="Treść SMS do klienta (${escapeHtml(b.customer_phone)})" required></textarea>
+    <button type="submit" onclick="return confirm('Wysłać SMS do klienta?')">Wyślij SMS</button>
+  </form>
+  <div class="timeline">${timelineHtml}</div>
+  <p class="muted" style="margin-top:8px">Historia odtworzona z wysłanych SMS-ów i przychodzących WhatsApp; nie potwierdza doręczenia.</p>
 </section>`;
   return adminShell('Zlecenie', body);
 }
 
-// Zapis pól finansowych zlecenia. Ustawia też final_price = wycena (części + robocizna),
-// żeby SMS „Koszt" i przychód w dashboardzie były spójne.
-async function adminSaveFinance(request, env) {
+// Dispatcher POST /admin/zlecenie: zapis pól zlecenia albo wysyłka SMS do klienta.
+async function adminZleceniePost(request, env) {
   const form = await request.formData();
+  const action = String(form.get('action') || '');
+  if (action === 'send_sms') return adminSendSms(env, form);
+  return adminSaveFinance(env, form);
+}
+
+// Zapis pól zlecenia (terminy, notatki, ceny). final_price = ręczne nadpisanie albo
+// auto (części + robocizna), żeby SMS „Koszt" i przychód były spójne.
+async function adminSaveFinance(env, form) {
   const id = String(form.get('id') || '');
   if (!id) return new Response('Bad', { status: 400 });
+  const cur = await env.DB.prepare('SELECT accepted_at, final_price_override FROM bookings WHERE id=?1').bind(id).first();
+  if (!cur) return new Response('Nie ma takiego zlecenia', { status: 404 });
 
   const partsCost = parseZl(form.get('parts_cost'));
   const partsCharged = parseZl(form.get('parts_charged'));
   const labor = parseZl(form.get('labor_charge'));
   const paid = parseZl(form.get('amount_paid'));
-  if ([partsCost, partsCharged, labor, paid].some(v => v === undefined)) {
+  const override = parseZl(form.get('final_price_override'));
+  if ([partsCost, partsCharged, labor, paid, override].some(v => v === undefined)) {
     return new Response('Nieprawidłowa kwota', { status: 400 });
   }
   const bikeModel = String(form.get('bike_model') || '').trim().slice(0, 120) || null;
   const summary = String(form.get('repair_summary') || '').trim().slice(0, 300) || null;
+  const repairInfo = String(form.get('repair_info') || '').trim().slice(0, 2000) || null;
   const method = ['cash', 'blik', 'transfer'].includes(String(form.get('payment_method'))) ? String(form.get('payment_method')) : null;
   const serviceBy = ['piotr', 'mateusz'].includes(String(form.get('service_by'))) ? String(form.get('service_by')) : 'piotr';
   const partsBy = ['mateusz', 'piotr', 'klient'].includes(String(form.get('parts_by'))) ? String(form.get('parts_by')) : 'mateusz';
   const paidTo = ['piotr', 'mateusz'].includes(String(form.get('paid_to'))) ? String(form.get('paid_to')) : null;
 
-  // final_price = wycena dla klienta (części + robocizna), gdy podano choć jedną z tych kwot.
-  const total = (partsCharged != null || labor != null) ? (partsCharged || 0) + (labor || 0) : null;
+  const expectedRaw = String(form.get('expected_ready_date') || '').trim();
+  if (expectedRaw && !isValidDate(expectedRaw)) return new Response('Zła data odbioru', { status: 400 });
+  const expectedReady = expectedRaw || null;
+
+  // Termin przyjęcia: puste pole NIE kasuje istniejącego stempla (z akcji „Przyjęto"); zachowaj
+  // dokładny ms, jeśli data się nie zmieniła; inaczej z pola (południe UTC).
+  const acceptedRaw = String(form.get('accepted_date') || '').trim();
+  let acceptedAt;
+  if (!acceptedRaw) acceptedAt = cur.accepted_at;
+  else if (cur.accepted_at != null && warsawDate(cur.accepted_at) === acceptedRaw) acceptedAt = cur.accepted_at;
+  else { acceptedAt = dateToMs(acceptedRaw); if (acceptedAt == null) return new Response('Zła data przyjęcia', { status: 400 }); }
+
+  // final_price = ręczne nadpisanie, inaczej auto (części + robocizna). Zapisujemy też, gdy
+  // czyścimy poprzednie nadpisanie (cur.final_price_override != null), żeby final_price nie został stary.
+  const autoTotal = (partsCharged != null || labor != null) ? (partsCharged || 0) + (labor || 0) : null;
+  const finalPrice = override != null ? override : autoTotal;
+  const writeFinal = (override != null || autoTotal != null || cur.final_price_override != null) ? 1 : 0;
 
   await env.DB.prepare(
     `UPDATE bookings SET
        bike_model=?2, parts_cost=?3, parts_charged=?4, labor_charge=?5, amount_paid=?6,
        payment_method=?7, service_by=?8, parts_by=?9, paid_to=?10, repair_summary=?11,
-       final_price=COALESCE(?12, final_price)
+       repair_info=?12, expected_ready_date=?13, accepted_at=?14, final_price_override=?15,
+       final_price=CASE WHEN ?17=1 THEN ?16 ELSE final_price END
      WHERE id=?1`
-  ).bind(id, bikeModel, partsCost, partsCharged, labor, paid, method, serviceBy, partsBy, paidTo, summary, total).run();
+  ).bind(id, bikeModel, partsCost, partsCharged, labor, paid, method, serviceBy, partsBy, paidTo,
+    summary, repairInfo, expectedReady, acceptedAt, override, finalPrice, writeFinal).run();
 
   return new Response('', { status: 302, headers: { 'Location': '/admin/zlecenie?id=' + encodeURIComponent(id) + '&saved=1' } });
+}
+
+// Wysyłka ręcznego SMS do klienta z panelu; zapis w tabeli messages (na oś czasu).
+async function adminSendSms(env, form) {
+  const id = String(form.get('id') || '');
+  const text = String(form.get('body') || '').trim().slice(0, 480);
+  if (!id || !text) return new Response('Bad', { status: 400 });
+  const b = await env.DB.prepare('SELECT customer_phone FROM bookings WHERE id=?1').bind(id).first();
+  if (!b || !b.customer_phone) return new Response('Brak telefonu', { status: 400 });
+
+  const ok = await sendSms(env, b.customer_phone, text).catch(e => { console.error('SMS panel error', e); return false; });
+  if (ok) {
+    await env.DB.prepare('INSERT INTO messages (id, booking_id, direction, channel, body, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)')
+      .bind(crypto.randomUUID(), id, 'out', 'sms', text, Date.now()).run();
+  }
+  return new Response('', { status: 302, headers: { 'Location': '/admin/zlecenie?id=' + encodeURIComponent(id) + '&sent=' + (ok ? '1' : '0') } });
 }
 
 // Strona rozliczeń: zlecenia 'done' z wyliczonym podziałem + zbiorcze saldo Mateusz/Piotr.
@@ -1762,13 +1899,31 @@ tr.status-done td { opacity: .65; }
 .name-link { color: #fff; text-decoration: none; border-bottom: 1px dotted #555; }
 .name-link:hover { color: #9fe22e; border-color: #9fe22e; }
 
-.detail-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; margin-top: 16px; }
-@media (max-width: 720px) { .detail-grid { grid-template-columns: 1fr; } }
 .finance-form { display: flex; flex-direction: column; gap: 10px; }
 .finance-form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: .04em; }
-.finance-form input, .finance-form select { background: #0e0e0e; border: 1px solid #333; color: #fff; padding: 9px 12px; border-radius: 4px; font-size: 14px; text-transform: none; letter-spacing: normal; }
+.finance-form input, .finance-form select, .finance-form textarea { background: #0e0e0e; border: 1px solid #333; color: #fff; padding: 9px 12px; border-radius: 4px; font-size: 14px; text-transform: none; letter-spacing: normal; font-family: inherit; }
+.finance-form textarea { resize: vertical; }
 .finance-form button { align-self: flex-start; background: #9fe22e; color: #000; border: none; padding: 10px 22px; border-radius: 4px; font-weight: 700; cursor: pointer; margin-top: 4px; }
-.calc-wrap h3 { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+.sec-h { font-size: 12px; color: #9fe22e; text-transform: uppercase; letter-spacing: .06em; margin: 14px 0 2px; border-bottom: 1px solid #222; padding-bottom: 6px; }
+.f2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 620px) { .f2 { grid-template-columns: 1fr; } }
+.hint { font-size: 11px; color: #666; text-transform: none; letter-spacing: normal; }
+.ro-note { background: #0e0e0e; border: 1px solid #222; border-radius: 6px; padding: 8px 12px; font-size: 14px; color: #ccc; display: flex; flex-direction: column; gap: 3px; }
+.ok-msg { color: #9fe22e; }
+.err-msg { color: #d66; }
+.split-details { margin-top: 16px; border: 1px solid #222; border-radius: 6px; padding: 8px 12px; }
+.split-details summary { cursor: pointer; font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: .05em; }
+.split-details .calc { margin-top: 10px; }
+.sms-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.sms-form textarea { background: #0e0e0e; border: 1px solid #333; color: #fff; padding: 9px 12px; border-radius: 4px; font-size: 14px; font-family: inherit; resize: vertical; }
+.sms-form button { align-self: flex-start; background: #9fe22e; color: #000; border: none; padding: 9px 18px; border-radius: 4px; font-weight: 700; cursor: pointer; }
+.timeline { display: flex; flex-direction: column; gap: 2px; }
+.tl-item { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid #1a1a1a; }
+.tl-item:last-child { border-bottom: 0; }
+.tl-when { font-size: 12px; color: #777; white-space: nowrap; min-width: 120px; }
+.tl-body { font-size: 14px; }
+.tl-sms { border-left: 2px solid #9fe22e; padding-left: 10px; }
+.tl-wa { border-left: 2px solid #4fb3e2; padding-left: 10px; }
 .calc { background: #0e0e0e; border: 1px solid #222; border-radius: 6px; padding: 12px 14px; }
 .calc-row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; font-size: 14px; border-bottom: 1px solid #1a1a1a; }
 .calc-row:last-child { border-bottom: 0; }
