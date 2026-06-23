@@ -1133,7 +1133,7 @@ ${ADMIN_STYLES}
   <h1>${escapeHtml(title)}</h1>
   <div class="topbar-right">
     <a href="/admin" class="logout">← Rezerwacje</a>
-    <a href="/admin/rozliczenie" class="logout">Rozliczenie</a>
+    <!-- <a href="/admin/rozliczenie" class="logout">Rozliczenie</a> tymczasowo ukryte -->
     <a href="/admin/logout" class="logout">Wyloguj</a>
   </div>
 </header>
@@ -1485,7 +1485,7 @@ ${ADMIN_STYLES}
   <h1>Rezerwacje</h1>
   <div class="topbar-right">
     <span class="muted">Dziś: ${today}</span>
-    <a href="/admin/rozliczenie" class="logout">Rozliczenie</a>
+    <!-- <a href="/admin/rozliczenie" class="logout">Rozliczenie</a> tymczasowo ukryte -->
     <a href="#outreach" class="logout">Współpraca</a>
     <a href="/admin/logout" class="logout">Wyloguj</a>
   </div>
