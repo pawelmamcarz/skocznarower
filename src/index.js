@@ -42,9 +42,9 @@ const SCHEDULE = {
 };
 
 // Publiczny numer pokazywany klientom w SMS/mailach (jeden punkt edycji po stronie Workera).
-// To NIE jest OWNER_PHONE: SMS o nowej rezerwacji do właściciela idzie osobno (patrz sendNotifications),
-// i ten numer zostaje na komórce Mateusza, nawet gdy numer publiczny zmienimy na wirtualny.
-const PUBLIC_PHONE_DISPLAY = '22 181 15 07';
+// Obecnie komórka Piotrka (serwisant) - numer Telnyx z agentem głosowym nie zadziałał, więc klienci dzwonią wprost do serwisanta.
+// To NIE jest OWNER_PHONE: SMS o nowej rezerwacji do właściciela idzie osobno (patrz sendNotifications).
+const PUBLIC_PHONE_DISPLAY = '501 174 195';
 
 export default {
   async fetch(request, env, ctx) {
@@ -786,6 +786,9 @@ async function handleAdmin(request, env, url) {
   if (path === '/admin/booking' && request.method === 'POST') {
     return await adminUpdateBooking(request, env);
   }
+  if (path === '/admin/booking-new' && request.method === 'POST') {
+    return await adminCreateBooking(request, env);
+  }
   if (path === '/admin/block' && request.method === 'POST') {
     return await adminBlockSlot(request, env);
   }
@@ -889,16 +892,34 @@ async function adminUpdateBooking(request, env) {
   if (action === 'confirm') {
     const res = await confirmBooking(env, id);
     if (res.error === 'slot') return new Response('Slot zajęty przez inną rezerwację', { status: 409 });
+  } else if (action === 'start') {
+    // Przyjęcie roweru do serwisu: status 'in_progress' + SMS do klienta.
+    // Wszystkie te statusy są aktywne (!= cancelled), slot się nie zmienia, więc brak ryzyka kolizji.
+    const b = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
+    if (b && b.status !== 'in_progress' && b.status !== 'done') {
+      await env.DB.prepare("UPDATE bookings SET status='in_progress' WHERE id=?1").bind(id).run();
+      if (b.customer_phone) {
+        await sendSms(env, b.customer_phone, repairAcceptedSms(b)).catch(e => console.error('SMS przyjęcie error', e));
+      }
+    }
   } else if (action === 'done') {
     // 'done' jest aktywny (!= cancelled), więc przywrócenie anulowanej rezerwacji,
     // której slot zajęła inna, narusza idx_bookings_active_slot. Mapujemy to na czytelny 409.
+    const before = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
+    const summary = String(form.get('repair_summary') || '').trim().slice(0, 300) || null;
     try {
-      await env.DB.prepare("UPDATE bookings SET status='done' WHERE id=?1").bind(id).run();
+      await env.DB.prepare("UPDATE bookings SET status='done', repair_summary=COALESCE(?2, repair_summary) WHERE id=?1")
+        .bind(id, summary).run();
     } catch (e) {
       if (/UNIQUE constraint/i.test(String(e?.message || e))) {
         return new Response('Slot zajęty przez inną rezerwację', { status: 409 });
       }
       throw e;
+    }
+    // SMS z podsumowaniem naprawy tylko przy realnym przejściu do 'done' (nie przy ponownym kliknięciu).
+    if (before && before.status !== 'done' && before.customer_phone) {
+      const fresh = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
+      await sendSms(env, fresh.customer_phone, repairDoneSms(fresh)).catch(e => console.error('SMS podsumowanie error', e));
     }
   } else if (action === 'cancel') {
     await cancelBooking(env, id);
@@ -960,6 +981,78 @@ async function cancelBooking(env, id) {
   }
 }
 
+// SMS po przyjęciu roweru do serwisu (status -> in_progress).
+function repairAcceptedSms(b) {
+  const firstName = (b.customer_name || '').split(' ')[0];
+  return `Cześć ${firstName}! Przyjęliśmy Twój rower do serwisu (skocznarower.pl, Jesionowa 18, Grodzisk Maz.). Damy znać SMS-em, gdy będzie gotowy do odbioru. W razie pytań: ${PUBLIC_PHONE_DISPLAY}.`;
+}
+
+// SMS z podsumowaniem naprawy (status -> done). Zakres: repair_summary, a jak puste, nazwa usługi.
+function repairDoneSms(b) {
+  const firstName = (b.customer_name || '').split(' ')[0];
+  const svc = SERVICES.find(s => s.id === b.service_type)?.name || b.service_type;
+  const zakres = (b.repair_summary && b.repair_summary.trim()) || svc;
+  const koszt = b.final_price != null ? ` Koszt: ${b.final_price} zł.` : '';
+  return `Cześć ${firstName}! Rower po serwisie jest gotowy do odbioru. Zakres: ${zakres}.${koszt} Adres: Jesionowa 18, Grodzisk Maz. Dzięki za zaufanie, skocznarower.pl`;
+}
+
+// Ręczne dodanie rezerwacji z panelu (telefon, Google Places, wejście z ulicy).
+// Świadomie luźniejsze niż formularz publiczny: dopuszcza daty wsteczne i godziny spoza
+// SCHEDULE (logujemy realne zdarzenia), nie wysyła powiadomień przy tworzeniu
+// (SMS-y idą dopiero przy przyjęciu/zakończeniu naprawy). Status od razu 'confirmed';
+// wpis do kalendarza tylko dla terminów dziś lub w przyszłości.
+async function adminCreateBooking(request, env) {
+  const form = await request.formData();
+  const name = String(form.get('customer_name') || '').trim();
+  const phone = normalizePhone(String(form.get('customer_phone') || ''));
+  const email = String(form.get('customer_email') || '').trim() || null;
+  const service_type = String(form.get('service_type') || '').trim();
+  const bike_type = String(form.get('bike_type') || '').trim();
+  const date = String(form.get('date') || '').trim();
+  const time_slot = String(form.get('time_slot') || '').trim();
+  const source = String(form.get('source') || '').trim();
+  const rawNotes = String(form.get('notes') || '').trim();
+
+  const errors = [];
+  if (name.length < 2 || name.length > 80) errors.push('imię');
+  if (!/[0-9]{9}/.test(phone)) errors.push('telefon');
+  if (!SERVICES.some(s => s.id === service_type)) errors.push('usługa');
+  if (!BIKE_TYPES.includes(bike_type)) errors.push('typ roweru');
+  if (!isValidDate(date)) errors.push('data');
+  if (!/^\d{2}:\d{2}$/.test(time_slot)) errors.push('godzina');
+  if (errors.length) {
+    return new Response('Uzupełnij poprawnie: ' + errors.join(', '), { status: 400 });
+  }
+
+  const prefix = { tel: '[tel]', google: '[google]', inne: '[ręczna]' }[source] || '[ręczna]';
+  const notes = rawNotes ? `${prefix} ${rawNotes}` : `${prefix} dodane ręcznie w panelu`;
+
+  const id = crypto.randomUUID();
+  try {
+    await env.DB.prepare(
+      `INSERT INTO bookings (id, created_at, date, time_slot, service_type, bike_type,
+         customer_name, customer_phone, customer_email, notes, status)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'confirmed')`
+    ).bind(id, Date.now(), date, time_slot, service_type, bike_type, name, phone, email, notes).run();
+  } catch (e) {
+    if (/UNIQUE constraint/i.test(String(e?.message || e))) {
+      return new Response('Ten slot ma już aktywną rezerwację (data + godzina). Zmień godzinę.', { status: 409 });
+    }
+    throw e;
+  }
+
+  // Kalendarz tylko dla terminów dziś/w przyszłości; wsteczne logi go nie potrzebują.
+  if (date >= todayInWarsaw()) {
+    try {
+      const b = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
+      const eventId = await addToCalendar(env, b);
+      if (eventId) await env.DB.prepare('UPDATE bookings SET gcal_event_id=?1 WHERE id=?2').bind(eventId, id).run();
+    } catch (e) { console.error('Kalendarz error (ręczna rezerwacja)', e); }
+  }
+
+  return new Response('', { status: 302, headers: { 'Location': '/admin' } });
+}
+
 async function adminBlockSlot(request, env) {
   const form = await request.formData();
   const date = String(form.get('date') || '');
@@ -985,7 +1078,7 @@ async function adminDashboard(env, url) {
   let where = '';
   let params = [];
   if (filter === 'upcoming') {
-    where = "WHERE date >= ?1 AND status IN ('pending','confirmed')";
+    where = "WHERE date >= ?1 AND status IN ('pending','confirmed','in_progress')";
     params = [today];
   } else if (filter === 'past') {
     where = 'WHERE date < ?1';
@@ -1086,7 +1179,8 @@ function renderDashboard({ bookings, blocked, filter, today, reviewsProfile, rev
           <input type="hidden" name="id" value="${escapeHtml(b.id)}">
           <input type="hidden" name="back" value="${backEsc}">
           ${b.status === 'pending' ? '<button name="action" value="confirm" class="btn-ok">Potwierdź</button>' : ''}
-          ${b.status !== 'done' && b.status !== 'cancelled' ? '<button name="action" value="done" class="btn-ok">Zrobione</button>' : ''}
+          ${b.status !== 'in_progress' && b.status !== 'done' && b.status !== 'cancelled' ? '<button name="action" value="start" class="btn-ok" title="Przyjęto rower do serwisu, wyśle SMS do klienta">Przyjęto</button>' : ''}
+          ${b.status !== 'done' && b.status !== 'cancelled' ? `<input type="text" name="repair_summary" value="${escapeHtml(b.repair_summary || '')}" placeholder="co zrobiono (do SMS)" maxlength="300" class="summary-input"><button name="action" value="done" class="btn-ok" title="Naprawa gotowa, wyśle SMS z podsumowaniem">Zrobione</button>` : ''}
           ${b.status !== 'cancelled' ? '<button name="action" value="cancel" class="btn-warn">Anuluj</button>' : ''}
           <button name="action" value="delete" class="btn-del" onclick="return confirm(\'Usunąć rezerwację?\')">Usuń</button>
         </form>
@@ -1128,6 +1222,33 @@ ${ADMIN_STYLES}
     <thead><tr><th>Kiedy</th><th>Klient</th><th>Kontakt</th><th>Usługa</th><th>Wycena</th><th>Faktycznie</th><th>Status</th><th></th></tr></thead>
     <tbody>${bookings.map(row).join('')}</tbody>
   </table>`}
+</section>
+
+<section class="card">
+  <h2>Dodaj rezerwację ręcznie</h2>
+  <p class="muted">Dla osób z telefonu albo z Google. Status od razu „potwierdzone", bez SMS-a przy dodaniu (SMS idzie przy „Przyjęto" i „Zrobione"). Można wpisać datę wsteczną.</p>
+  <form method="post" action="/admin/booking-new" class="block-form manual-form">
+    <input type="text" name="customer_name" placeholder="Imię i nazwisko" required minlength="2" maxlength="80">
+    <input type="tel" name="customer_phone" placeholder="Telefon" required>
+    <input type="email" name="customer_email" placeholder="E-mail (opcjonalnie)">
+    <select name="service_type" required>
+      <option value="" disabled selected>Usługa…</option>
+      ${SERVICES.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('')}
+    </select>
+    <select name="bike_type" required>
+      <option value="" disabled selected>Typ roweru…</option>
+      ${BIKE_TYPES.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}
+    </select>
+    <input type="date" name="date" required value="${today}">
+    <input type="text" name="time_slot" placeholder="Godzina np. 17:00" pattern="[0-9]{2}:[0-9]{2}" required>
+    <select name="source">
+      <option value="tel">Z telefonu</option>
+      <option value="google">Z Google</option>
+      <option value="inne">Inne</option>
+    </select>
+    <input type="text" name="notes" placeholder="Notatka (opcjonalnie)" maxlength="300">
+    <button type="submit">Dodaj</button>
+  </form>
 </section>
 
 <section class="card">
@@ -1317,6 +1438,7 @@ tr.status-done td { opacity: .65; }
 .badge { font-size: 11px; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 600; letter-spacing: .05em; }
 .badge-pending { background: #2a2410; color: #f4c542; }
 .badge-confirmed { background: #122a14; color: #9fe22e; }
+.badge-in_progress { background: #10202a; color: #4fb3e2; }
 .badge-done { background: #1a1a1a; color: #888; }
 .badge-cancelled { background: #2a1414; color: #d66; }
 
@@ -1350,6 +1472,8 @@ tr.status-done td { opacity: .65; }
 .block-form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 .block-form input { background: #0e0e0e; border: 1px solid #333; color: #fff; padding: 8px 12px; border-radius: 4px; font-size: 14px; }
 .block-form button { background: #9fe22e; color: #000; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; }
+.block-form select { background: #0e0e0e; border: 1px solid #333; color: #fff; padding: 8px 12px; border-radius: 4px; font-size: 14px; }
+.summary-input { background: #0e0e0e; border: 1px solid #333; color: #fff; padding: 5px 8px; border-radius: 4px; font-size: 12px; width: 150px; margin-right: 4px; }
 .blocked-table { margin-top: 12px; }
 
 body.login { display: flex; align-items: center; justify-content: center; }
@@ -1368,7 +1492,7 @@ body.login { display: flex; align-items: center; justify-content: center; }
 </style>`;
 
 function statusLabel(s) {
-  return { pending: 'oczekuje', confirmed: 'potwierdzone', done: 'zrobione', cancelled: 'anulowane' }[s] || s;
+  return { pending: 'oczekuje', confirmed: 'potwierdzone', in_progress: 'w naprawie', done: 'zrobione', cancelled: 'anulowane' }[s] || s;
 }
 
 // ─── AUTH ───────────────────────────────────────────────────────────────────
