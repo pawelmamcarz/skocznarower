@@ -1,0 +1,6 @@
+# Cloudflare assets headers. Static media in /uploads/ is immutable (filenames
+# are stable), so cache it for a year in the browser instead of revalidating
+# every visit. HTML keeps its default (max-age=0, must-revalidate) so content
+# edits go live immediately. Processed by the assets binding; not served itself.
+/uploads/*
+  Cache-Control: public, max-age=31536000, immutable

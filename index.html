@@ -157,14 +157,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
 
+  <!-- LCP: plakat hero (pod wideo). Preconnect do R2 skraca start wideo. -->
+  <link rel="preconnect" href="https://pub-b615f83299d84d5b917ae79ae5f22198.r2.dev" crossorigin>
+  <link rel="preload" as="image" href="/uploads/photo-1778431658856.webp" fetchpriority="high">
+
   <!-- ─── ANALYTICS ─────────────────────────────────────────────
        Aby aktywować, wpisz swoje ID poniżej:
          - GA4: https://analytics.google.com → Admin → Data Streams → Mierzenie ID (format: G-XXXXXXXXXX)
          - Meta Pixel: https://business.facebook.com → Events Manager → Twój Pixel (15-16 cyfr)
        Bez ID skrypty nic nie ładują, więc strona pozostaje szybka.
+       Preconnecty do GTM/Meta dodaj z powrotem dopiero po wpisaniu ID
+       (puste ID = brak żądań, więc preconnect byłby martwy).
   ───────────────────────────────────────────────────────────── -->
-  <link rel="preconnect" href="https://www.googletagmanager.com">
-  <link rel="preconnect" href="https://connect.facebook.net">
   <script>
     window.GA_ID = '';        // np. 'G-XXXXXXXXXX'
     window.FB_PIXEL_ID = '';  // np. '1234567890123456'
@@ -1257,7 +1261,7 @@
 ════════════════════════════════════════════════ -->
 <section class="hero">
   <video class="hero-video" autoplay muted loop playsinline preload="metadata"
-         poster="uploads/photo-1778431658856.jpeg">
+         poster="uploads/photo-1778431658856.webp">
     <source src="https://pub-b615f83299d84d5b917ae79ae5f22198.r2.dev/hero.mp4" type="video/mp4">
   </video>
   <div class="hero-veil"></div>
