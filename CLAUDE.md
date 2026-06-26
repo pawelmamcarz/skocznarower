@@ -100,9 +100,9 @@ npx wrangler secret put WHATSAPP_APP_SECRET         # opcjonalne, weryfikacja po
 curl -sI https://skocznarower.pl/
 ```
 
-Local dev needs a `.dev.vars` file (gitignored; copy from `.dev.vars.example`). Without `ADMIN_PASSWORD` you can't log into `/admin` locally; without `RESEND_API_KEY` and the SMS pair, notifications log to console instead of going out.
+Local dev needs a `.dev.vars` file (gitignored; copy from `.dev.vars.example`, the checked-in template listing every local var/secret). Without `ADMIN_PASSWORD` you can't log into `/admin` locally; without `RESEND_API_KEY` and the SMS pair, notifications log to console instead of going out.
 
-There is no build step, no test suite, no linter. Edits go live on the next `wrangler deploy`.
+There is no build step, no test suite, no linter. There is also no `package.json` or lockfile: `wrangler` runs via `npx` (downloaded on first use), so don't run `npm install` or hunt for a dependency manifest. Edits go live on the next `wrangler deploy`.
 
 ## Content conventions (load-bearing)
 
