@@ -1338,7 +1338,7 @@
     </div>
 
     <div class="about-photo-wrap reveal" data-delay="2">
-      <img class="about-photo" src="uploads/photo-1778431658856.jpeg" width="1200" height="900" loading="lazy" decoding="async" alt="Mateusz Mamcarz xPyszczek, serwis rowerowy Grodzisk Mazowiecki">
+      <img class="about-photo" src="uploads/photo-1778431658856.webp" width="1200" height="900" loading="lazy" decoding="async" alt="Mateusz Mamcarz xPyszczek, serwis rowerowy Grodzisk Mazowiecki">
       <div class="about-badge">@XPYSZCZEK_</div>
     </div>
   </div>
@@ -1844,7 +1844,7 @@
         <input type="email" class="reminder-input" name="email" required maxlength="120" placeholder="twoj@adres.pl" autocomplete="email">
       </label>
       <label class="reminder-consent">
-        <input type="checkbox" name="consent" required>
+        <input type="checkbox" name="consent" required aria-invalid="false">
         <span>Zgadzam się na otrzymanie jednego przypomnienia mailem w marcu o przeglądzie rowerowym. Możesz zrezygnować w każdej chwili.</span>
       </label>
       <button type="submit" class="btn btn-green reminder-submit">Zapisz mnie</button>
@@ -2017,7 +2017,8 @@
       const email = remForm.email.value.trim();
       const consent = remForm.consent.checked;
       if (!email) { showRemMsg('Wpisz adres email.', 'err'); return; }
-      if (!consent) { showRemMsg('Zaznacz zgodę żebym mógł napisać.', 'err'); return; }
+      if (!consent) { remForm.consent.setAttribute('aria-invalid', 'true'); showRemMsg('Zaznacz zgodę żebym mógł napisać.', 'err'); return; }
+      remForm.consent.setAttribute('aria-invalid', 'false');
       remBtn.disabled = true;
       const originalText = remBtn.textContent;
       remBtn.textContent = 'Zapisuję...';
@@ -2034,6 +2035,7 @@
           showRemMsg(data.message || 'Zapisany.', 'ok');
           remForm.email.value = '';
           remForm.consent.checked = false;
+          remForm.consent.setAttribute('aria-invalid', 'false');
           try { if (typeof gtag === 'function') gtag('event', 'lead_capture', { source: 'seasonal_reminder' }); } catch (_) {}
           try { if (typeof fbq === 'function') fbq('track', 'Lead', { source: 'seasonal_reminder' }); } catch (_) {}
         }
