@@ -60,8 +60,10 @@
       --accent: #9fe22e;
       --accent-dim: rgba(159,226,46,.10);
       --white: #f0f0f0;
-      --muted: #888;
+      --muted: #969696;
       --border: rgba(255,255,255,.07);
+      --accent-hi: #b5f040;
+      --radius: 2px;
       --fd: 'Bebas Neue', sans-serif;
       --fb: 'DM Sans', sans-serif;
     }
@@ -97,9 +99,9 @@
     .nav-links a:hover { color: var(--accent); }
     .nav-cta {
       background: var(--accent); color: var(--bg) !important;
-      padding: 9px 18px; border-radius: 6px; font-weight: 700;
+      padding: 9px 18px; border-radius: var(--radius); font-weight: 700;
     }
-    .nav-cta:hover { color: var(--bg) !important; background: #b6f23d; }
+    .nav-cta:hover { color: var(--bg) !important; background: var(--accent-hi); }
 
     @media (max-width: 720px) {
       body { padding-top: 70px; }
@@ -291,7 +293,7 @@
       color: var(--bg);
       border: none;
       padding: 16px 36px;
-      border-radius: 8px;
+      border-radius: var(--radius);
       font-family: var(--fb);
       font-size: 20px;
       letter-spacing: .04em;
@@ -299,7 +301,7 @@
       cursor: pointer;
       transition: transform .12s, background .15s;
     }
-    .btn-submit:hover { background: #b6f23d; transform: translateY(-1px); }
+    .btn-submit:hover { background: var(--accent-hi); transform: translateY(-1px); }
     .btn-submit:disabled { opacity: .5; cursor: wait; transform: none; }
     .submit-note { font-size: 13px; color: var(--muted); }
 
