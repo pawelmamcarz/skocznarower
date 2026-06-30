@@ -18,6 +18,15 @@ Marketing site + bookings app for **skocznarower.pl**, a bicycle service shop in
 - `sitemap.xml` + `robots.txt` are static. The sitemap lists every public page above — when adding/removing a page or meaningfully changing content, update it and bump `<lastmod>`.
 - `llms.txt` + `llms-full.txt` are static AI/LLM index files served as-is. `llms.txt` is the short index (intro blurb with a service/price summary, e.g. bleeding od 100 zł, plus a linked list of the main pages) and points at `llms-full.txt`, the self-contained long-form copy (full service list, cennik, FAQ, contact). Keep both in sync when services, prices, hours, or pages change.
 
+### Design tokens (inline CSS, duplicated across the 5 pages)
+There is no shared stylesheet: every page inlines its own `<style>` with a `:root` token block, so tokens are **copied into all 5 HTML files and must be kept in sync**. The core palette/fonts (`--bg`/`--bg2`/`--bg3`, `--accent` `#9fe22e`, `--accent-dim`, `--white`, `--border`, `--fd` Bebas Neue, `--fb` DM Sans) are mirrored on every page. Three tokens were unified after drifting apart and are now the canonical values everywhere:
+- `--radius: 2px` — corner radius for the button family (`.btn`/`.btn-green`/`.nav-cta`/`.btn-submit`/`.reminder-input`/`.map-wrap`). Previously `2/4/6/8px` across files; the homepage's sharp `2px` is the brand canon.
+- `--accent-hi: #b5f040` — the brighter green used on `:hover` of accent surfaces. Previously a mix of `#b5f040` (index) and `#b6f23d` (subpages).
+- `--muted: #969696` — secondary/label text, chosen to pass WCAG AA (≥4.5:1) on the darkest background it sits on (`--bg3 #1c1c1c`). Previously `#777` (index, failed AA) vs `#888` (subpages).
+When changing a button radius, the hover green, or muted text, edit the **token** in all 5 `:root` blocks; do not hardcode a hex or reintroduce raw `#b5f040`/`#b6f23d`/`#777`/`#888`. The token set is deliberately thin: spacing, shadow, and font-size stay as raw magic numbers, not tokens.
+
+Two `index.html`-only mechanics tied to the above: (1) the homepage nav is transparent and `position:fixed` over the hero, offset down by `--banner-h`, a custom property the holiday-banner script sets to the banner's measured height on show + `resize` so the fixed nav clears the in-flow banner; `.nav.stuck` resets it to `top:0` once scrolled. (2) Below 820px the nav collapses to a `.nav-toggle` hamburger that toggles `.nav-links.open` (full-width dropdown); without it the section anchors are unreachable on phones. The fixed `.mobile-bar` CTA is mobile-only via the `@media(max-width:820px)` rule (`display:none` otherwise), so never give it an inline `display:flex` (it leaks onto desktop and covers the hero pill + footer).
+
 ### Worker (`src/index.js`)
 - Routed to both `skocznarower.pl/*` and `www.skocznarower.pl/*`. Apex requests get a 301 to `www`. Both routes must stay: drop `skocznarower.pl/*` and apex requests never reach the Worker (the 301 never fires); drop `www.skocznarower.pl/*` and `www` traffic stops being handled.
 - `wrangler.jsonc` sets `assets.run_worker_first: true`, so the Worker sees every request first. `/api/*`, `/admin*`, and `/r` are handled in the Worker; everything else falls through to a plain `env.ASSETS.fetch(request)` passthrough. The extensionless resolution (e.g. `/umow` → `umow.html`) is done by the Cloudflare ASSETS binding itself, not by code in `src/index.js`, so do not go hunting for that routing logic in the Worker.
@@ -57,6 +66,9 @@ Each public page has its own JSON-LD. On `index.html` there are two (`FAQPage`, 
 
 ### `.assetsignore` (what does NOT get uploaded as a static asset)
 The Worker bundles the whole repo root as assets, so this file is what keeps junk out: large source media (`uploads/*.mp4`, `uploads/*.pdf`, `uploads/FastDL.to_*`), the Worker source (`src/`), migrations, dotfiles (`.wrangler/`, `.git/`, `.claude/`, `.playwright-mcp/`, `.DS_Store`), `node_modules/`, and the dev-only files (`CLAUDE.md`, `OUTREACH_PLAN.md`, `telnyx-voice-agent.md`, `whatsapp-setup.md`, `.assetsignore`, `.gitignore`, `.dev.vars*`). When adding new top-level files or directories, decide whether they belong in `.assetsignore`.
+
+### `_headers` (cache-control for static assets)
+`_headers` at the repo root is a Cloudflare assets-config file (consumed by the ASSETS binding, **not** served as a static asset, so it stays **out** of `.assetsignore`). It sets `/uploads/*` to `Cache-Control: public, max-age=31536000, immutable` so images/favicons/the hero poster cache for a year in the browser instead of revalidating every visit (without it the binding defaults to `max-age=0, must-revalidate`, i.e. a conditional request per asset on every repeat visit). HTML is deliberately left on the default so content edits go live immediately. It applies through the `env.ASSETS.fetch` passthrough even with `run_worker_first: true`. Filenames in `uploads/` are stable, so `immutable` is safe; if you ever overwrite an image in place rather than adding a new filename, bump the filename (or the cache will serve the old bytes for up to a year).
 
 ## Common commands
 
