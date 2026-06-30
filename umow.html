@@ -280,6 +280,17 @@
     .input:focus, .textarea:focus, .date-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
     .input[aria-invalid="true"] { border-color: #ff5c5c; }
     .textarea { min-height: 90px; resize: vertical; line-height: 1.5; }
+    .consent-check {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+      cursor: pointer;
+    }
+    .consent-check input { margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
 
     .submit-row {
       margin-top: 28px;
@@ -440,6 +451,10 @@
         <span>Email (opcjonalnie)</span>
         <input class="input" type="email" id="email" name="email" maxlength="120" autocomplete="email">
       </label>
+      <label class="consent-check">
+        <input type="checkbox" id="consent" name="consent">
+        <span>Chcę dostać jedno przypomnienie mailem przed sezonem. Zrezygnujesz w każdej chwili.</span>
+      </label>
       <label class="field">
         <span>Opisz krótko co dolega rowerowi</span>
         <textarea class="textarea" id="notes" name="notes" maxlength="1000" placeholder="np. trzeszczy suport, źle hamuje tył, prosta regulacja przerzutek..."></textarea>
@@ -587,6 +602,7 @@ form.addEventListener('submit', async (e) => {
   const phone   = $('#phone').value.trim();
   const email   = $('#email').value.trim();
   const notes   = $('#notes').value.trim();
+  const consent = $('#consent')?.checked || false;
 
   const nameEl = $('#name'), phoneEl = $('#phone');
   nameEl.removeAttribute('aria-invalid');
@@ -612,6 +628,7 @@ form.addEventListener('submit', async (e) => {
         customer_name: name, customer_phone: phone,
         customer_email: email || null,
         notes: notes || null,
+        consent,
       }),
     });
     const data = await r.json();

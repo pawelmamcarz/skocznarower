@@ -74,6 +74,8 @@ export default {
       catch (e) { console.error('reminders error', e); }
       try { await sendFollowUps(env); }
       catch (e) { console.error('followups error', e); }
+      try { await sendWinBack(env); }
+      catch (e) { console.error('winback error', e); }
       try { await sendSeasonalReminders(env); }
       catch (e) { console.error('seasonal reminders error', e); }
       try { await fetchGoogleReviews(env); }
@@ -343,6 +345,19 @@ async function createBookingCore(env, ctx, body) {
   // waitUntil utrzymuje izolat przy życiu do końca wysyłki.
   const mail = sendNotifications(env, { id, ...body }).catch(e => console.error('Mail/SMS error', e));
   if (ctx?.waitUntil) ctx.waitUntil(mail);
+
+  // Opt-in sezonowy: gdy klient podał email i zaznaczył zgodę, dopisz go do listy
+  // (INSERT OR IGNORE, bo email jest unikalny). Best-effort, nie blokuje rezerwacji.
+  if (body.consent === true && body.customer_email?.trim()) {
+    const email = body.customer_email.trim().toLowerCase();
+    if (email.length <= 120 && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      try {
+        await env.DB.prepare(
+          'INSERT OR IGNORE INTO seasonal_reminders (id, email, signed_up_at) VALUES (?1, ?2, ?3)'
+        ).bind(crypto.randomUUID(), email, now).run();
+      } catch (e) { console.error('seasonal opt-in error', e); }
+    }
+  }
 
   return { ok: true, id };
 }
@@ -2132,6 +2147,37 @@ async function sendFollowUps(env) {
     if (ok) {
       await env.DB.prepare('UPDATE bookings SET feedback_sent_at = ?1 WHERE id = ?2')
         .bind(Date.now(), b.id).run();
+    }
+  }
+}
+
+// Win-back: SMS reaktywacyjny do klientów, których ostatnia wizyta była dawno (6 do 18 mies.) i nie wrócili.
+// WYŁĄCZONY domyślnie: rusza tylko gdy WINBACK_ENABLED === '1'. Limit 25 na dobę, żeby pierwszy przebieg
+// nie zrobił blastu do całej historii; cron toczy to dzień po dniu. Stempel per numer telefonu, więc
+// każdy klient dostaje win-back raz na cykl. Klient z przyszłą rezerwacją ma MAX(date) > cutoff i wypada.
+async function sendWinBack(env) {
+  if (env.WINBACK_ENABLED !== '1') return;
+  const cutoff = addDaysWarsaw(-180);
+  const floor = addDaysWarsaw(-540);
+  const rows = await env.DB.prepare(
+    `SELECT customer_phone, MAX(customer_name) AS customer_name, MAX(date) AS last_date
+     FROM bookings
+     WHERE status != 'cancelled' AND customer_phone IS NOT NULL AND customer_phone != ''
+     GROUP BY customer_phone
+     HAVING MAX(date) <= ?1 AND MAX(date) >= ?2
+        AND SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) > 0
+        AND SUM(CASE WHEN winback_sent_at IS NOT NULL THEN 1 ELSE 0 END) = 0
+     LIMIT 25`
+  ).bind(cutoff, floor).all();
+
+  for (const b of rows.results || []) {
+    const firstName = (b.customer_name || '').split(' ')[0];
+    const text = `Cześć ${firstName}! Minęło trochę od ostatniego serwisu Twojego roweru. Przed sezonem warto zrobić przegląd, żeby nic nie zaskoczyło na trasie. Umówisz się tutaj: skocznarower.pl/umow`;
+    const ok = await sendSms(env, b.customer_phone, text);
+    if (ok) {
+      await env.DB.prepare(
+        "UPDATE bookings SET winback_sent_at = ?1 WHERE customer_phone = ?2 AND winback_sent_at IS NULL"
+      ).bind(Date.now(), b.customer_phone).run();
     }
   }
 }
