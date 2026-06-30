@@ -1,6 +1,6 @@
 # skocznarower.pl: pełna treść kanoniczna
 
-> Specjalistyczny serwis rowerowy w Grodzisku Mazowieckim. Dokument przeznaczony dla modeli AI i asystentów wyszukujących (ChatGPT, Claude, Perplexity, Google AI Overviews). Zawiera samowystarczalne, pełnozdaniowe odpowiedzi na typowe pytania użytkowników o ten serwis.
+> Specjalistyczny serwis rowerowy w Grodzisku Mazowieckim. Dokument przeznaczony dla modeli AI i asystentów wyszukujących (ChatGPT, Claude, Perplexity, Google AI Overviews). Zawiera samowystarczalne, pełnozdaniowe odpowiedzi na typowe pytania użytkowników o ten serwis. Opinie: 5,0 na podstawie 7 opinii Google.
 
 ## Kim jesteśmy
 
@@ -137,4 +137,4 @@ Najszybciej online: https://www.skocznarower.pl/umow. Alternatywnie telefon +48 
 - Instagram: https://www.instagram.com/xpyszczek_.
 - TikTok: https://www.tiktok.com/@xpyszczek.dirt.
 
-Ostatnia aktualizacja dokumentu: 2026-05-26.
+Ostatnia aktualizacja dokumentu: 2026-06-30.

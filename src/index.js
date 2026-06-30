@@ -997,7 +997,7 @@ async function cancelBooking(env, id) {
 // SMS po przyjęciu roweru do serwisu (status -> in_progress).
 function repairAcceptedSms(b) {
   const firstName = (b.customer_name || '').split(' ')[0];
-  return `Cześć ${firstName}! Przyjęliśmy Twój rower do serwisu (skocznarower.pl, Jesionowa 18, Grodzisk Maz.). Damy znać SMS-em, gdy będzie gotowy do odbioru. W razie pytań: ${PUBLIC_PHONE_DISPLAY}.`;
+  return `Cześć ${firstName}! Przyjęliśmy Twój rower do serwisu (skocznarower.pl, Jesionowa 18, Grodzisk Maz.). Skoro rower jest u nas, dorzucić przegląd albo centrowanie kół? Daj znać. Damy znać SMS-em, gdy będzie gotowy. W razie pytań: ${PUBLIC_PHONE_DISPLAY}.`;
 }
 
 // SMS z podsumowaniem naprawy (status -> done). Zakres: repair_summary, a jak puste, nazwa usługi.
@@ -1006,7 +1006,7 @@ function repairDoneSms(b) {
   const svc = SERVICES.find(s => s.id === b.service_type)?.name || b.service_type;
   const zakres = (b.repair_summary && b.repair_summary.trim()) || svc;
   const koszt = b.final_price != null ? ` Koszt: ${b.final_price} zł.` : '';
-  return `Cześć ${firstName}! Rower po serwisie jest gotowy do odbioru. Zakres: ${zakres}.${koszt} Adres: Jesionowa 18, Grodzisk Maz. Dzięki za zaufanie, skocznarower.pl`;
+  return `Cześć ${firstName}! Rower po serwisie jest gotowy do odbioru. Zakres: ${zakres}.${koszt} Adres: Jesionowa 18, Grodzisk Maz. Następnym razem umówisz się tutaj: skocznarower.pl/umow. Dzięki za zaufanie! Zadowolony? Poleć nas znajomym.`;
 }
 
 // Ręczne dodanie rezerwacji z panelu (telefon, Google Places, wejście z ulicy).
