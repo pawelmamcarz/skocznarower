@@ -186,32 +186,43 @@ async function apiReviews(env) {
   });
 }
 
+// Normalizuje i waliduje adres email; zwraca oczyszczony (trim + lowercase) email
+// albo null. Jedyne źródło reguły emaila dla zapisów na listę sezonową.
+function normalizeEmail(raw) {
+  const email = String(raw || '').trim().toLowerCase();
+  if (!email || email.length > 120 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return null;
+  return email;
+}
+
+// Dopisuje email do listy przypomnień sezonowych (idempotentnie, INSERT OR IGNORE,
+// bo email jest unikalny). Zwraca true gdy dodano nowy wiersz, false gdy już był.
+async function addSeasonalReminder(env, email) {
+  const res = await env.DB.prepare(
+    'INSERT OR IGNORE INTO seasonal_reminders (id, email, signed_up_at) VALUES (?1, ?2, ?3)'
+  ).bind(crypto.randomUUID(), email, Date.now()).run();
+  return (res.meta?.changes || 0) > 0;
+}
+
 async function apiSeasonalReminder(request, env) {
   let body;
   try { body = await request.json(); }
   catch { return json({ error: 'Bad JSON' }, 400); }
 
-  const email = String(body?.email || '').trim().toLowerCase();
-  if (!email || email.length > 120 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-    return json({ error: 'Nieprawidłowy email' }, 400);
-  }
+  const email = normalizeEmail(body?.email);
+  if (!email) return json({ error: 'Nieprawidłowy email' }, 400);
   if (body?.consent !== true) {
     return json({ error: 'Potrzebna zgoda na kontakt' }, 400);
   }
 
-  const id = crypto.randomUUID();
   try {
-    await env.DB.prepare(
-      `INSERT INTO seasonal_reminders (id, email, signed_up_at) VALUES (?1, ?2, ?3)`
-    ).bind(id, email, Date.now()).run();
+    const added = await addSeasonalReminder(env, email);
+    return json({ ok: true, message: added
+      ? 'Zapisany, przypomnę mailem przed sezonem.'
+      : 'Już jesteś na liście, do zobaczenia wiosną.' });
   } catch (e) {
-    if (String(e?.message || '').toLowerCase().includes('unique')) {
-      return json({ ok: true, message: 'Już jesteś na liście, do zobaczenia wiosną.' });
-    }
     console.error('seasonal insert error', e);
     return json({ error: 'Błąd zapisu' }, 500);
   }
-  return json({ ok: true, message: 'Zapisany, przypomnę mailem przed sezonem.' });
 }
 
 // Wczytuje zajęte i zablokowane sloty z zakresu dat do Setów (klucze "YYYY-MM-DD HH:MM").
@@ -346,16 +357,13 @@ async function createBookingCore(env, ctx, body) {
   const mail = sendNotifications(env, { id, ...body }).catch(e => console.error('Mail/SMS error', e));
   if (ctx?.waitUntil) ctx.waitUntil(mail);
 
-  // Opt-in sezonowy: gdy klient podał email i zaznaczył zgodę, dopisz go do listy
-  // (INSERT OR IGNORE, bo email jest unikalny). Best-effort, nie blokuje rezerwacji.
-  if (body.consent === true && body.customer_email?.trim()) {
-    const email = body.customer_email.trim().toLowerCase();
-    if (email.length <= 120 && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      try {
-        await env.DB.prepare(
-          'INSERT OR IGNORE INTO seasonal_reminders (id, email, signed_up_at) VALUES (?1, ?2, ?3)'
-        ).bind(crypto.randomUUID(), email, now).run();
-      } catch (e) { console.error('seasonal opt-in error', e); }
+  // Opt-in sezonowy: gdy klient zaznaczył zgodę i podał poprawny email, dopisz go do listy.
+  // Best-effort, deferowane przez waitUntil jak powiadomienia powyżej, więc nie wydłuża odpowiedzi.
+  if (body.consent === true && body.customer_email) {
+    const email = normalizeEmail(body.customer_email);
+    if (email) {
+      const optin = addSeasonalReminder(env, email).catch(e => console.error('seasonal opt-in error', e));
+      if (ctx?.waitUntil) ctx.waitUntil(optin); else await optin;
     }
   }
 
@@ -2160,7 +2168,7 @@ async function sendWinBack(env) {
   const cutoff = addDaysWarsaw(-180);
   const floor = addDaysWarsaw(-540);
   const rows = await env.DB.prepare(
-    `SELECT customer_phone, MAX(customer_name) AS customer_name, MAX(date) AS last_date
+    `SELECT customer_phone, MAX(customer_name) AS customer_name
      FROM bookings
      WHERE status != 'cancelled' AND customer_phone IS NOT NULL AND customer_phone != ''
      GROUP BY customer_phone
