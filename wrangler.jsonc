@@ -35,6 +35,7 @@
     "crons": ["0 8 * * *"]
   },
   "vars": {
-    "REVIEW_LINK": "https://g.page/r/CHANGE_TO_GOOGLE_BUSINESS_REVIEW_URL"
+    // Bezpośredni link "napisz opinię" dla profilu Google (place_id zweryfikowany w Mapach).
+    "REVIEW_LINK": "https://search.google.com/local/writereview?placeid=ChIJy3rjtflJGUcR-vo90y41alc"
   }
 }
