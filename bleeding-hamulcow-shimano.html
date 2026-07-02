@@ -111,7 +111,7 @@
         "name": "Skąd przyjeżdżają klienci na bleeding hamulców?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Głównie z Grodziska Mazowieckiego, Pruszkowa, Milanówka, Brwinowa i zachodniej Warszawy. W razie potrzeby możemy też odebrać rower z domu w cenie od 50 zł (Grodzisk, Milanówek, Pruszków)."
+          "text": "Głównie z Grodziska Mazowieckiego, Pruszkowa, Milanówka, Brwinowa i zachodniej Warszawy. W razie potrzeby jest też odbiór roweru z domu: od 50 zł na terenie Grodziska, Milanówka i Pruszkowa, od 90 zł z zachodniej Warszawy."
         }
       },
       {
@@ -135,7 +135,7 @@
         "name": "Czy robisz serwis hamulców rowerowych, nie tylko bleeding?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Tak. Poza bleedingiem robię pełny serwis hamulców rowerowych: regulacja od 40 zł, wymiana klocków od 35 zł plus część, centrowanie tarczy wyceniane po oględzinach, wymiana przewodu hamulcowego od 160 zł za obwód. Hamulce hydrauliczne i mechaniczne, w rowerach MTB, miejskich, dirt i BMX."
+          "text": "Tak. Poza bleedingiem robię pełny serwis hamulców rowerowych: regulacja od 40 zł, wymiana klocków od 50 zł plus klocki, centrowanie tarczy wyceniane po oględzinach, wymiana przewodu hamulcowego od 160 zł za obwód. Hamulce hydrauliczne i mechaniczne, w rowerach MTB, miejskich, dirt i BMX."
         }
       }
     ]
@@ -218,13 +218,13 @@
     .seo-section strong { color: var(--white); }
     .info-box {
       background: var(--bg2); border-left: 3px solid var(--accent);
-      padding: 18px 22px; margin: 18px 0; border-radius: 0 6px 6px 0;
+      padding: 18px 22px; margin: 18px 0; border-radius: 0 var(--radius) var(--radius) 0;
     }
     .info-box p { margin-bottom: 8px; }
     .info-box p:last-child { margin-bottom: 0; }
     .price-table {
       width: 100%; border-collapse: collapse; margin: 20px 0;
-      background: var(--bg2); border-radius: 6px; overflow: hidden;
+      background: var(--bg2); border-radius: var(--radius); overflow: hidden;
     }
     .price-table th, .price-table td {
       padding: 12px 18px; text-align: left; border-bottom: 1px solid var(--border);
@@ -234,10 +234,11 @@
     .price-table tr:last-child td { border-bottom: none; }
     .price-table td:last-child { text-align: right; font-weight: 700; color: var(--white); }
     .cta-box {
-      background: linear-gradient(135deg, var(--bg2) 0%, rgba(159,226,46,0.08) 100%);
-      border: 1px solid rgba(159,226,46,0.22);
-      border-radius: 8px; padding: 32px;
-      margin: 32px 0; text-align: center;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--accent);
+      border-radius: var(--radius); padding: 32px;
+      margin: 32px 0;
     }
     .cta-box h3 { font-family: var(--fd); font-size: 28px; margin-bottom: 12px; color: var(--white); }
     .cta-box p { color: #ccc; margin-bottom: 18px; }
@@ -299,7 +300,7 @@
   <h2>Kiedy <em>potrzebny</em> bleeding</h2>
   <p>Najprostsze objawy, że hamulec wymaga odpowietrzenia:</p>
   <ul>
-    <li><strong>Klamka cofa się do kierownicy.</strong> Naciskasz, klamka jedzie bliżej grafu, ale hamowanie słabe. Klasyczny objaw powietrza w układzie.</li>
+    <li><strong>Klamka cofa się do kierownicy.</strong> Naciskasz, klamka jedzie bliżej gripa, ale hamowanie słabe. Klasyczny objaw powietrza w układzie.</li>
     <li><strong>Gąbczasty chwyt.</strong> Hamulec nie jest "twardy" jak powinien. Klamka pracuje miękko, daje się ścisnąć dalej niż dawniej.</li>
     <li><strong>Punkt chwytu zmienia się przy pompowaniu.</strong> Po kilku pociągnięciach klamki punkt zatrzymania się przesuwa. To oznaka, że w układzie jest powietrze, które się przegrupowuje.</li>
     <li><strong>Hamulec pracuje gorzej na zjeździe.</strong> Na płaskim wydaje się ok, ale przy długim zjeździe (rozgrzewa się) zaczyna ustępować. Termin techniczny: <em>brake fade</em>.</li>
@@ -336,9 +337,9 @@
     <li><strong>Saint</strong>: BR-M820 (downhill, 4-tłoczkowe).</li>
     <li><strong>Zee</strong>: BR-M640 (gravity).</li>
     <li><strong>Hamulce drogowe</strong>: BR-R8070, BR-RS505, BR-RS785.</li>
-    <li><strong>Starsze MTB</strong>: BR-M535, BR-M555, BR-M596 (też się jeszcze przyjmują).</li>
+    <li><strong>Starsze MTB</strong>: BR-M535, BR-M555, BR-M596 (te modele nadal serwisuję).</li>
   </ul>
-  <p>Jeśli nie wiesz, jaki masz model, sprawdź gwoździa lub naklejkę na zacisku albo przyjedź, identyfikuję od ręki. Jeśli to coś nietypowego, napisz w <a href="/umow">notatce do rezerwacji</a>, sprawdzę dostępność części.</p>
+  <p>Jeśli nie wiesz, jaki masz model, sprawdź grawer lub naklejkę na zacisku albo przyjedź, identyfikuję od ręki. Jeśli to coś nietypowego, napisz w <a href="/umow">notatce do rezerwacji</a>, sprawdzę dostępność części.</p>
 </section>
 
 <section class="seo-section">
@@ -366,7 +367,7 @@
   <p>Bleeding to jeden z elementów. Jeśli hamulec szarpie, piszczy, tarcza bije albo klocki są na wykończeniu, sam olej nie wystarczy. Robię kompletny serwis hamulców rowerowych, hydraulicznych i mechanicznych:</p>
   <ul>
     <li><strong>Regulacja hamulców</strong>, ustawienie zacisku, klamki i punktu chwytu: od 40 zł.</li>
-    <li><strong>Wymiana klocków hamulcowych</strong>: od 35 zł + część.</li>
+    <li><strong>Wymiana klocków hamulcowych</strong>: od 50 zł + klocki.</li>
     <li><strong>Centrowanie i prostowanie tarczy</strong>, likwidacja bicia: wyceniane po oględzinach.</li>
     <li><strong>Wymiana przewodu hamulcowego</strong> z odpowietrzeniem: od 160 zł za obwód.</li>
     <li><strong>Diagnoza całego układu</strong>, gdy nie wiadomo, co siada: klocki, tarcza, tłoczki czy olej.</li>
@@ -401,10 +402,10 @@
   <p>Tak, robię też bleeding dla SRAM (płyn DOT 5.1), TRP, Hope i Magura. Każdy producent ma własną procedurę, używam właściwego płynu i narzędzi dla każdego z nich. Cennik analogiczny: od 100 zł za obwód.</p>
 
   <h3>Skąd przyjeżdżają klienci na bleeding?</h3>
-  <p>Głównie z Grodziska Mazowieckiego, <a href="/serwis-rowerow-pruszkow">Pruszkowa</a>, <a href="/serwis-rowerow-milanowek">Milanówka</a>, Brwinowa i zachodniej Warszawy. W razie potrzeby mogę też odebrać rower z domu, w cenie od 50 zł (Grodzisk/Milanówek/Pruszków).</p>
+  <p>Głównie z Grodziska Mazowieckiego, <a href="/serwis-rowerow-pruszkow">Pruszkowa</a>, <a href="/serwis-rowerow-milanowek">Milanówka</a>, Brwinowa i zachodniej Warszawy. W razie potrzeby mogę też odebrać rower z domu: od 50 zł na terenie Grodziska, Milanówka i Pruszkowa, od 90 zł z zachodniej Warszawy.</p>
 
   <h3>Czy robisz serwis hamulców rowerowych, nie tylko bleeding?</h3>
-  <p>Tak. Poza bleedingiem robię pełny serwis hamulców rowerowych: regulacja od 40 zł, wymiana klocków od 35 zł + część, centrowanie tarczy wyceniane po oględzinach, wymiana przewodu hamulcowego od 160 zł za obwód. Hamulce hydrauliczne i mechaniczne, w rowerach MTB, miejskich, dirt i BMX.</p>
+  <p>Tak. Poza bleedingiem robię pełny serwis hamulców rowerowych: regulacja od 40 zł, wymiana klocków od 50 zł + klocki, centrowanie tarczy wyceniane po oględzinach, wymiana przewodu hamulcowego od 160 zł za obwód. Hamulce hydrauliczne i mechaniczne, w rowerach MTB, miejskich, dirt i BMX.</p>
 </section>
 
 </div>

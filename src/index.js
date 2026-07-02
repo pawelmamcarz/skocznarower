@@ -259,7 +259,9 @@ async function apiAvailability(env, dateStr) {
   if (maps.blockedDays.has(dateStr)) return json({ slots: [] });
 
   const free = new Set(freeSlotsForDate(dateStr, maps.taken, maps.blocked, maps.blockedDays));
-  const slots = allSlots.map(time => ({ time, available: free.has(time) }));
+  // Dla dzisiejszej daty sloty z miniętą godziną rozpoczęcia (czas warszawski) są niedostępne.
+  const nowHM = dateStr === todayInWarsaw() ? nowTimeInWarsaw() : null;
+  const slots = allSlots.map(time => ({ time, available: free.has(time) && (nowHM === null || time >= nowHM) }));
   return json({ slots });
 }
 
@@ -312,8 +314,13 @@ async function createBookingCore(env, ctx, body) {
   if (!SCHEDULE[dow]?.includes(body.time_slot)) {
     return { ok: false, status: 400, error: 'Nieprawidłowy slot' };
   }
-  if (body.date < todayInWarsaw()) {
+  const bookingToday = todayInWarsaw();
+  if (body.date < bookingToday) {
     return { ok: false, status: 400, error: 'Nie można umówić wstecz' };
+  }
+  // Dzisiejszy slot jest miniony dopiero, gdy jego godzina rozpoczęcia minęła (czas warszawski).
+  if (body.date === bookingToday && body.time_slot < nowTimeInWarsaw()) {
+    return { ok: false, status: 400, error: 'Ta godzina już minęła, wybierz późniejszy termin' };
   }
 
   // Konflikt slotu
@@ -378,7 +385,13 @@ async function apiVoiceAvailability(env, dateStr) {
   if (!isValidDate(dateStr)) return json({ error: 'Bad date' }, 400);
   if (dateStr < todayInWarsaw()) return json({ date: dateStr, free: [] });
   const maps = await loadSlotMaps(env, dateStr, dateStr);
-  return json({ date: dateStr, free: freeSlotsForDate(dateStr, maps.taken, maps.blocked, maps.blockedDays) });
+  let free = freeSlotsForDate(dateStr, maps.taken, maps.blocked, maps.blockedDays);
+  // Spójnie z apiAvailability: dzisiejsze sloty z miniętą godziną rozpoczęcia odpadają.
+  if (dateStr === todayInWarsaw()) {
+    const nowHM = nowTimeInWarsaw();
+    free = free.filter(t => t >= nowHM);
+  }
+  return json({ date: dateStr, free });
 }
 
 // Stałe (usługi/ceny/typy/godziny) jako jedno źródło prawdy dla promptu agenta,
@@ -514,11 +527,11 @@ ID:    ${b.id}
     await resendSend(env.RESEND_API_KEY, {
       from,
       to: b.customer_email,
-      subject: 'Potwierdzenie rezerwacji, skocznarower.pl',
+      subject: 'Rezerwacja przyjęta, czeka na potwierdzenie, skocznarower.pl',
       text:
 `Cześć ${b.customer_name},
 
-Dziękuję za zgłoszenie. Skontaktuję się z Tobą, żeby potwierdzić termin.
+Dziękuję za zgłoszenie. Twój termin jest wstępnie zarezerwowany, potwierdzę go telefonicznie.
 
 Data:    ${b.date}, godz. ${b.time_slot}
 Usługa:  ${service}
@@ -906,6 +919,8 @@ async function adminLogin(request, env) {
   const pw = String(form.get('password') || '');
   const expected = env.ADMIN_PASSWORD || '';
   if (!expected || !timingSafeEqual(pw, expected)) {
+    // Brak konfiguracji tylko do logów (endpoint publiczny, komunikat nie zdradza stanu sekretów).
+    if (!expected) console.warn('ADMIN_PASSWORD nie ustawione, logowanie do /admin niemożliwe');
     return loginPage('Złe hasło.');
   }
   const cookie = await makeSessionCookie(env);
@@ -918,69 +933,165 @@ async function adminLogin(request, env) {
   });
 }
 
+// 302 na wskazany adres (skrót dla akcji POST panelu).
+function redirect(loc) {
+  return new Response('', { status: 302, headers: { 'Location': loc } });
+}
+
+// Dokleja parametr do ścieżki powrotu, szanując istniejący query string i #kotwicę.
+function withParam(back, key, value) {
+  const [base, hash] = String(back).split('#');
+  const sep = base.includes('?') ? '&' : '?';
+  return base + sep + key + '=' + encodeURIComponent(value) + (hash ? '#' + hash : '');
+}
+
+// Białe listy komunikatów toastów. Kod z URL-a mapuje się na stały tekst,
+// więc surowa wartość parametru msg/err nigdy nie trafia do HTML.
+const ADMIN_MSGS = {
+  'potwierdzono': 'Rezerwacja potwierdzona, wydarzenie dodane do kalendarza.',
+  'przyjeto-1': 'Przyjęto do serwisu. SMS do klienta wysłany.',
+  'przyjeto-0': 'Przyjęto do serwisu, ale SMS nie wyszedł. Sprawdź logi Workera.',
+  'przyjeto': 'Przyjęto do serwisu (bez SMS, rezerwacja nie ma telefonu).',
+  'zrobione-1': 'Oznaczono jako zrobione. SMS z podsumowaniem wysłany do klienta.',
+  'zrobione-0': 'Oznaczono jako zrobione, ale SMS nie wyszedł. Sprawdź logi Workera.',
+  'zrobione': 'Oznaczono jako zrobione.',
+  'anulowano': 'Rezerwacja anulowana, slot zwolniony.',
+  'usunieto': 'Rezerwacja usunięta.',
+  'cena': 'Cena zapisana.',
+  'dodano': 'Rezerwacja dodana.',
+  'zablokowano': 'Termin zablokowany.',
+  'odblokowano': 'Blokada usunięta.',
+};
+const ADMIN_ERRS = {
+  'slot-zajety': 'Ten slot ma już aktywną rezerwację (data + godzina). Zmień godzinę.',
+  'rez-anulowana': 'Ta rezerwacja jest anulowana. Najpierw przywróć ją przyciskiem Przywróć.',
+  'zla-kwota': 'Nieprawidłowa kwota. Wpisz liczbę w złotych.',
+  'zla-data': 'Nieprawidłowa data.',
+  'zla-godzina': 'Nieprawidłowa godzina. Użyj formatu HH:MM.',
+  'zakres-za-dlugi': 'Zakres blokady może objąć najwyżej 60 dni.',
+  'zle-dane': 'Uzupełnij poprawnie wszystkie pola.',
+  'brak-telefonu': 'Ta rezerwacja nie ma numeru telefonu.',
+};
+
+// Zielony/czerwony pasek u góry strony. Tekst wyłącznie z białych list powyżej
+// (plus escapowana lista pól przy 'zle-dane'), nigdy surowy parametr z URL-a.
+function adminToasts(msg, err, errFields = '') {
+  const okText = ADMIN_MSGS[msg] || '';
+  let errText = ADMIN_ERRS[err] || '';
+  if (err === 'zle-dane' && errFields) errText = 'Uzupełnij poprawnie: ' + errFields;
+  return (okText ? `<div class="toast toast-ok">${escapeHtml(okText)}</div>` : '')
+    + (errText ? `<div class="toast toast-err">${escapeHtml(errText)}</div>` : '');
+}
+
+// Escapuje tekst do literału JS w atrybucie HTML (onsubmit="return confirm('...')").
+// Kolejność: najpierw \\ i \', potem escapeHtml (encje wracają do znaków już po sparsowaniu atrybutu).
+function confirmJs(text) {
+  return escapeHtml(String(text).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r?\n/g, ' '));
+}
+function confirmAttr(text) {
+  return `onsubmit="return confirm('${confirmJs(text)}')"`;
+}
+
 async function adminUpdateBooking(request, env) {
   const form = await request.formData();
   const id = String(form.get('id') || '');
   const action = String(form.get('action') || '');
   if (!id) return new Response('Bad', { status: 400 });
+  let back = String(form.get('back') || '/admin');
+  if (!back.startsWith('/') || back.startsWith('//')) back = '/admin';
+  const backWith = (key, code) => redirect(withParam(back, key, code));
 
   if (action === 'confirm') {
     const res = await confirmBooking(env, id);
-    if (res.error === 'slot') return new Response('Slot zajęty przez inną rezerwację', { status: 409 });
+    if (res.error === 'slot') return backWith('err', 'slot-zajety');
+    return backWith('msg', 'potwierdzono');
   } else if (action === 'start') {
     // Przyjęcie roweru do serwisu: status 'in_progress' + SMS do klienta.
-    // Wszystkie te statusy są aktywne (!= cancelled), slot się nie zmienia, więc brak ryzyka kolizji.
+    // 'cancelled' jest wykluczone (wskrzeszenie anulowanej mogłoby kolidować ze slotem innej
+    // aktywnej rezerwacji i wysłać fałszywy SMS o przyjęciu); kolizję z idx_bookings_active_slot
+    // mapujemy na czytelny błąd, tak jak przy 'confirm' i 'done'.
     const b = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
+    if (b && b.status === 'cancelled') return backWith('err', 'rez-anulowana');
     if (b && b.status !== 'in_progress' && b.status !== 'done') {
-      // accepted_at stempluje się tu (raz), ręczna korekta daty idzie przez adminSaveFinance.
-      await env.DB.prepare("UPDATE bookings SET status='in_progress', accepted_at=COALESCE(accepted_at, ?2) WHERE id=?1").bind(id, Date.now()).run();
-      if (b.customer_phone) {
-        await sendSms(env, b.customer_phone, repairAcceptedSms(b)).catch(e => console.error('SMS przyjęcie error', e));
+      try {
+        // accepted_at stempluje się tu (raz), ręczna korekta daty idzie przez adminSaveFinance.
+        await env.DB.prepare("UPDATE bookings SET status='in_progress', accepted_at=COALESCE(accepted_at, ?2) WHERE id=?1").bind(id, Date.now()).run();
+      } catch (e) {
+        if (/UNIQUE constraint/i.test(String(e?.message || e))) return backWith('err', 'slot-zajety');
+        throw e;
       }
+      if (b.customer_phone) {
+        const ok = await sendSms(env, b.customer_phone, repairAcceptedSms(b))
+          .catch(e => { console.error('SMS przyjęcie error', e); return false; });
+        return backWith('msg', ok ? 'przyjeto-1' : 'przyjeto-0');
+      }
+      return backWith('msg', 'przyjeto');
     }
   } else if (action === 'done') {
-    // 'done' jest aktywny (!= cancelled), więc przywrócenie anulowanej rezerwacji,
-    // której slot zajęła inna, narusza idx_bookings_active_slot. Mapujemy to na czytelny 409.
     const before = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
+    // Ten sam guard co przy 'start': anulowanej nie wskrzeszamy po cichu.
+    if (before && before.status === 'cancelled') return backWith('err', 'rez-anulowana');
     const summary = String(form.get('repair_summary') || '').trim().slice(0, 300) || null;
-    try {
-      await env.DB.prepare("UPDATE bookings SET status='done', done_at=COALESCE(done_at, ?3), repair_summary=COALESCE(?2, repair_summary) WHERE id=?1")
-        .bind(id, summary, Date.now()).run();
-    } catch (e) {
-      if (/UNIQUE constraint/i.test(String(e?.message || e))) {
-        return new Response('Slot zajęty przez inną rezerwację', { status: 409 });
+    // Formularz „Zrobione" na dashboardzie przesyła też aktualną wartość pola ceny,
+    // żeby kwota wpisana przed kliknięciem nie ginęła (SMS „Koszt" czyta final_price).
+    let price = null;
+    let writePrice = 0;
+    if (form.has('final_price')) {
+      const raw = String(form.get('final_price') || '').replace(',', '.').trim();
+      // Zapis tylko przy niepustej kwocie: pusty submit (np. z nieświeżej karty drugiego
+      // użytkownika panelu) nie może wyczyścić ceny zapisanej w międzyczasie; czyszczenie
+      // ceny nadal możliwe przez akcję 'price' (przycisk ✓).
+      if (raw !== '') {
+        if (!/^\d+(\.\d+)?$/.test(raw)) return backWith('err', 'zla-kwota');
+        price = Math.round(parseFloat(raw));
+        if (price < 0 || price > 100000) return backWith('err', 'zla-kwota');
+        writePrice = 1;
       }
+    }
+    try {
+      await env.DB.prepare(
+        `UPDATE bookings SET status='done', done_at=COALESCE(done_at, ?3),
+           repair_summary=COALESCE(?2, repair_summary),
+           final_price=CASE WHEN ?4=1 THEN ?5 ELSE final_price END
+         WHERE id=?1`
+      ).bind(id, summary, Date.now(), writePrice, price).run();
+    } catch (e) {
+      if (/UNIQUE constraint/i.test(String(e?.message || e))) return backWith('err', 'slot-zajety');
       throw e;
     }
     // SMS z podsumowaniem naprawy tylko przy realnym przejściu do 'done' (nie przy ponownym kliknięciu).
     if (before && before.status !== 'done' && before.customer_phone) {
       const fresh = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
-      await sendSms(env, fresh.customer_phone, repairDoneSms(fresh)).catch(e => console.error('SMS podsumowanie error', e));
+      const ok = await sendSms(env, fresh.customer_phone, repairDoneSms(fresh))
+        .catch(e => { console.error('SMS podsumowanie error', e); return false; });
+      return backWith('msg', ok ? 'zrobione-1' : 'zrobione-0');
     }
+    return backWith('msg', 'zrobione');
   } else if (action === 'cancel') {
     await cancelBooking(env, id);
+    return backWith('msg', 'anulowano');
   } else if (action === 'delete') {
     const b = await env.DB.prepare('SELECT gcal_event_id FROM bookings WHERE id=?1').bind(id).first();
     await env.DB.prepare('DELETE FROM bookings WHERE id=?1').bind(id).run();
     if (b?.gcal_event_id) {
       try { await deleteCalendarEvent(env, b.gcal_event_id); } catch (e) { console.error('Kalendarz delete error', e); }
     }
+    return backWith('msg', 'usunieto');
   } else if (action === 'price') {
     const raw = String(form.get('final_price') || '').replace(',', '.').trim();
     let price = null;
     if (raw !== '') {
       // Ścisły format, żeby "12abc" nie przeszło jako 12 przez parseFloat.
-      if (!/^\d+(\.\d+)?$/.test(raw)) return new Response('Bad price', { status: 400 });
+      if (!/^\d+(\.\d+)?$/.test(raw)) return backWith('err', 'zla-kwota');
       price = Math.round(parseFloat(raw));
-      if (price < 0 || price > 100000) return new Response('Bad price', { status: 400 });
+      if (price < 0 || price > 100000) return backWith('err', 'zla-kwota');
     }
     await env.DB.prepare('UPDATE bookings SET final_price=?1 WHERE id=?2').bind(price, id).run();
+    return backWith('msg', 'cena');
   } else {
     return new Response('Bad action', { status: 400 });
   }
-  let back = String(form.get('back') || '/admin');
-  if (!back.startsWith('/') || back.startsWith('//')) back = '/admin';
-  return new Response('', { status: 302, headers: { 'Location': back } });
+  return redirect(back);
 }
 
 // Wspólna logika dla panelu admina i linku z SMS-a.
@@ -1056,9 +1167,17 @@ async function adminCreateBooking(request, env) {
   if (!SERVICES.some(s => s.id === service_type)) errors.push('usługa');
   if (!BIKE_TYPES.includes(bike_type)) errors.push('typ roweru');
   if (!isValidDate(date)) errors.push('data');
-  if (!/^\d{2}:\d{2}$/.test(time_slot)) errors.push('godzina');
+  // Realna godzina (odrzuca 99:99, które psuło sortowanie i insert do kalendarza).
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time_slot)) errors.push('godzina');
+
+  // Przy błędzie wpisane wartości wracają w query, żeby formularz nie wyczyścił się do zera.
+  const prefillQs = () => new URLSearchParams({
+    mf_name: name, mf_phone: phone, mf_email: email || '', mf_service: service_type,
+    mf_bike: bike_type, mf_model: bike_model || '', mf_date: date, mf_time: time_slot,
+    mf_source: source, mf_notes: rawNotes,
+  }).toString();
   if (errors.length) {
-    return new Response('Uzupełnij poprawnie: ' + errors.join(', '), { status: 400 });
+    return redirect('/admin?err=zle-dane&fields=' + encodeURIComponent(errors.join(', ')) + '&' + prefillQs() + '#dodaj');
   }
 
   const prefix = { tel: '[tel]', google: '[google]', inne: '[ręczna]' }[source] || '[ręczna]';
@@ -1073,7 +1192,7 @@ async function adminCreateBooking(request, env) {
     ).bind(id, Date.now(), date, time_slot, service_type, bike_type, bike_model, name, phone, email, notes).run();
   } catch (e) {
     if (/UNIQUE constraint/i.test(String(e?.message || e))) {
-      return new Response('Ten slot ma już aktywną rezerwację (data + godzina). Zmień godzinę.', { status: 409 });
+      return redirect('/admin?err=slot-zajety&' + prefillQs() + '#dodaj');
     }
     throw e;
   }
@@ -1087,7 +1206,7 @@ async function adminCreateBooking(request, env) {
     } catch (e) { console.error('Kalendarz error (ręczna rezerwacja)', e); }
   }
 
-  return new Response('', { status: 302, headers: { 'Location': '/admin' } });
+  return redirect('/admin?msg=dodano');
 }
 
 // ─── ROZLICZENIE MATEUSZ / PIOTR ────────────────────────────────────────────
@@ -1226,6 +1345,8 @@ async function adminBookingDetail(env, url) {
   if (!b) return new Response('Nie ma takiego zlecenia', { status: 404 });
   const saved = url.searchParams.get('saved') === '1';
   const sent = url.searchParams.get('sent');
+  const msg = url.searchParams.get('msg') || '';
+  const err = url.searchParams.get('err') || '';
   const svc = SERVICES.find(s => s.id === b.service_type)?.name || b.service_type;
   const s = computeSettlement(b);
   const opt = (val, cur, label) => `<option value="${val}"${cur === val ? ' selected' : ''}>${escapeHtml(label)}</option>`;
@@ -1257,7 +1378,8 @@ async function adminBookingDetail(env, url) {
 
   const body = `
 <section class="card">
-  <h2>${escapeHtml(b.customer_name)} · ${b.date} ${b.time_slot} <span class="badge badge-${b.status}">${statusLabel(b.status)}</span></h2>
+  <h2>${escapeHtml(b.customer_name)} · ${escapeHtml(b.date)} ${escapeHtml(b.time_slot)} <span class="badge badge-${b.status}">${statusLabel(b.status)}</span></h2>
+  ${adminToasts(msg, err)}
   ${saved ? '<p class="ok-msg">Zapisano.</p>' : ''}
   ${sent === '1' ? '<p class="ok-msg">SMS wysłany.</p>' : ''}
   ${sent === '0' ? '<p class="err-msg">Nie udało się wysłać SMS (sprawdź logi).</p>' : ''}
@@ -1302,7 +1424,8 @@ async function adminBookingDetail(env, url) {
         <select name="paid_to">${opt('', b.paid_to || '', 'auto z metody')}${opt('piotr', b.paid_to, 'Piotr')}${opt('mateusz', b.paid_to, 'Mateusz')}</select>
       </label>
     </div>
-    <button type="submit">Zapisz</button>
+    <button type="submit">Zapisz zlecenie</button>
+    <span class="hint">Zapisuje wszystkie sekcje: Terminy, Naprawa i notatki, Ceny i płatność.</span>
   </form>
 
   <details class="split-details">
@@ -1313,9 +1436,10 @@ async function adminBookingDetail(env, url) {
   <form method="post" action="/admin/booking" class="actions" style="margin-top:16px">
     <input type="hidden" name="id" value="${escapeHtml(b.id)}">
     <input type="hidden" name="back" value="${escapeHtml(back)}">
-    ${b.status !== 'in_progress' && b.status !== 'done' && b.status !== 'cancelled' ? '<button name="action" value="start" class="btn-ok">Przyjęto</button>' : ''}
-    ${b.status !== 'done' && b.status !== 'cancelled' ? '<button name="action" value="done" class="btn-ok">Zrobione</button>' : ''}
-    ${b.status !== 'cancelled' ? '<button name="action" value="cancel" class="btn-warn">Anuluj</button>' : ''}
+    ${b.status === 'pending' ? '<button name="action" value="confirm" class="btn-ok">Potwierdź</button>' : ''}
+    ${b.status !== 'in_progress' && b.status !== 'done' && b.status !== 'cancelled' ? `<button name="action" value="start" class="btn-ok" onclick="return confirm('Przyjąć rower do serwisu? Klient dostanie SMS o przyjęciu.')">Przyjęto</button>` : ''}
+    ${b.status !== 'done' && b.status !== 'cancelled' ? `<button name="action" value="done" class="btn-ok" onclick="return confirm('Oznaczyć jako zrobione? Klient dostanie SMS z podsumowaniem i kosztem.')">Zrobione</button>` : ''}
+    ${b.status !== 'cancelled' ? `<button name="action" value="cancel" class="btn-warn" onclick="return confirm('Anulować rezerwację? Slot zostanie zwolniony.')">Anuluj</button>` : ''}
   </form>
 </section>
 
@@ -1329,7 +1453,24 @@ async function adminBookingDetail(env, url) {
   </form>
   <div class="timeline">${timelineHtml}</div>
   <p class="muted" style="margin-top:8px">Historia odtworzona z wysłanych SMS-ów i przychodzących WhatsApp; nie potwierdza doręczenia.</p>
-</section>`;
+</section>
+
+<script>
+(function () {
+  // Ostrzeżenie przed utratą niezapisanych pól zlecenia przy akcjach statusu
+  // (Przyjęto/Zrobione/Anuluj wysyłają osobny formularz i nie zapisują finance-form).
+  var f = document.querySelector('.finance-form');
+  var a = document.querySelector('form.actions');
+  if (!f || !a) return;
+  var snap = new URLSearchParams(new FormData(f)).toString();
+  a.addEventListener('submit', function (e) {
+    var now = new URLSearchParams(new FormData(f)).toString();
+    if (now !== snap && !confirm('Masz niezapisane zmiany w polach zlecenia. Kontynuować bez ich zapisu?')) {
+      e.preventDefault();
+    }
+  });
+})();
+</script>`;
   return adminShell('Zlecenie', body);
 }
 
@@ -1348,6 +1489,7 @@ async function adminSaveFinance(env, form) {
   if (!id) return new Response('Bad', { status: 400 });
   const cur = await env.DB.prepare('SELECT accepted_at, final_price_override FROM bookings WHERE id=?1').bind(id).first();
   if (!cur) return new Response('Nie ma takiego zlecenia', { status: 404 });
+  const backTo = '/admin/zlecenie?id=' + encodeURIComponent(id);
 
   const partsCost = parseZl(form.get('parts_cost'));
   const partsCharged = parseZl(form.get('parts_charged'));
@@ -1355,7 +1497,7 @@ async function adminSaveFinance(env, form) {
   const paid = parseZl(form.get('amount_paid'));
   const override = parseZl(form.get('final_price_override'));
   if ([partsCost, partsCharged, labor, paid, override].some(v => v === undefined)) {
-    return new Response('Nieprawidłowa kwota', { status: 400 });
+    return redirect(withParam(backTo, 'err', 'zla-kwota'));
   }
   const bikeModel = String(form.get('bike_model') || '').trim().slice(0, 120) || null;
   const summary = String(form.get('repair_summary') || '').trim().slice(0, 300) || null;
@@ -1366,7 +1508,7 @@ async function adminSaveFinance(env, form) {
   const paidTo = ['piotr', 'mateusz'].includes(String(form.get('paid_to'))) ? String(form.get('paid_to')) : null;
 
   const expectedRaw = String(form.get('expected_ready_date') || '').trim();
-  if (expectedRaw && !isValidDate(expectedRaw)) return new Response('Zła data odbioru', { status: 400 });
+  if (expectedRaw && !isValidDate(expectedRaw)) return redirect(withParam(backTo, 'err', 'zla-data'));
   const expectedReady = expectedRaw || null;
 
   // Termin przyjęcia: puste pole NIE kasuje istniejącego stempla (z akcji „Przyjęto"); zachowaj
@@ -1375,7 +1517,7 @@ async function adminSaveFinance(env, form) {
   let acceptedAt;
   if (!acceptedRaw) acceptedAt = cur.accepted_at;
   else if (cur.accepted_at != null && warsawDate(cur.accepted_at) === acceptedRaw) acceptedAt = cur.accepted_at;
-  else { acceptedAt = dateToMs(acceptedRaw); if (acceptedAt == null) return new Response('Zła data przyjęcia', { status: 400 }); }
+  else { acceptedAt = dateToMs(acceptedRaw); if (acceptedAt == null) return redirect(withParam(backTo, 'err', 'zla-data')); }
 
   // final_price = ręczne nadpisanie, inaczej auto (części + robocizna). Zapisujemy też, gdy
   // czyścimy poprzednie nadpisanie (cur.final_price_override != null), żeby final_price nie został stary.
@@ -1402,7 +1544,10 @@ async function adminSendSms(env, form) {
   const text = String(form.get('body') || '').trim().slice(0, 480);
   if (!id || !text) return new Response('Bad', { status: 400 });
   const b = await env.DB.prepare('SELECT customer_phone FROM bookings WHERE id=?1').bind(id).first();
-  if (!b || !b.customer_phone) return new Response('Brak telefonu', { status: 400 });
+  if (!b) return new Response('Nie ma takiego zlecenia', { status: 404 });
+  if (!b.customer_phone) {
+    return redirect(withParam('/admin/zlecenie?id=' + encodeURIComponent(id), 'err', 'brak-telefonu'));
+  }
 
   const ok = await sendSms(env, b.customer_phone, text).catch(e => { console.error('SMS panel error', e); return false; });
   if (ok) {
@@ -1430,14 +1575,14 @@ async function adminSettlement(env, url) {
     }
     const det = '/admin/zlecenie?id=' + encodeURIComponent(b.id);
     return `<tr class="${b.settled_at ? 'settled' : ''}">
-      <td><div class="date">${b.date}</div><div class="muted">${escapeHtml(b.customer_name)}</div></td>
-      <td>${s.hasFinance ? zl(s.total) : '<span class="muted">brak danych</span>'}</td>
-      <td>${s.hasFinance ? zl(s.profit) : '–'}</td>
-      <td>${s.hasFinance ? zl(s.mateuszProfit) : '–'}</td>
-      <td>${s.hasFinance ? zl(s.piotrProfit) : '–'}</td>
-      <td>${s.hasFinance ? `${PAY_LABELS[b.payment_method] || '?'} → ${PERSON_LABELS[s.holder]}` : '–'}</td>
+      <td data-label="Zlecenie"><div class="date">${escapeHtml(b.date)}</div><div class="muted">${escapeHtml(b.customer_name)}</div></td>
+      <td data-label="Wycena">${s.hasFinance ? zl(s.total) : '<span class="muted">brak danych</span>'}</td>
+      <td data-label="Zysk">${s.hasFinance ? zl(s.profit) : '–'}</td>
+      <td data-label="Mateusz">${s.hasFinance ? zl(s.mateuszProfit) : '–'}</td>
+      <td data-label="Piotr">${s.hasFinance ? zl(s.piotrProfit) : '–'}</td>
+      <td data-label="Płatność">${s.hasFinance ? `${PAY_LABELS[b.payment_method] || '?'} → ${PERSON_LABELS[s.holder]}` : '–'}</td>
       <td class="actions">
-        <a href="${escapeHtml(det)}" class="btn-ok" style="text-decoration:none">Otwórz</a>
+        <a href="${escapeHtml(det)}" class="btn-ok">Otwórz</a>
         ${b.settled_at
           ? `<form method="post" action="/admin/rozliczenie" style="display:inline"><input type="hidden" name="id" value="${escapeHtml(b.id)}"><button name="action" value="unsettle" class="btn-warn">Cofnij</button></form>`
           : `<form method="post" action="/admin/rozliczenie" style="display:inline"><input type="hidden" name="id" value="${escapeHtml(b.id)}"><button name="action" value="settle" class="btn-ok">Rozliczone</button></form>`}
@@ -1470,7 +1615,7 @@ async function adminSettlement(env, url) {
     ${missing ? `<div class="calc-row warn"><span>Zleceń bez danych finansowych</span><b>${missing}</b></div>` : ''}
   </div>
   ${rows.length === 0 ? '<p class="muted">Brak zleceń.</p>' : `
-  <table>
+  <table class="cards">
     <thead><tr><th>Zlecenie</th><th>Wycena</th><th>Zysk</th><th>Mateusz</th><th>Piotr</th><th>Płatność</th><th></th></tr></thead>
     <tbody>${lines}</tbody>
   </table>`}
@@ -1497,19 +1642,49 @@ async function adminSettleAction(request, env) {
 async function adminBlockSlot(request, env) {
   const form = await request.formData();
   const date = String(form.get('date') || '');
-  const time = String(form.get('time_slot') || 'all');
+  const dateTo = String(form.get('date_to') || '').trim();
+  const time = String(form.get('time_slot') || '').trim() || 'all';
   const reason = String(form.get('reason') || '').slice(0, 200);
-  if (!isValidDate(date)) return new Response('Bad date', { status: 400 });
+  if (!isValidDate(date)) return redirect('/admin?err=zla-data');
 
   if (form.get('_method') === 'delete') {
-    await env.DB.prepare('DELETE FROM blocked_slots WHERE date=?1 AND time_slot=?2')
-      .bind(date, time).run();
-  } else {
-    await env.DB.prepare(
-      'INSERT OR REPLACE INTO blocked_slots (date, time_slot, reason, created_at) VALUES (?1, ?2, ?3, ?4)'
-    ).bind(date, time, reason || null, Date.now()).run();
+    // Odblokowanie: pojedynczy wpis albo cały sklejony zakres dni całodniowych.
+    // Gałąź delete celowo bez walidacji formatu time, żeby dało się usunąć też
+    // historyczny wadliwy wpis (wartość idzie parametrycznie, jest bezpieczna).
+    if (isValidDate(dateTo) && dateTo > date) {
+      await env.DB.prepare("DELETE FROM blocked_slots WHERE date >= ?1 AND date <= ?2 AND time_slot = 'all'")
+        .bind(date, dateTo).run();
+    } else {
+      await env.DB.prepare('DELETE FROM blocked_slots WHERE date=?1 AND time_slot=?2')
+        .bind(date, time).run();
+    }
+    return redirect('/admin?msg=odblokowano');
   }
-  return new Response('', { status: 302, headers: { 'Location': '/admin' } });
+
+  // Zakres dat (urlop): blokuje całe dni od "date" do "date_to" włącznie. Limit 60 dni,
+  // żeby literówka w roku nie wygenerowała tysięcy wierszy.
+  if (dateTo) {
+    if (!isValidDate(dateTo) || dateTo < date) return redirect('/admin?err=zla-data');
+    const span = Math.round((Date.parse(dateTo + 'T12:00:00Z') - Date.parse(date + 'T12:00:00Z')) / 86400000) + 1;
+    if (span > 60) return redirect('/admin?err=zakres-za-dlugi');
+    const stmt = env.DB.prepare(
+      "INSERT OR IGNORE INTO blocked_slots (date, time_slot, reason, created_at) VALUES (?1, 'all', ?2, ?3)"
+    );
+    const now = Date.now();
+    const batch = [];
+    for (let i = 0; i < span; i++) batch.push(stmt.bind(addDaysToDateStr(date, i), reason || null, now));
+    await env.DB.batch(batch);
+    return redirect('/admin?msg=zablokowano');
+  }
+
+  // Walidacja godziny po stronie serwera (atrybuty inputu są tylko klienckie).
+  if (time !== 'all' && !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
+    return redirect('/admin?err=zla-godzina');
+  }
+  await env.DB.prepare(
+    'INSERT OR REPLACE INTO blocked_slots (date, time_slot, reason, created_at) VALUES (?1, ?2, ?3, ?4)'
+  ).bind(date, time, reason || null, Date.now()).run();
+  return redirect('/admin?msg=zablokowano');
 }
 
 async function adminDashboard(env, url) {
@@ -1530,10 +1705,26 @@ async function adminDashboard(env, url) {
     where = '';
   }
 
+  // Przeszłe i Wszystkie od najnowszych (przy >500 wierszach LIMIT ucina najstarsze, nie najświeższe);
+  // Nadchodzące zostają rosnąco (najbliższa wizyta na górze).
+  const orderBy = (filter === 'past' || filter === 'all')
+    ? 'ORDER BY date DESC, time_slot DESC'
+    : 'ORDER BY date ASC, time_slot ASC';
   const q = env.DB.prepare(
-    `SELECT * FROM bookings ${where} ORDER BY date ASC, time_slot ASC LIMIT 500`
+    `SELECT * FROM bookings ${where} ${orderBy} LIMIT 500`
   );
   const bookings = (await (params.length ? q.bind(...params) : q).all()).results || [];
+
+  // Widok dnia: wszystkie dzisiejsze wizyty niezależnie od statusu (w tym done, które
+  // znika z Nadchodzących w chwili kliknięcia „Zrobione").
+  const todayRows = (await env.DB.prepare(
+    'SELECT * FROM bookings WHERE date = ?1 ORDER BY time_slot ASC'
+  ).bind(today).all()).results || [];
+
+  // Kropka pending liczona globalnie (osobny SELECT), niezależnie od aktywnego filtra.
+  const pendingCount = (await env.DB.prepare(
+    "SELECT COUNT(*) AS n FROM bookings WHERE status = 'pending' AND date >= ?1"
+  ).bind(today).first())?.n || 0;
 
   const blocked = (await env.DB.prepare(
     'SELECT * FROM blocked_slots WHERE date >= ?1 ORDER BY date ASC, time_slot ASC'
@@ -1551,10 +1742,28 @@ async function adminDashboard(env, url) {
     "SELECT * FROM outreach_contacts ORDER BY CASE status WHEN 'planned' THEN 0 WHEN 'sent' THEN 1 WHEN 'responded' THEN 2 WHEN 'closed' THEN 3 ELSE 4 END, channel ASC, id ASC"
   ).all()).results || [];
 
+  // Toasty (kody mapowane na białe listy w adminToasts) + prefill formularza ręcznej
+  // rezerwacji po błędzie walidacji (wartości wracają w query, patrz adminCreateBooking).
+  const msg = url.searchParams.get('msg') || '';
+  const err = url.searchParams.get('err') || '';
+  const errFields = url.searchParams.get('fields') || '';
+  const prefill = {
+    name: url.searchParams.get('mf_name') || '',
+    phone: url.searchParams.get('mf_phone') || '',
+    email: url.searchParams.get('mf_email') || '',
+    service: url.searchParams.get('mf_service') || '',
+    bike: url.searchParams.get('mf_bike') || '',
+    model: url.searchParams.get('mf_model') || '',
+    date: url.searchParams.get('mf_date') || '',
+    time: url.searchParams.get('mf_time') || '',
+    source: url.searchParams.get('mf_source') || '',
+    notes: url.searchParams.get('mf_notes') || '',
+  };
+
   return html(renderDashboard({
-    bookings, blocked, filter, today,
+    bookings, todayRows, pendingCount, blocked, filter, today,
     reviewsProfile, reviewsCount, reviewsStatus,
-    outreach,
+    outreach, msg, err, errFields, prefill,
   }));
 }
 
@@ -1570,65 +1779,88 @@ ${ADMIN_STYLES}
   <form method="post" action="/admin/login" class="login-box">
     <h1>Panel rezerwacji</h1>
     ${error ? `<p class="err">${escapeHtml(error)}</p>` : ''}
-    <input type="password" name="password" placeholder="Hasło" autofocus required>
+    <label for="admin-password">Hasło</label>
+    <input type="password" id="admin-password" name="password" autocomplete="current-password" autofocus required>
     <button type="submit">Zaloguj</button>
   </form>
 </body></html>`);
 }
 
-function renderDashboard({ bookings, blocked, filter, today, reviewsProfile, reviewsCount, reviewsStatus, outreach }) {
-  const pendingCount = bookings.filter(b => b.status === 'pending').length;
-
+function renderDashboard({ bookings, todayRows, pendingCount, blocked, filter, today, reviewsProfile, reviewsCount, reviewsStatus, outreach, msg, err, errFields, prefill }) {
   const back = `/admin?filter=${encodeURIComponent(filter)}`;
   const backEsc = escapeHtml(back);
+  const pf = prefill || {};
+  // Osobny formularz na każdą akcję: Enter w polu tekstowym nie odpala już pierwszego
+  // przycisku formularza (implicit submission), a akcje SMS-owe i destrukcyjne mają confirm().
   const row = b => {
     const svc = SERVICES.find(s => s.id === b.service_type);
     const service = svc?.name || b.service_type;
     const estPrice = svc?.price || '-';
     const finalVal = b.final_price != null ? b.final_price : '';
+    const who = `${b.customer_name} (${b.date} ${b.time_slot})`;
+    const hidden = `<input type="hidden" name="id" value="${escapeHtml(b.id)}"><input type="hidden" name="back" value="${backEsc}">`;
     return `
     <tr class="status-${b.status}">
-      <td class="when">
-        <div class="date">${b.date}</div>
-        <div class="time">${b.time_slot}</div>
+      <td class="when" data-label="Kiedy">
+        <div class="date">${escapeHtml(b.date)}</div>
+        <div class="time">${escapeHtml(b.time_slot)}</div>
       </td>
-      <td>
+      <td data-label="Klient">
         <div class="name"><a href="/admin/zlecenie?id=${escapeHtml(b.id)}" class="name-link">${escapeHtml(b.customer_name)}</a></div>
         <div class="muted">${escapeHtml(b.bike_type)}${b.bike_model ? ` · ${escapeHtml(b.bike_model)}` : ''}</div>
       </td>
-      <td>
+      <td data-label="Kontakt">
         <a href="tel:${escapeHtml(b.customer_phone)}">${escapeHtml(b.customer_phone)}</a>
         ${b.customer_email ? `<div class="muted"><a href="mailto:${escapeHtml(b.customer_email)}">${escapeHtml(b.customer_email)}</a></div>` : ''}
       </td>
-      <td>
+      <td data-label="Usługa">
         <div>${escapeHtml(service)}</div>
         ${b.notes ? `<div class="muted notes">${escapeHtml(b.notes)}</div>` : ''}
       </td>
-      <td class="price-est"><span class="muted">${escapeHtml(estPrice)}</span></td>
-      <td class="price-final">
+      <td class="price-est" data-label="Wycena"><span class="muted">${escapeHtml(estPrice)}</span></td>
+      <td class="price-final" data-label="Faktycznie">
         <form method="post" action="/admin/booking" class="price-form">
-          <input type="hidden" name="id" value="${escapeHtml(b.id)}">
+          ${hidden}
           <input type="hidden" name="action" value="price">
-          <input type="hidden" name="back" value="${backEsc}">
           <input type="number" name="final_price" value="${finalVal}" min="0" max="100000" step="1" placeholder="zł" class="price-input">
-          <button type="submit" class="btn-save" title="Zapisz">✓</button>
+          <button type="submit" class="btn-save" title="Zapisz cenę">✓</button>
         </form>
       </td>
-      <td><span class="badge badge-${b.status}">${statusLabel(b.status)}</span></td>
+      <td data-label="Status"><span class="badge badge-${b.status}">${statusLabel(b.status)}</span></td>
       <td class="actions">
-        <a href="/admin/zlecenie?id=${escapeHtml(b.id)}" class="btn-ok" style="text-decoration:none" title="Szczegóły, kwoty, rozliczenie">Otwórz</a>
-        <form method="post" action="/admin/booking" style="display:inline">
-          <input type="hidden" name="id" value="${escapeHtml(b.id)}">
-          <input type="hidden" name="back" value="${backEsc}">
-          ${b.status === 'pending' ? '<button name="action" value="confirm" class="btn-ok">Potwierdź</button>' : ''}
-          ${b.status !== 'in_progress' && b.status !== 'done' && b.status !== 'cancelled' ? '<button name="action" value="start" class="btn-ok" title="Przyjęto rower do serwisu, wyśle SMS do klienta">Przyjęto</button>' : ''}
-          ${b.status !== 'done' && b.status !== 'cancelled' ? `<input type="text" name="repair_summary" value="${escapeHtml(b.repair_summary || '')}" placeholder="co zrobiono (do SMS)" maxlength="300" class="summary-input"><button name="action" value="done" class="btn-ok" title="Naprawa gotowa, wyśle SMS z podsumowaniem">Zrobione</button>` : ''}
-          ${b.status !== 'cancelled' ? '<button name="action" value="cancel" class="btn-warn">Anuluj</button>' : ''}
-          <button name="action" value="delete" class="btn-del" onclick="return confirm(\'Usunąć rezerwację?\')">Usuń</button>
-        </form>
+        <a href="/admin/zlecenie?id=${escapeHtml(b.id)}" class="btn-ok" title="Szczegóły, kwoty, rozliczenie">Otwórz</a>
+        ${b.status === 'pending' ? `<form method="post" action="/admin/booking">${hidden}<button name="action" value="confirm" class="btn-ok">Potwierdź</button></form>` : ''}
+        ${b.status === 'pending' || b.status === 'confirmed' ? `<form method="post" action="/admin/booking" ${confirmAttr(`Przyjąć rower do serwisu? ${who}. Klient dostanie SMS o przyjęciu.`)}>${hidden}<button name="action" value="start" class="btn-ok" title="Przyjęto rower do serwisu, wyśle SMS do klienta">Przyjęto</button></form>` : ''}
+        ${b.status !== 'done' && b.status !== 'cancelled' ? `<form method="post" action="/admin/booking" class="done-form" onsubmit="var p=this.closest('tr').querySelector('.price-input'); if (p) this.final_price.value = p.value; return confirm('${confirmJs(`Oznaczyć jako zrobione? ${who}. Klient dostanie SMS z podsumowaniem i kosztem.`)}')">${hidden}<input type="hidden" name="final_price" value="${finalVal}"><input type="text" name="repair_summary" value="${escapeHtml(b.repair_summary || '')}" placeholder="co zrobiono (do SMS)" maxlength="300" class="summary-input" onkeydown="if(event.key==='Enter'){event.preventDefault()}"><button name="action" value="done" class="btn-ok" title="Naprawa gotowa, wyśle SMS z podsumowaniem">Zrobione</button></form>` : ''}
+        ${b.status === 'cancelled' ? `<form method="post" action="/admin/booking" ${confirmAttr(`Przywrócić rezerwację? ${who}. Wróci jako potwierdzona.`)}>${hidden}<button name="action" value="confirm" class="btn-ok">Przywróć</button></form>` : ''}
+        ${b.status !== 'cancelled' ? `<form method="post" action="/admin/booking" ${confirmAttr(`Anulować rezerwację? ${who}. Slot zostanie zwolniony.`)}>${hidden}<button name="action" value="cancel" class="btn-warn">Anuluj</button></form>` : ''}
+        <form method="post" action="/admin/booking" ${confirmAttr(`Usunąć rezerwację? ${who}. Tego nie można cofnąć.`)}>${hidden}<button name="action" value="delete" class="btn-del">Usuń</button></form>
       </td>
     </tr>`;
   };
+
+  const todayItem = t => {
+    const svc = SERVICES.find(s => s.id === t.service_type)?.name || t.service_type;
+    return `<li class="today-item status-${t.status}">
+      <span class="today-time">${escapeHtml(t.time_slot)}</span>
+      <a href="/admin/zlecenie?id=${escapeHtml(t.id)}" class="name-link">${escapeHtml(t.customer_name)}</a>
+      <span class="muted">${escapeHtml(svc)}</span>
+      <span class="badge badge-${t.status}">${statusLabel(t.status)}</span>
+      <a href="tel:${escapeHtml(t.customer_phone)}" class="muted">${escapeHtml(t.customer_phone)}</a>
+    </li>`;
+  };
+
+  // Ciągłe dni całodniowe (ten sam powód) sklejone w jeden wiersz z jednym Odblokuj.
+  const blockedRows = [];
+  for (const b of blocked) {
+    const prev = blockedRows[blockedRows.length - 1];
+    if (b.time_slot === 'all' && prev && prev.time_slot === 'all'
+      && (prev.reason || '') === (b.reason || '') && addDaysToDateStr(prev.dateTo, 1) === b.date) {
+      prev.dateTo = b.date;
+    } else {
+      blockedRows.push({ date: b.date, dateTo: b.date, time_slot: b.time_slot, reason: b.reason });
+    }
+  }
 
   const revenue = bookings
     .filter(b => b.status === 'done' && b.final_price != null)
@@ -1651,6 +1883,15 @@ ${ADMIN_STYLES}
   </div>
 </header>
 
+${adminToasts(msg, err, errFields)}
+
+<section class="card today-card">
+  <h2>Dziś · ${today}${todayRows.length ? ` · wizyt: ${todayRows.length}` : ''}</h2>
+  ${todayRows.length === 0 ? '<p class="muted">Brak wizyt na dziś.</p>' : `<ul class="today-list">
+    ${todayRows.map(todayItem).join('')}
+  </ul>`}
+</section>
+
 <nav class="tabs">
   <a href="?filter=upcoming" class="${filter === 'upcoming' ? 'active' : ''}">Nadchodzące${pendingCount ? ` <span class="dot">${pendingCount}</span>` : ''}</a>
   <a href="?filter=past" class="${filter === 'past' ? 'active' : ''}">Przeszłe</a>
@@ -1661,63 +1902,65 @@ ${ADMIN_STYLES}
 <section class="card">
   <h2>Lista (${bookings.length})${revenue > 0 ? ` · <span class="revenue">${revenue} zł</span><span class="muted revenue-note"> z ukończonych</span>` : ''}</h2>
   ${bookings.length === 0 ? '<p class="muted">Brak rezerwacji.</p>' : `
-  <table>
+  <table class="cards">
     <thead><tr><th>Kiedy</th><th>Klient</th><th>Kontakt</th><th>Usługa</th><th>Wycena</th><th>Faktycznie</th><th>Status</th><th></th></tr></thead>
     <tbody>${bookings.map(row).join('')}</tbody>
   </table>`}
 </section>
 
-<section class="card">
+<section class="card" id="dodaj">
   <h2>Dodaj rezerwację ręcznie</h2>
   <p class="muted">Dla osób z telefonu albo z Google. Status od razu „potwierdzone", bez SMS-a przy dodaniu (SMS idzie przy „Przyjęto" i „Zrobione"). Można wpisać datę wsteczną.</p>
   <form method="post" action="/admin/booking-new" class="block-form manual-form">
-    <input type="text" name="customer_name" placeholder="Imię i nazwisko" required minlength="2" maxlength="80">
-    <input type="tel" name="customer_phone" placeholder="Telefon" required>
-    <input type="email" name="customer_email" placeholder="E-mail (opcjonalnie)">
+    <input type="text" name="customer_name" placeholder="Imię i nazwisko" required minlength="2" maxlength="80" value="${escapeHtml(pf.name)}">
+    <input type="tel" name="customer_phone" placeholder="Telefon" required value="${escapeHtml(pf.phone)}">
+    <input type="email" name="customer_email" placeholder="E-mail (opcjonalnie)" value="${escapeHtml(pf.email)}">
     <select name="service_type" required>
-      <option value="" disabled selected>Usługa…</option>
-      ${SERVICES.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('')}
+      <option value="" disabled${pf.service ? '' : ' selected'}>Usługa…</option>
+      ${SERVICES.map(s => `<option value="${escapeHtml(s.id)}"${pf.service === s.id ? ' selected' : ''}>${escapeHtml(s.name)}</option>`).join('')}
     </select>
     <select name="bike_type" required>
-      <option value="" disabled selected>Typ roweru…</option>
-      ${BIKE_TYPES.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}
+      <option value="" disabled${pf.bike ? '' : ' selected'}>Typ roweru…</option>
+      ${BIKE_TYPES.map(t => `<option value="${escapeHtml(t)}"${pf.bike === t ? ' selected' : ''}>${escapeHtml(t)}</option>`).join('')}
     </select>
-    <input type="text" name="bike_model" placeholder="Model roweru (opcjonalnie)" maxlength="120">
-    <input type="date" name="date" required value="${today}">
-    <input type="text" name="time_slot" placeholder="Godzina np. 17:00" pattern="[0-9]{2}:[0-9]{2}" required>
+    <input type="text" name="bike_model" placeholder="Model roweru (opcjonalnie)" maxlength="120" value="${escapeHtml(pf.model)}">
+    <label class="bl">Data<input type="date" name="date" required value="${escapeHtml(pf.date || today)}"></label>
+    <label class="bl">Godzina<input type="time" name="time_slot" step="3600" required value="${escapeHtml(pf.time)}"></label>
     <select name="source">
-      <option value="tel">Z telefonu</option>
-      <option value="google">Z Google</option>
-      <option value="inne">Inne</option>
+      <option value="tel"${!pf.source || pf.source === 'tel' ? ' selected' : ''}>Z telefonu</option>
+      <option value="google"${pf.source === 'google' ? ' selected' : ''}>Z Google</option>
+      <option value="inne"${pf.source === 'inne' ? ' selected' : ''}>Inne</option>
     </select>
-    <input type="text" name="notes" placeholder="Notatka (opcjonalnie)" maxlength="300">
+    <input type="text" name="notes" placeholder="Notatka (opcjonalnie)" maxlength="300" value="${escapeHtml(pf.notes)}">
     <button type="submit">Dodaj</button>
   </form>
 </section>
 
 <section class="card">
   <h2>Zablokuj termin</h2>
-  <p class="muted">Urlop, święto, prywatne plany. Wybierz datę i opcjonalnie godzinę (puste = cały dzień).</p>
+  <p class="muted">Urlop, święto, prywatne plany. Jeden dzień albo zakres od-do (zakres blokuje całe dni). Godzina pusta = cały dzień.</p>
   <form method="post" action="/admin/block" class="block-form">
-    <input type="date" name="date" required min="${today}">
-    <input type="text" name="time_slot" placeholder="np. 14:00 (puste = cały dzień)" pattern="[0-9]{2}:[0-9]{2}|all">
-    <input type="text" name="reason" placeholder="Powód (opcjonalnie)" maxlength="200">
+    <label class="bl">Od<input type="date" name="date" required min="${today}"></label>
+    <label class="bl">Do (opcjonalnie)<input type="date" name="date_to" min="${today}"></label>
+    <label class="bl">Godzina (puste = cały dzień)<input type="time" name="time_slot" step="3600"></label>
+    <label class="bl">Powód<input type="text" name="reason" placeholder="np. urlop (opcjonalnie)" maxlength="200"></label>
     <button type="submit">Zablokuj</button>
   </form>
 
-  ${blocked.length === 0 ? '<p class="muted">Brak zablokowanych terminów.</p>' : `
-  <table class="blocked-table">
+  ${blockedRows.length === 0 ? '<p class="muted">Brak zablokowanych terminów.</p>' : `
+  <table class="blocked-table cards">
     <thead><tr><th>Data</th><th>Godzina</th><th>Powód</th><th></th></tr></thead>
     <tbody>
-      ${blocked.map(b => `
+      ${blockedRows.map(b => `
       <tr>
-        <td>${b.date}</td>
-        <td>${b.time_slot === 'all' ? 'cały dzień' : b.time_slot}</td>
-        <td>${escapeHtml(b.reason || '')}</td>
-        <td>
+        <td data-label="Data">${escapeHtml(b.date)}${b.dateTo !== b.date ? ` do ${escapeHtml(b.dateTo)}` : ''}</td>
+        <td data-label="Godzina">${b.time_slot === 'all' ? 'cały dzień' : escapeHtml(b.time_slot)}</td>
+        <td data-label="Powód">${escapeHtml(b.reason || '')}</td>
+        <td class="actions">
           <form method="post" action="/admin/block" style="display:inline">
-            <input type="hidden" name="date" value="${b.date}">
-            <input type="hidden" name="time_slot" value="${b.time_slot}">
+            <input type="hidden" name="date" value="${escapeHtml(b.date)}">
+            ${b.dateTo !== b.date ? `<input type="hidden" name="date_to" value="${escapeHtml(b.dateTo)}">` : ''}
+            <input type="hidden" name="time_slot" value="${escapeHtml(b.time_slot)}">
             <input type="hidden" name="_method" value="delete">
             <button class="btn-del">Odblokuj</button>
           </form>
@@ -1749,7 +1992,7 @@ ${ADMIN_STYLES}
   </div>
   ${reviewsStatus === 'no-keys' ? '<p class="muted" style="color:#f4c542;">Brak GOOGLE_PLACES_API_KEY albo GOOGLE_PLACE_ID. Dodaj sekrety, żeby pobrać opinie.</p>' : ''}
   ${reviewsStatus === 'error' ? '<p class="muted" style="color:#d66;">Błąd pobierania, zobacz logi Workera w Cloudflare.</p>' : ''}
-  ${reviewsStatus.startsWith('ok-') ? `<p class="muted" style="color:#9fe22e;">Pobrano i zapisano ${reviewsStatus.slice(3)} opinii.</p>` : ''}
+  ${reviewsStatus.startsWith('ok-') ? `<p class="muted" style="color:#9fe22e;">Pobrano i zapisano ${Number.parseInt(reviewsStatus.slice(3), 10) || 0} opinii.</p>` : ''}
 </section>
 
 ${renderOutreachSection(outreach || [])}
@@ -1773,14 +2016,14 @@ function renderOutreachSection(outreach) {
 
   const row = o => `
     <tr style="opacity:${o.status === 'closed' ? .55 : 1}">
-      <td><strong>${escapeHtml(o.brand_name)}</strong></td>
-      <td><span class="muted">${channelLabel(o.channel)}</span></td>
-      <td class="muted" style="max-width:280px; word-break:break-all">${escapeHtml(o.contact_method || '')}</td>
-      <td>
-        <span class="badge" style="background:${statusColor(o.status)}22; color:${statusColor(o.status)}; border:1px solid ${statusColor(o.status)}66;">${statusLabel(o.status)}</span>
+      <td data-label="Marka / sklep"><strong>${escapeHtml(o.brand_name)}</strong></td>
+      <td data-label="Kanał"><span class="muted">${channelLabel(o.channel)}</span></td>
+      <td class="muted" data-label="Kontakt" style="max-width:280px; word-break:break-all">${escapeHtml(o.contact_method || '')}</td>
+      <td data-label="Status">
+        <span class="badge" style="background:${statusColor(o.status)}22; color:${statusColor(o.status)}; border:1px solid ${statusColor(o.status)}66;">${escapeHtml(statusLabel(o.status))}</span>
         ${o.sent_at ? `<div class="muted" style="font-size:11px; margin-top:4px;">${new Date(o.sent_at).toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw' })}</div>` : ''}
       </td>
-      <td class="muted" style="font-size:12px; max-width:260px;">
+      <td class="muted" data-label="Notatki / odpowiedź" style="font-size:12px; max-width:260px;">
         ${o.notes ? `<div>${escapeHtml(o.notes)}</div>` : ''}
         ${o.response ? `<div style="color:#9fe22e; margin-top:4px;"><strong>Odp.:</strong> ${escapeHtml(o.response)}</div>` : ''}
       </td>
@@ -1826,7 +2069,7 @@ function renderOutreachSection(outreach) {
   </h2>
   <p class="muted" style="margin-bottom:12px;">Plan w OUTREACH_PLAN.md (root repo). A = brand / dealer, B = dystrybutor / program serwisowy, C = sklep bez warsztatu (recommended-local / pickup-hub / warranty).</p>
 
-  <form method="post" action="/admin/outreach" style="display:grid; grid-template-columns: 2fr 1fr 2fr 2fr auto; gap:8px; margin-bottom:18px;">
+  <form method="post" action="/admin/outreach" class="outreach-add">
     <input type="hidden" name="action" value="add">
     <input type="text" name="brand_name" placeholder="Nazwa marki / sklepu" required maxlength="120">
     <select name="channel" required>
@@ -1841,7 +2084,7 @@ function renderOutreachSection(outreach) {
   </form>
 
   ${outreach.length === 0 ? '<p class="muted">Brak kontaktów. Dodaj pierwszy z formularza powyżej.</p>' : `
-  <table>
+  <table class="cards">
     <thead><tr><th>Marka / sklep</th><th>Kanał</th><th>Kontakt</th><th>Status</th><th>Notatki / odpowiedź</th><th></th></tr></thead>
     <tbody>${outreach.map(row).join('')}</tbody>
   </table>`}
@@ -1886,9 +2129,26 @@ tr.status-done td { opacity: .65; }
 .badge-done { background: #1a1a1a; color: #888; }
 .badge-cancelled { background: #2a1414; color: #d66; }
 
-.actions form { display: flex; flex-wrap: wrap; gap: 4px; }
-.actions button { font-size: 11px; padding: 4px 8px; border: 1px solid #333; background: transparent; color: #ccc; border-radius: 3px; cursor: pointer; }
+.actions form { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 2px 4px 2px 0; vertical-align: middle; }
+.actions button, .actions a.btn-ok { font-size: 11px; padding: 4px 8px; border: 1px solid #333; background: transparent; color: #ccc; border-radius: 3px; cursor: pointer; display: inline-flex; align-items: center; text-decoration: none; }
 .actions button:hover { border-color: #555; color: #fff; }
+.actions a.btn-ok { margin-right: 4px; }
+
+.toast { padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 14px; border: 1px solid; }
+.toast-ok { background: #122a14; color: #9fe22e; border-color: #2f5a1e; }
+.toast-err { background: #2a1414; color: #e08a8a; border-color: #5a2424; }
+
+.today-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.today-item { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 8px 10px; border: 1px solid #222; border-radius: 6px; background: #101010; }
+.today-item .today-time { color: #9fe22e; font-weight: 700; min-width: 48px; }
+.today-item.status-cancelled { opacity: .45; }
+.today-item.status-done { opacity: .65; }
+
+.bl { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: .04em; }
+
+.outreach-add { display: grid; grid-template-columns: 2fr 1fr 2fr 2fr auto; gap: 8px; margin-bottom: 18px; }
+.outreach-add input, .outreach-add select { background: #0e0e0e; border: 1px solid #333; color: #fff; padding: 8px 12px; border-radius: 4px; font-size: 14px; }
+.outreach-add button { background: #9fe22e; color: #000; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; }
 
 .price-form { display: flex; gap: 4px; align-items: center; }
 .price-input {
@@ -1959,6 +2219,7 @@ tr.settled td { opacity: .5; }
 body.login { display: flex; align-items: center; justify-content: center; }
 .login-box { background: #161616; border: 1px solid #222; border-radius: 8px; padding: 32px; width: 100%; max-width: 360px; }
 .login-box h1 { margin-bottom: 20px; }
+.login-box label { display: block; font-size: 12px; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
 .login-box input { width: 100%; background: #0e0e0e; border: 1px solid #333; color: #fff; padding: 12px 14px; border-radius: 4px; font-size: 15px; margin-bottom: 12px; }
 .login-box button { width: 100%; background: #9fe22e; color: #000; border: none; padding: 12px; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 15px; }
 .err { color: #d66; margin-bottom: 12px; font-size: 14px; }
@@ -1968,6 +2229,26 @@ body.login { display: flex; align-items: center; justify-content: center; }
   table { font-size: 13px; }
   th, td { padding: 6px 4px; }
   .notes { max-width: 200px; }
+
+  /* Dotyk w warsztacie: minimum 44px wysokości dla akcji i pól. */
+  .actions button, .actions a.btn-ok { min-height: 44px; padding: 10px 14px; font-size: 14px; }
+  .actions form { gap: 8px; margin: 3px 6px 3px 0; }
+  .btn-save { width: 44px; height: 44px; }
+  .price-input, .summary-input { min-height: 44px; font-size: 16px; }
+  .summary-input { width: 100%; margin: 0 0 6px; }
+  .block-form input, .block-form select, .block-form button { min-height: 44px; }
+  .outreach-add input, .outreach-add select, .outreach-add button { min-height: 44px; }
+  .outreach-add { grid-template-columns: 1fr; }
+  .logout { min-height: 44px; display: inline-flex; align-items: center; }
+  .finance-form button, .sms-form button { min-height: 44px; }
+
+  /* Tabele jako karty: wiersz = karta, komórki z etykietami data-label (bez overflow-x). */
+  table.cards, table.cards tbody, table.cards tr, table.cards td { display: block; width: 100%; }
+  table.cards thead { display: none; }
+  table.cards tr { border: 1px solid #262626; border-radius: 8px; margin-bottom: 12px; padding: 10px 12px; background: #131313; }
+  table.cards td { border-bottom: 0; padding: 6px 0; }
+  table.cards td[data-label]::before { content: attr(data-label); display: block; font-size: 10px; color: #777; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
+  table.cards .actions { display: flex; flex-wrap: wrap; gap: 8px; }
 }
 </style>`;
 
@@ -2075,6 +2356,18 @@ function todayInWarsaw() {
   return new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Warsaw' });
 }
 
+// Bieżąca godzina "HH:MM" w strefie Warszawy (do odsiewania minionych slotów dzisiejszego dnia).
+function nowTimeInWarsaw() {
+  return new Date().toLocaleTimeString('sv-SE', { timeZone: 'Europe/Warsaw', hour: '2-digit', minute: '2-digit' });
+}
+
+// Przesuwa datę YYYY-MM-DD o n dni (czysta arytmetyka kalendarzowa, bez strefy czasowej).
+function addDaysToDateStr(dateStr, n) {
+  const d = new Date(dateStr + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
 function b64url(s) {
   return btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -2147,7 +2440,9 @@ async function sendFollowUps(env) {
      WHERE date <= ?1 AND date >= ?2 AND status = 'done' AND feedback_sent_at IS NULL`
   ).bind(threeDaysAgo, thirtyDaysAgo).all();
 
-  const reviewLink = env.REVIEW_LINK || 'https://www.skocznarower.pl/';
+  // Placeholder CHANGE_TO_ nigdy nie idzie do klienta (ta sama reguła co w apiReviews).
+  const reviewLink = (env.REVIEW_LINK && !env.REVIEW_LINK.includes('CHANGE_TO_'))
+    ? env.REVIEW_LINK : 'https://www.skocznarower.pl/';
   for (const b of rows.results || []) {
     const firstName = b.customer_name.split(' ')[0];
     const text = `Dzięki za zaufanie, ${firstName}! Jeśli wszystko gra, zostaw opinię na Google: ${reviewLink} . To 30 sekund, a mi pomaga zdobywać klientów. Pozdrawiam, Mateusz / skocznarower.pl`;

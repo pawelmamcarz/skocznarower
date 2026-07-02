@@ -39,7 +39,7 @@
       },
       {
         "@type": "Question",
-        "name": "Czy serwisujecie rowery Dirt Jump i BMX?",
+        "name": "Czy serwisujesz rowery Dirt Jump i BMX?",
         "acceptedAnswer": {"@type": "Answer", "text": "Tak, to główna specjalizacja. Serwis Dirt Jump i BMX w Grodzisku Mazowieckim, obsługa klientów z Pruszkowa, Milanówka i okolic Warszawy."}
       },
       {
@@ -75,12 +75,17 @@
       {
         "@type": "Question",
         "name": "Czy serwis jest profesjonalnie wyposażony?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Tak. Stojak serwisowy, profesjonalna centrównica do kół z miernikiem wybierania (truing stand), klucz dynamometryczny, zestaw do odpowietrzania hamulców hydraulicznych, przyrząd do prostowania haków i tarcz, skuwacz, klucze do konusów, bacik i klucze do kaset i suportów. Dzięki centrownicy z miernikiem zaplatanie i centrowanie koła robię z milimetrową precyzją."}
+        "acceptedAnswer": {"@type": "Answer", "text": "Tak. Stojak serwisowy, profesjonalna centrownica do kół z miernikiem wybierania (truing stand), klucz dynamometryczny, zestaw do odpowietrzania hamulców hydraulicznych, przyrząd do prostowania haków i tarcz, skuwacz, klucze do konusów, bacik i klucze do kaset i suportów. Dzięki centrownicy z miernikiem zaplatanie i centrowanie koła robię z milimetrową precyzją."}
       },
       {
         "@type": "Question",
-        "name": "Co to jest centrównica z miernikiem i dlaczego to ważne?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Centrównica to stojak do centrowania i zaplatania kół. Tania wersja to dwa kawałki metalu i oko mechanika. Profesjonalna centrównica z miernikiem (dial indicator) to precyzyjny przyrząd, który mierzy odchylenie koła z dokładnością do setnych milimetra, zarówno na boki jak i na górę/dół. Dzięki temu zaplatam i centruję koła tak blisko idealnego jak to możliwe fizycznie. Dla kół do dirt jumpa, BMX czy MTB, gdzie koło dostaje mocne uderzenia, precyzja szprychowania robi realną różnicę w trwałości."}
+        "name": "Co to jest centrownica z miernikiem i dlaczego to ważne?",
+        "acceptedAnswer": {"@type": "Answer", "text": "Centrownica to stojak do centrowania i zaplatania kół. Tania wersja to dwa kawałki metalu i oko mechanika. Profesjonalna centrownica z miernikiem (dial indicator) to precyzyjny przyrząd, który mierzy odchylenie koła z dokładnością do dziesiątych części milimetra, zarówno na boki jak i na górę/dół. Dzięki temu zaplatam i centruję koła tak blisko idealnego jak to możliwe fizycznie. Dla kół do dirt jumpa, BMX czy MTB, gdzie koło dostaje mocne uderzenia, precyzja szprychowania robi realną różnicę w trwałości."}
+      },
+      {
+        "@type": "Question",
+        "name": "Jakie marki osprzętu obsługujesz?",
+        "acceptedAnswer": {"@type": "Answer", "text": "Shimano, SRAM, TRP, Hope, Magura, bez problemu. Zawieszenia to RockShox, Fox, Manitou, DVO. Masz coś innego? Napisz, prawie na pewno dam radę."}
       }
     ]
   }
@@ -91,6 +96,7 @@
   {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
+    "@id": "https://www.skocznarower.pl/#business",
     "name": "skocznarower.pl – Serwis Rowerowy",
     "description": "Profesjonalny serwis rowerowy specjalizujący się w Dirt Jump, MTB, BMX i e-bike. Obsługuję klientów z Grodziska Mazowieckiego, Pruszkowa, Milanówka i okolic Warszawy.",
     "url": "https://www.skocznarower.pl",
@@ -113,7 +119,7 @@
         "@type": "OpeningHoursSpecification",
         "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
         "opens": "16:00",
-        "closes": "20:00"
+        "closes": "19:00"
       }
     ],
     "areaServed": [
@@ -157,8 +163,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
 
-  <!-- LCP: plakat hero (pod wideo). Preconnect do R2 skraca start wideo. -->
-  <link rel="preconnect" href="https://pub-b615f83299d84d5b917ae79ae5f22198.r2.dev" crossorigin>
+  <!-- LCP: plakat hero (pod wideo). Preconnect do R2 skraca start wideo (bez crossorigin, bo <video> pobiera no-cors). -->
+  <link rel="preconnect" href="https://pub-b615f83299d84d5b917ae79ae5f22198.r2.dev">
   <link rel="preload" as="image" href="/uploads/mateusz-portret.webp" fetchpriority="high">
 
   <!-- ─── ANALYTICS ─────────────────────────────────────────────
@@ -195,6 +201,9 @@
     }
   </script>
 
+  <!-- Gate animacji reveal: bez JS treść zostaje widoczna -->
+  <script>document.documentElement.classList.add('js');</script>
+
   <style>
     /* ─── TOKENS ─────────────────────────────────────────── */
     :root {
@@ -213,13 +222,27 @@
     }
 
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-    html { scroll-behavior:smooth; scroll-padding-top: 90px; }
+    html { scroll-padding-top: 90px; }
+    @media (prefers-reduced-motion: no-preference) {
+      html { scroll-behavior: smooth; }
+    }
     body {
       background: var(--bg);
       color: var(--white);
       font-family: var(--fb);
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
+    }
+    /* ziarno na całej stronie (to samo data-URI co w hero), pod nav/mobile-bar */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      opacity: .022;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 220px;
     }
 
     /* ─── NAV ────────────────────────────────────────────── */
@@ -333,6 +356,25 @@
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
       background-size: 220px;
     }
+    .hero-pause {
+      position: absolute;
+      right: 20px;
+      bottom: 20px;
+      z-index: 3;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(8,8,8,.55);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: var(--radius);
+      color: var(--white);
+      cursor: pointer;
+    }
+    .hero-pause:hover, .hero-pause:focus-visible { border-color: var(--accent); color: var(--accent); }
+    .hero-pause:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .hero-pause svg { width: 15px; height: 15px; display: block; }
 
     .hero-content {
       position: relative;
@@ -402,7 +444,9 @@
       text-decoration: none;
       transition: background .15s, border-color .15s, transform .15s;
     }
-    .next-slot:hover { background: rgba(159,226,46,.16); border-color: var(--accent); transform: translateY(-1px); }
+    .next-slot[hidden] { display: none; }
+    .next-slot:hover { background: rgba(159,226,46,.16); border-color: var(--accent); }
+    .next-slot-go svg { display: block; }
     .next-slot strong { color: var(--accent); font-weight: 700; }
     .next-slot-go { color: var(--accent); font-weight: 700; }
     .next-slot-dot {
@@ -435,14 +479,22 @@
       cursor: pointer;
       border: none;
     }
-    .btn-green { background: var(--accent); color: #080808; }
-    .btn-green:hover { background: var(--accent-hi); transform: translateY(-2px); }
+    /* mechaniczny "stempel" zamiast unoszenia: przycisk dociska się jak fizyczny klawisz */
+    .btn-green { background: var(--accent); color: #080808; box-shadow: 3px 3px 0 rgba(159,226,46,.30); }
+    .btn-green:hover { background: var(--accent-hi); transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(159,226,46,.30); }
     .btn-ghost { background: transparent; color: var(--white); border: 1.5px solid rgba(255,255,255,.25); }
-    .btn-ghost:hover { border-color: var(--white); transform: translateY(-2px); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
 
     /* ─── SECTION SHELL ──────────────────────────────────── */
     .section { padding: 108px 48px; }
     .section-alt { background: var(--bg2); }
+    /* pełny pas z ukośnym cięciem (sekcja naklejki) */
+    .section-tilt {
+      background: var(--bg2);
+      clip-path: polygon(0 3%, 100% 0, 100% 97%, 0 100%);
+      padding-top: 132px;
+      padding-bottom: 132px;
+    }
 
     .eyebrow {
       font-size: 11px;
@@ -451,6 +503,14 @@
       text-transform: uppercase;
       color: var(--accent);
       margin-bottom: 16px;
+    }
+    /* numer sekcji jak na rysunku technicznym; numeracja = kolejność pozycji w nav */
+    .eyebrow-no {
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 10px;
+      letter-spacing: .12em;
+      color: var(--muted);
+      margin-right: 10px;
     }
     .display {
       font-family: var(--fd);
@@ -476,29 +536,28 @@
     .about-body p + p { margin-top: 18px; }
     .about-body strong { color: var(--white); font-weight: 500; }
 
-    .about-stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2px;
+    /* specyfikacja warsztatu: ruled list zamiast pseudo-statystyk */
+    .spec-list {
       margin-top: 44px;
+      border-top: 1px solid var(--border);
     }
-    .stat {
-      background: var(--bg3);
-      padding: 22px 24px;
+    .spec-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 24px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13.5px;
     }
-    .stat-n {
-      font-family: var(--fd);
-      font-size: 42px;
-      color: var(--accent);
-      line-height: 1;
-      letter-spacing: .02em;
-    }
-    .stat-l {
-      font-size: 12px;
+    .spec-k { color: var(--white); font-weight: 500; flex-shrink: 0; }
+    .spec-v {
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+      font-size: 12.5px;
       color: var(--muted);
-      margin-top: 5px;
-      letter-spacing: .04em;
-      line-height: 1.4;
+      text-align: right;
+      letter-spacing: .02em;
     }
 
     .about-photo-wrap { position: relative; }
@@ -521,24 +580,39 @@
       line-height: 1.2;
     }
 
-    /* ─── SERVICES ───────────────────────────────────────── */
-    .services-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(265px, 1fr));
-      gap: 2px;
+    /* ─── SERVICES: numerowana tablica usług jak nad stanowiskiem ── */
+    .services-list {
       margin-top: 60px;
+      border-bottom: 1px solid var(--border);
     }
-    .service {
-      background: var(--bg2);
-      padding: 36px 32px;
-      border-top: 2px solid transparent;
-      transition: border-color .25s, background .25s;
+    .service-row {
+      display: grid;
+      grid-template-columns: 56px minmax(220px, 340px) 1fr;
+      gap: 28px;
+      align-items: start;
+      padding: 26px 12px 26px 0;
+      border-top: 1px solid var(--border);
+      transition: background .2s, box-shadow .2s;
     }
-    .service:hover { border-top-color: var(--accent); background: var(--bg3); }
+    .service-row:hover { background: var(--bg2); box-shadow: inset 3px 0 0 var(--accent); }
+    .sr-no {
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 12px;
+      letter-spacing: .1em;
+      color: var(--muted);
+      padding-top: 8px;
+      padding-left: 12px;
+    }
+    .sr-head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
     .service-icon {
-      width: 36px; height: 36px;
+      width: 26px; height: 26px;
+      flex-shrink: 0;
       color: var(--accent);
-      margin-bottom: 22px;
     }
     .service-name {
       font-family: var(--fd);
@@ -548,10 +622,11 @@
       line-height: 1.05;
     }
     .service-desc {
-      font-size: 14px;
+      font-size: 14.5px;
       color: var(--muted);
-      margin-top: 10px;
       line-height: 1.65;
+      max-width: 640px;
+      padding-top: 5px;
     }
 
     /* ─── SOCIAL ─────────────────────────────────────────── */
@@ -568,34 +643,40 @@
       margin-bottom: 52px;
       max-width: 400px;
     }
-    .social-cards {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .social-card {
+    /* typograficzne linki social w skali display zamiast kart */
+    .social-links {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 14px;
-      padding: 44px 60px;
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 2px;
-      text-decoration: none;
-      color: var(--white);
-      min-width: 210px;
-      transition: border-color .25s, transform .25s;
+      gap: 10px;
     }
-    .social-card:hover { border-color: var(--accent); transform: translateY(-4px); }
-    .social-card svg { width: 34px; height: 34px; }
-    .social-card-name {
+    .social-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 22px;
       font-family: var(--fd);
-      font-size: 22px;
-      letter-spacing: .06em;
+      font-size: clamp(38px, 7vw, 88px);
+      line-height: 1.05;
+      color: var(--white);
+      text-decoration: none;
+      padding-bottom: 8px;
+      background-image: linear-gradient(var(--accent), var(--accent));
+      background-size: 0 4px;
+      background-position: 0 100%;
+      background-repeat: no-repeat;
+      transition: background-size .25s, color .2s;
     }
-    .social-card-handle { font-size: 13px; color: var(--muted); }
+    .social-link:hover { background-size: 100% 4px; color: var(--accent); }
+    .social-link svg { width: clamp(26px, 4vw, 42px); height: auto; color: var(--accent); flex-shrink: 0; }
+    .social-platform {
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 11px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      align-self: flex-end;
+      padding-bottom: 14px;
+    }
 
     /* ─── REMINDER (LEAD CAPTURE) ────────────────────────── */
     .reminder-inner {
@@ -636,7 +717,7 @@
       border: 1px solid var(--border);
       color: var(--white);
       padding: 14px 16px;
-      border-radius: 4px;
+      border-radius: var(--radius);
       font-family: var(--fb);
       font-size: 15px;
       transition: border-color .15s;
@@ -667,9 +748,10 @@
     .reminder-msg {
       font-size: 14px;
       padding: 12px 16px;
-      border-radius: 4px;
+      border-radius: var(--radius);
       margin-top: 8px;
     }
+    .reminder-msg:empty { display: none; }
     .reminder-msg.ok {
       background: var(--accent-dim);
       border: 1px solid rgba(159,226,46,.4);
@@ -780,16 +862,20 @@
       from { opacity: 0; transform: translateY(22px); }
       to   { opacity: 1; transform: none; }
     }
-    .reveal {
+    /* animacja tylko gdy JS dodał .js na <html>; bez JS treść jest widoczna od razu */
+    .js .reveal {
       opacity: 0;
       transform: translateY(18px);
       transition: opacity .65s ease, transform .65s ease;
     }
-    .reveal.in { opacity: 1; transform: none; }
-    .reveal[data-delay="1"] { transition-delay: .1s; }
-    .reveal[data-delay="2"] { transition-delay: .2s; }
-    .reveal[data-delay="3"] { transition-delay: .3s; }
-    .reveal[data-delay="4"] { transition-delay: .4s; }
+    .js .reveal.in { opacity: 1; transform: none; }
+    .js .reveal[data-delay="1"] { transition-delay: .1s; }
+    .js .reveal[data-delay="2"] { transition-delay: .2s; }
+    .js .reveal[data-delay="3"] { transition-delay: .3s; }
+    .js .reveal[data-delay="4"] { transition-delay: .4s; }
+    @media (prefers-reduced-motion: reduce) {
+      .js .reveal { opacity: 1; transform: none; transition: none; }
+    }
 
     /* ─── CENNIK ─────────────────────────────────────────── */
     .price-grid {
@@ -812,22 +898,37 @@
       padding-bottom: 12px;
       border-bottom: 1px solid var(--border);
     }
+    /* wiersz cennika jak na paragonie: kropkowe odbicie + kwoty w mono */
     .price-row {
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
       align-items: baseline;
-      gap: 12px;
       padding: 9px 0;
       border-bottom: 1px solid var(--border);
       font-size: 14px;
     }
+    .price-row::after {
+      content: '';
+      grid-column: 2;
+      grid-row: 1;
+      height: .85em;
+      align-self: baseline;
+      border-bottom: 1px dotted rgba(255,255,255,.18);
+      margin: 0 10px;
+      min-width: 16px;
+    }
     .price-row:last-child { border-bottom: none; }
-    .price-label { color: rgba(240,240,240,.72); line-height: 1.4; }
+    .price-label { grid-column: 1; grid-row: 1; color: rgba(240,240,240,.72); line-height: 1.4; }
     .price-val {
-      font-weight: 700;
+      grid-column: 3;
+      grid-row: 1;
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
       color: var(--white);
       white-space: nowrap;
-      font-size: 13px;
+      font-size: 12.5px;
+      letter-spacing: .01em;
     }
     .price-badge {
       display: inline-block;
@@ -860,7 +961,7 @@
       padding: 22px 24px;
       background: var(--bg2);
       border: 1px solid rgba(159,226,46,0.18);
-      border-radius: 4px;
+      border-radius: var(--radius);
     }
     .reviews-rating {
       display: flex;
@@ -876,10 +977,20 @@
       line-height: 1;
     }
     .reviews-stars {
-      font-size: 22px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
       color: var(--accent);
-      letter-spacing: .08em;
     }
+    .reviews-stars svg { width: 19px; height: 19px; display: block; }
+    .review-stars-sm {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      color: var(--accent);
+      vertical-align: -2px;
+    }
+    .review-stars-sm svg { width: 12px; height: 12px; display: block; }
     .reviews-count {
       font-size: 14px;
       color: rgba(240,240,240,.7);
@@ -905,7 +1016,7 @@
     .review {
       background: var(--bg2);
       padding: 26px 24px;
-      border-radius: 4px;
+      border-radius: var(--radius);
       position: relative;
       display: flex;
       flex-direction: column;
@@ -959,7 +1070,6 @@
       border: none;
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 16px;
       padding: 22px 0;
       font-family: var(--fd);
@@ -969,6 +1079,16 @@
       cursor: pointer;
       text-align: left;
     }
+    .faq-no {
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 12px;
+      letter-spacing: .08em;
+      color: var(--accent);
+      min-width: 44px;
+      flex-shrink: 0;
+    }
+    .faq-t { flex: 1; }
+    .faq-a { margin-left: 60px; }
     .faq-q:hover { color: var(--accent); }
     .faq-q:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
     .faq-icon {
@@ -1310,6 +1430,15 @@
       .about-grid { grid-template-columns: 1fr; gap: 44px; }
       .about-photo-wrap { order: -1; }
       .about-badge { right: 0; bottom: 0; font-size: 12px; padding: 8px 12px; }
+      .service-row { grid-template-columns: 36px 1fr; gap: 8px 12px; padding: 20px 8px 20px 0; }
+      .service-desc { grid-column: 2; padding-top: 0; }
+      .sr-no { padding-left: 0; padding-top: 6px; }
+      .spec-row { flex-wrap: wrap; gap: 4px 16px; }
+      .spec-v { text-align: left; }
+      .social-link { gap: 12px; }
+      .social-platform { padding-bottom: 8px; }
+      .faq-no { min-width: 34px; }
+      .faq-a { margin-left: 0; }
       .price-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .reminder-inner { grid-template-columns: 1fr; gap: 36px; }
       .contact-grid { grid-template-columns: 1fr; gap: 44px; }
@@ -1361,12 +1490,15 @@
      HERO
 ════════════════════════════════════════════════ -->
 <section class="hero">
-  <video class="hero-video" autoplay muted loop playsinline preload="metadata"
+  <video class="hero-video" id="hero-video" autoplay muted loop playsinline preload="metadata"
          poster="uploads/mateusz-portret.webp">
     <source src="https://pub-b615f83299d84d5b917ae79ae5f22198.r2.dev/hero.mp4" type="video/mp4">
   </video>
   <div class="hero-veil"></div>
   <div class="hero-grain"></div>
+  <button class="hero-pause" id="hero-pause" type="button" aria-label="Zatrzymaj wideo" aria-pressed="false" hidden>
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+  </button>
 
   <div class="hero-content">
     <p class="hero-eyebrow">Grodzisk Mazowiecki</p>
@@ -1393,7 +1525,9 @@
     <a href="/umow" class="next-slot" id="next-slot" hidden>
       <span class="next-slot-dot" aria-hidden="true"></span>
       <span>Najbliższy wolny termin: <strong id="next-slot-when"></strong></span>
-      <span class="next-slot-go" aria-hidden="true">→</span>
+      <span class="next-slot-go" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+      </span>
     </a>
   </div>
 </section>
@@ -1403,8 +1537,8 @@
      ABOUT
 ════════════════════════════════════════════════ -->
 <section class="section section-alt" id="o-mnie">
-  <p class="eyebrow reveal">O mnie</p>
-  <h2 class="display reveal" data-delay="1">Pasja do jazdy</h2>
+  <p class="eyebrow reveal"><span class="eyebrow-no">01 /</span>O mnie</p>
+  <h2 class="display reveal" data-delay="1">SERWIS<br>OD RIDERA</h2>
 
   <div class="about-grid">
     <div>
@@ -1414,26 +1548,26 @@
         <p>Warsztat w <strong>Grodzisku Mazowieckim</strong> (Jesionowa 18). Przyjeżdżają do mnie z <strong>Pruszkowa</strong>, <strong>Milanówka</strong> i całej <strong>zachodniej Warszawy</strong>. Umów się przez formularz, telefon albo Instagram.</p>
       </div>
 
-      <div class="about-stats reveal" data-delay="3">
-        <div class="stat">
-          <div class="stat-n">DJ</div>
-          <div class="stat-l">Dirt jump specjalizacja</div>
+      <div class="spec-list reveal" data-delay="3">
+        <div class="spec-row">
+          <span class="spec-k">Specjalizacja</span>
+          <span class="spec-v">Dirt Jump &middot; BMX &middot; MTB &middot; E-bike</span>
         </div>
-        <div class="stat">
-          <div class="stat-n">MTB</div>
-          <div class="stat-l">Full suspension &amp; hardtail</div>
+        <div class="spec-row">
+          <span class="spec-k">Centrownica z miernikiem</span>
+          <span class="spec-v">odchyłka do 0,1 mm</span>
         </div>
-        <div class="stat">
-          <div class="stat-n">BMX</div>
-          <div class="stat-l">Park, street, dirt</div>
+        <div class="spec-row">
+          <span class="spec-k">Klucz dynamometryczny</span>
+          <span class="spec-v">moment wg specyfikacji</span>
         </div>
-        <div class="stat">
-          <div class="stat-n">E&#8209;BK</div>
-          <div class="stat-l">Serwis e-bike</div>
+        <div class="spec-row">
+          <span class="spec-k">Hydraulika (bleeding)</span>
+          <span class="spec-v">Shimano &middot; SRAM &middot; TRP &middot; Hope &middot; Magura</span>
         </div>
-        <div class="stat">
-          <div class="stat-n">CNC</div>
-          <div class="stat-l">Centrównica z miernikiem wybierania</div>
+        <div class="spec-row">
+          <span class="spec-k">Zawieszenie</span>
+          <span class="spec-v">RockShox &middot; Fox &middot; Manitou &middot; DVO</span>
         </div>
       </div>
     </div>
@@ -1450,91 +1584,118 @@
      SERVICES
 ════════════════════════════════════════════════ -->
 <section class="section" id="uslugi">
-  <p class="eyebrow reveal">Usługi</p>
+  <p class="eyebrow reveal"><span class="eyebrow-no">02 /</span>Usługi</p>
   <h2 class="display reveal" data-delay="1">CO<br>NAPRAWIAM</h2>
   <p class="about-body reveal" data-delay="2" style="max-width:640px; margin-top:12px; margin-bottom:0;">Serwis rowerów i hulajnóg w Grodzisku Mazowieckim. Dirt Jump, BMX, MTB, e-bike, rowery miejskie. Przyjeżdżają do mnie z Pruszkowa, Milanówka i całej Warszawy zachodniej.</p>
 
-  <div class="services-grid">
+  <div class="services-list">
 
-    <div class="service reveal" data-delay="1">
-      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/><path d="M8 11l2 2 4-4"/>
-      </svg>
-      <div class="service-name">PRZEGLĄD</div>
+    <div class="service-row reveal" data-delay="1">
+      <span class="sr-no">01</span>
+      <div class="sr-head">
+        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/><path d="M8 11l2 2 4-4"/>
+        </svg>
+        <div class="service-name">PRZEGLĄD</div>
+      </div>
       <div class="service-desc">Sprawdzam cały rower punkt po punkcie i pokazuję, co realnie wymaga ręki, a co jeszcze pojeździ.</div>
     </div>
 
-    <div class="service reveal" data-delay="2">
-      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.77 3.77z"/>
-      </svg>
-      <div class="service-name">SERWIS</div>
+    <div class="service-row reveal" data-delay="1">
+      <span class="sr-no">02</span>
+      <div class="sr-head">
+        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.77 3.77z"/>
+        </svg>
+        <div class="service-name">SERWIS</div>
+      </div>
       <div class="service-desc">Wymiana części, smarowanie, regulacje. Tyle ile trzeba, żeby rower jeździł jak powinien.</div>
     </div>
 
-    <div class="service reveal" data-delay="3">
-      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="9"/>
-        <line x1="12" y1="3" x2="12" y2="12"/><line x1="12" y1="12" x2="19.5" y2="7.5"/>
-        <line x1="12" y1="12" x2="19.5" y2="16.5"/><line x1="12" y1="12" x2="12" y2="21"/>
-        <line x1="12" y1="12" x2="4.5" y2="16.5"/><line x1="12" y1="12" x2="4.5" y2="7.5"/>
-        <circle cx="12" cy="12" r="2"/>
-      </svg>
-      <div class="service-name">ZAPLATANIE KÓŁ</div>
+    <div class="service-row reveal" data-delay="2">
+      <span class="sr-no">03</span>
+      <div class="sr-head">
+        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/>
+          <line x1="12" y1="3" x2="12" y2="12"/><line x1="12" y1="12" x2="19.5" y2="7.5"/>
+          <line x1="12" y1="12" x2="19.5" y2="16.5"/><line x1="12" y1="12" x2="12" y2="21"/>
+          <line x1="12" y1="12" x2="4.5" y2="16.5"/><line x1="12" y1="12" x2="4.5" y2="7.5"/>
+          <circle cx="12" cy="12" r="2"/>
+        </svg>
+        <div class="service-name">ZAPLATANIE KÓŁ</div>
+      </div>
       <div class="service-desc">Centrowanie, zaplatanie od zera, wymiana szprych. Pracuję na centrownicy z miernikiem wybierania, mierzę odchyłkę do dziesiątych milimetra, nie zgaduję. Koło wytrzyma to, co chcesz po nim odpalić.</div>
     </div>
 
-    <div class="service reveal" data-delay="1">
-      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-2.12 2.12M6.34 17.66l-1.41 1.41M4.93 4.93l2.12 2.12M17.66 17.66l1.41 1.41"/>
-        <path d="M12 2v2M12 20v2M2 12h2M20 12h2"/>
-      </svg>
-      <div class="service-name">OSPRZĘT</div>
+    <div class="service-row reveal" data-delay="2">
+      <span class="sr-no">04</span>
+      <div class="sr-head">
+        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-2.12 2.12M6.34 17.66l-1.41 1.41M4.93 4.93l2.12 2.12M17.66 17.66l1.41 1.41"/>
+          <path d="M12 2v2M12 20v2M2 12h2M20 12h2"/>
+        </svg>
+        <div class="service-name">OSPRZĘT</div>
+      </div>
       <div class="service-desc">Hamulce, przerzutki, manetki, ustawione tak jak lubisz. Shimano, SRAM, TRP, Magura, dla mnie bez różnicy.</div>
     </div>
 
-    <div class="service reveal" data-delay="2">
-      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M2 20h20"/>
-        <path d="M2 20l5-8 4 5 4-7 4 4 3-3"/>
-      </svg>
-      <div class="service-name">DIRT JUMP</div>
+    <div class="service-row reveal" data-delay="3">
+      <span class="sr-no">05</span>
+      <div class="sr-head">
+        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M2 20h20"/>
+          <path d="M2 20l5-8 4 5 4-7 4 4 3-3"/>
+        </svg>
+        <div class="service-name">DIRT JUMP</div>
+      </div>
       <div class="service-desc">Sam jeżdżę na dirtcie. Wiem co się klepie na rampie, jak ustawić hamulec pod tail whip i czemu Twoja korba luzuje się co dwa weekendy.</div>
     </div>
 
-    <div class="service reveal" data-delay="3">
-      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/>
-        <path d="M6 18l4-8h6l3 8M10 10h5"/><path d="M15 6v4"/><path d="M13 6h4"/>
-      </svg>
-      <div class="service-name">BMX</div>
+    <div class="service-row reveal" data-delay="3">
+      <span class="sr-no">06</span>
+      <div class="sr-head">
+        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/>
+          <path d="M6 18l4-8h6l3 8M10 10h5"/><path d="M15 6v4"/><path d="M13 6h4"/>
+        </svg>
+        <div class="service-name">BMX</div>
+      </div>
       <div class="service-desc">Park, street, dirt. Ustawiam pod Twoją jazdę, nie pod katalog. Wiem, co znaczy "tylna pływa" i kiedy łożyska kompletu mają już dość.</div>
     </div>
 
-    <div class="service reveal" data-delay="1">
-      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-      </svg>
-      <div class="service-name">E-BIKE</div>
+    <div class="service-row reveal" data-delay="4">
+      <span class="sr-no">07</span>
+      <div class="sr-head">
+        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+        </svg>
+        <div class="service-name">E-BIKE</div>
+      </div>
       <div class="service-desc">Mechanika e-bike to normalny serwis rowerowy. Robię zawieszenie, hamulce, koła, osprzęt. Elektroniki i silnika nie ruszam.</div>
     </div>
 
-    <div class="service reveal" data-delay="2">
-      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/>
-        <path d="M5 19h10l5-13"/><path d="M18 6h3"/>
-      </svg>
-      <div class="service-name">HULAJNOGI</div>
+    <div class="service-row reveal" data-delay="4">
+      <span class="sr-no">08</span>
+      <div class="sr-head">
+        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/>
+          <path d="M5 19h10l5-13"/><path d="M18 6h3"/>
+        </svg>
+        <div class="service-name">HULAJNOGI</div>
+      </div>
       <div class="service-desc">Naprawa hulajnóg mechanicznych, elektrycznych i spalinowych. Hamulce, koła, łożyska, mechanika składania.</div>
     </div>
 
-    <div class="service reveal" data-delay="3">
-      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/>
-        <path d="M6 17l5-9h5l3 9M10 8h5"/>
-        <rect x="2" y="6" width="5" height="3"/>
-      </svg>
-      <div class="service-name">ROWERY MIEJSKIE</div>
+    <div class="service-row reveal" data-delay="4">
+      <span class="sr-no">09</span>
+      <div class="sr-head">
+        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/>
+          <path d="M6 17l5-9h5l3 9M10 8h5"/>
+          <rect x="2" y="6" width="5" height="3"/>
+        </svg>
+        <div class="service-name">ROWERY MIEJSKIE</div>
+      </div>
       <div class="service-desc">Przegląd, regulacje, wymiana części. Ten sam stojak, ten sam zestaw narzędzi, niższe ceny niż w sezonowych pop-upach.</div>
     </div>
 
@@ -1548,8 +1709,8 @@
 <section class="dirt-section">
   <p class="eyebrow reveal" style="text-align:center;">Dirt</p>
   <h2 class="display reveal" data-delay="1" style="text-align:center;">SALTA<br>I WHIPY</h2>
-  <div class="dirt-scene" aria-hidden="true">
-    <svg viewBox="0 -30 1500 350" preserveAspectRatio="xMidYMid meet">
+  <div class="dirt-scene">
+    <svg viewBox="0 -30 1500 350" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
       <defs>
         <path id="hopki-line" d="M 0 280 C 120 274 240 270 360 273 C 440 280 560 282 680 280 L 800 280 C 900 280 1000 250 1120 222 L 1240 220 C 1280 220 1328 280 1360 280 L 1520 280 C 1560 280 1600 224 1620 222 L 1740 222 C 1768 222 1800 268 1840 280 L 1880 280 C 2040 282 2240 295 2440 310 C 2560 315 2680 315 2800 315 L 2880 315 C 2920 313 2960 314 3000 315 L 3080 315 C 3120 315 3180 290 3240 285 L 3320 285 C 3340 285 3368 315 3380 315 L 3460 315 C 3480 315 3500 290 3520 285 L 3620 285 C 3648 285 3672 315 3680 315 C 3780 308 3920 280 4000 240 C 4040 215 4052 205 4060 200 L 4200 200 C 4280 200 4340 200 4400 200 C 4480 200 4600 280 4680 280 L 4840 280 C 4940 280 5080 180 5160 145 L 5320 142 C 5360 142 5420 280 5440 280 L 5680 280 C 5720 280 5768 150 5800 145 L 5920 145 C 5960 145 5992 280 6000 280"/>
         <path id="hopki-fill" d="M 0 280 C 120 274 240 270 360 273 C 440 280 560 282 680 280 L 800 280 C 900 280 1000 250 1120 222 L 1240 220 C 1280 220 1328 280 1360 280 L 1520 280 C 1560 280 1600 224 1620 222 L 1740 222 C 1768 222 1800 268 1840 280 L 1880 280 C 2040 282 2240 295 2440 310 C 2560 315 2680 315 2800 315 L 2880 315 C 2920 313 2960 314 3000 315 L 3080 315 C 3120 315 3180 290 3240 285 L 3320 285 C 3340 285 3368 315 3380 315 L 3460 315 C 3480 315 3500 290 3520 285 L 3620 285 C 3648 285 3672 315 3680 315 C 3780 308 3920 280 4000 240 C 4040 215 4052 205 4060 200 L 4200 200 C 4280 200 4340 200 4400 200 C 4480 200 4600 280 4680 280 L 4840 280 C 4940 280 5080 180 5160 145 L 5320 142 C 5360 142 5420 280 5440 280 L 5680 280 C 5720 280 5768 150 5800 145 L 5920 145 C 5960 145 5992 280 6000 280 L 6000 350 L 0 350 Z"/>
@@ -1739,7 +1900,7 @@
       <span class="reviews-stars" id="reviews-stars" aria-hidden="true"></span>
       <span class="reviews-count" id="reviews-count"></span>
     </div>
-    <a class="reviews-cta" id="reviews-cta" href="https://g.page/r/" target="_blank" rel="noopener" hidden>Zostaw swoją opinię →</a>
+    <a class="reviews-cta" id="reviews-cta" href="https://g.page/r/" target="_blank" rel="noopener" hidden>Zostaw swoją opinię <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></a>
   </div>
 
   <div class="reviews-grid" id="reviews-grid"></div>
@@ -1750,12 +1911,12 @@
      CENNIK
 ════════════════════════════════════════════════ -->
 <section class="section section-alt" id="cennik">
-  <p class="eyebrow reveal">Cennik</p>
-  <h2 class="display reveal" data-delay="1">CENNIK<br>SERWISU</h2>
+  <p class="eyebrow reveal" style="text-align:right;"><span class="eyebrow-no">03 /</span>Cennik</p>
+  <h2 class="display reveal" data-delay="1" style="text-align:right;">CENNIK<br>SERWISU</h2>
 
   <div class="price-grid">
 
-    <div class="price-cat reveal" data-delay="1" style="background: linear-gradient(135deg, var(--bg2) 0%, rgba(159,226,46,0.06) 100%); border: 1px solid rgba(159,226,46,0.22);">
+    <div class="price-cat reveal" data-delay="1" style="border: 1px solid rgba(159,226,46,0.25); border-top: 2px solid var(--accent);">
       <div class="price-cat-name">ODBIÓR I ODWÓZ</div>
       <div class="price-row">
         <span class="price-label">
@@ -1789,6 +1950,7 @@
       <div class="price-cat-name">KOŁA</div>
       <div class="price-row"><span class="price-label">Centrowanie koła</span><span class="price-val">od 120 zł</span></div>
       <div class="price-row"><span class="price-label">Zaplatanie koła (robocizna)</span><span class="price-val">od 180 zł</span></div>
+      <div class="price-row"><span class="price-label">Naprawa koła</span><span class="price-val">od 35 zł</span></div>
       <div class="price-row"><span class="price-label">Wymiana dętki</span><span class="price-val">35 zł + dętka</span></div>
       <div class="price-row"><span class="price-label">Wymiana opony</span><span class="price-val">40 zł + opona</span></div>
       <div class="price-row"><span class="price-label">Montaż tubeless</span><span class="price-val">od 70 zł / koło</span></div>
@@ -1825,103 +1987,115 @@
      FAQ
 ════════════════════════════════════════════════ -->
 <section class="section" id="faq">
-  <p class="eyebrow reveal">FAQ</p>
+  <p class="eyebrow reveal"><span class="eyebrow-no">04 /</span>FAQ</p>
   <h2 class="display reveal" data-delay="1">PYTANIA<br>I ODPOWIEDZI</h2>
 
   <div class="faq-list reveal" data-delay="2">
 
     <div class="faq-item">
       <button class="faq-q">
-        Jak umówić rower do serwisu w Grodzisku Mazowieckim?
-        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span class="faq-no">Q.01</span>
+        <span class="faq-t">Jak umówić rower do serwisu w Grodzisku Mazowieckim?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
       <div class="faq-a">Najprościej przez <a href="/umow" style="color:var(--accent)">formularz online</a>: wybierasz usługę, dzień i godzinę, oddzwaniam żeby potwierdzić. Możesz też zadzwonić albo napisać na Instagramie (@xpyszczek_). Nie przyjmuję bez umówienia, bo pracuję samodzielnie i chcę mieć czas na każdy rower.</div>
     </div>
 
     <div class="faq-item">
       <button class="faq-q">
-        Ile trwa serwis roweru?
-        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span class="faq-no">Q.02</span>
+        <span class="faq-t">Ile trwa serwis roweru?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
       <div class="faq-a">Proste rzeczy jak regulacja czy dętka to zazwyczaj tego samego dnia. Przegląd kompleksowy albo zaplatanie koła to 2 do 4 dni roboczych. Jak będzie inaczej, powiem przy umawianiu.</div>
     </div>
 
     <div class="faq-item">
       <button class="faq-q">
-        Czy serwisujecie rowery Dirt Jump i BMX?
-        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span class="faq-no">Q.03</span>
+        <span class="faq-t">Czy serwisujesz rowery Dirt Jump i BMX?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
       <div class="faq-a">Tak, to właśnie moja główna specjalizacja. Jeżdżę na dirt jumpie i BMX od lat, wiem jak te rowery działają i co im dolega. Serwis robi ktoś, kto sam jeździ na tym samym sprzęcie.</div>
     </div>
 
     <div class="faq-item">
       <button class="faq-q">
-        Czy naprawiasz rowery elektryczne (e-bike)?
-        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span class="faq-no">Q.04</span>
+        <span class="faq-t">Czy naprawiasz rowery elektryczne (e-bike)?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
       <div class="faq-a">Tak. Robię pełen serwis mechaniczny, więc zawieszenie, hamulce, koła i osprzęt bez problemu. Elektroniką ani silnikiem się nie zajmuję, ale część mechaniczna to normalny rower.</div>
     </div>
 
     <div class="faq-item">
       <button class="faq-q">
-        Czy dojadę do serwisu z Pruszkowa lub Milanówka?
-        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span class="faq-no">Q.05</span>
+        <span class="faq-t">Czy dojadę do serwisu z Pruszkowa lub Milanówka?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
-      <div class="faq-a">Tak, bez problemu. Z <a href="/serwis-rowerow-pruszkow" style="color:var(--accent)">Pruszkowa</a> ok. 15 min samochodem, z <a href="/serwis-rowerow-milanowek" style="color:var(--accent)">Milanówka</a> minuta, jesteśmy na granicy. Z zachodnich dzielnic Warszawy wychodzi ok. 30 minut. Umów się, nie bój się jechać dalej.</div>
+      <div class="faq-a">Tak, bez problemu. Z <a href="/serwis-rowerow-pruszkow" style="color:var(--accent)">Pruszkowa</a> ok. 15 min samochodem, z <a href="/serwis-rowerow-milanowek" style="color:var(--accent)">Milanówka</a> minuta, warsztat stoi na granicy. Z zachodnich dzielnic Warszawy wychodzi ok. 30 minut. Umów się, nie bój się jechać dalej.</div>
     </div>
 
     <div class="faq-item">
       <button class="faq-q">
-        Czy serwis jest profesjonalnie wyposażony?
-        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span class="faq-no">Q.06</span>
+        <span class="faq-t">Czy serwis jest profesjonalnie wyposażony?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
-      <div class="faq-a">Tak. Mam stojak serwisowy, <strong>profesjonalną centrównicę do kół z miernikiem wybierania</strong>, klucz dynamometryczny, zestaw do odpowietrzania hydrauliki, przyrząd do prostowania haków i tarcz, skuwacz, klucze do konusów, bacik, klucze do kaset i suportów. Dzięki centrownicy z miernikiem zaplatanie i centrowanie koła robię z milimetrową precyzją. Każda naprawa jest robiona właściwym narzędziem, nie kombinuję na skróty.</div>
+      <div class="faq-a">Tak. Mam stojak serwisowy, <strong>profesjonalną centrownicę do kół z miernikiem wybierania</strong>, klucz dynamometryczny, zestaw do odpowietrzania hydrauliki, przyrząd do prostowania haków i tarcz, skuwacz, klucze do konusów, bacik, klucze do kaset i suportów. Dzięki centrownicy z miernikiem zaplatanie i centrowanie koła robię z milimetrową precyzją. Każda naprawa jest robiona właściwym narzędziem, nie kombinuję na skróty.</div>
     </div>
 
     <div class="faq-item">
       <button class="faq-q">
-        Jak często serwisować rower dirt jump?
-        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span class="faq-no">Q.07</span>
+        <span class="faq-t">Jak często serwisować rower dirt jump?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
       <div class="faq-a">Przy regularnej jeździe na torze polecam podstawowy przegląd co sezon, czyli wiosną przed startem. Jeśli jeździsz mocno kilka razy w tygodniu, warto zajrzeć do roweru też w połowie lata. Łańcuch, hamulce i centralnie ustawione koła to trzy rzeczy, które robią największą różnicę w jeździe.</div>
     </div>
 
     <div class="faq-item">
       <button class="faq-q">
-        Co to jest centrównica z miernikiem i dlaczego to ważne?
-        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span class="faq-no">Q.08</span>
+        <span class="faq-t">Co to jest centrownica z miernikiem i dlaczego to ważne?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
-      <div class="faq-a">Centrównica to stojak do centrowania i zaplatania kół. Tania wersja to dwa kawałki metalu i oko mechanika. Profesjonalna centrównica z miernikiem (dial indicator) to precyzyjny przyrząd, który mierzy odchylenie koła z dokładnością do setnych milimetra, zarówno na boki jak i na górę/dół. Dzięki temu zaplatam i centruję koła tak blisko idealnego jak to możliwe fizycznie, a nie "na oko i prawie dobrze". Dla kół do dirt jumpa, BMX czy MTB, gdzie koło dostaje mocne uderzenia, precyzja szprychowania robi realną różnicę w trwałości.</div>
+      <div class="faq-a">Centrownica to stojak do centrowania i zaplatania kół. Tania wersja to dwa kawałki metalu i oko mechanika. Profesjonalna centrownica z miernikiem (dial indicator) to precyzyjny przyrząd, który mierzy odchylenie koła z dokładnością do dziesiątych części milimetra, zarówno na boki jak i na górę/dół. Dzięki temu zaplatam i centruję koła tak blisko idealnego jak to możliwe fizycznie, a nie "na oko i prawie dobrze". Dla kół do dirt jumpa, BMX czy MTB, gdzie koło dostaje mocne uderzenia, precyzja szprychowania robi realną różnicę w trwałości.</div>
     </div>
 
     <div class="faq-item">
       <button class="faq-q">
-        Jaka różnica między zaplataniem koła a centrowaniem?
-        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span class="faq-no">Q.09</span>
+        <span class="faq-t">Jaka różnica między zaplataniem koła a centrowaniem?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
       <div class="faq-a">Centrowanie to regulacja naciągu szprych w gotowym kole, żeby nie biło na boki. Zaplatanie to składanie koła od zera: obręcz, piasta, szprychy, nyple. Zaplatanie robi się przy nowej piaście albo obręczy, albo kiedy szprychy są zbyt zużyte żeby je ratować. Centrowanie wystarczy, jeśli koło samo w sobie jest sprawne. Oba robię na profesjonalnej centrownicy z miernikiem.</div>
     </div>
 
     <div class="faq-item">
       <button class="faq-q">
-        Kiedy wymienić łańcuch rowerowy?
-        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span class="faq-no">Q.10</span>
+        <span class="faq-t">Kiedy wymienić łańcuch rowerowy?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
-      <div class="faq-a">Najprościej sprawdzić przymierzem zużycia łańcucha. Przy 0,75 warto wymienić, bo zaoszczędzisz na kasecie. Jak poczekasz do 1,0 to kaseta idzie razem z łańcuchem i płacisz kilka razy więcej. Przy serwisie zawsze sprawdzam łańcuch i powiem Ci czy już czas.</div>
+      <div class="faq-a">Najprościej sprawdzić przymiarem zużycia łańcucha. Przy 0,75 warto wymienić, bo zaoszczędzisz na kasecie. Jak poczekasz do 1,0 to kaseta idzie razem z łańcuchem i płacisz kilka razy więcej. Przy serwisie zawsze sprawdzam łańcuch i powiem Ci czy już czas.</div>
     </div>
 
     <div class="faq-item">
       <button class="faq-q">
-        Robisz serwis hydraulicznych hamulców rowerowych?
-        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span class="faq-no">Q.11</span>
+        <span class="faq-t">Robisz serwis hydraulicznych hamulców rowerowych?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
       <div class="faq-a">Tak, bleeding to jedna z częstszych rzeczy. Robię dla <a href="/bleeding-hamulcow-shimano" style="color:var(--accent)">Shimano</a>, SRAM, TRP, Hope i Magury. Odpowietrzanie, wymiana oleju, regulacja punktu chwytu. Jak masz gąbczasty chwyt albo manetka cofa się do kierownicy, czas na serwis hydrauliki. Cena od 100 zł za obwód, zależy od modelu i stanu.</div>
     </div>
 
     <div class="faq-item">
       <button class="faq-q">
-        Jakie marki osprzętu obsługujesz?
-        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span class="faq-no">Q.12</span>
+        <span class="faq-t">Jakie marki osprzętu obsługujesz?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
       <div class="faq-a">Shimano, SRAM, TRP, Hope, Magura, bez problemu. Zawieszenia to RockShox, Fox, Manitou, DVO. Masz coś innego? Napisz, prawie na pewno dam radę.</div>
     </div>
@@ -1938,7 +2112,7 @@
     <div class="reminder-copy">
       <p class="eyebrow reveal">Przypomnij mi</p>
       <h2 class="display reveal" data-delay="1">CO ROKU<br>TA SAMA HISTORIA</h2>
-      <p class="reminder-sub reveal" data-delay="2">Wiosna przychodzi, rower stoi w garażu od jesieni, klocki są twarde, łańcuch zaciągnięty, koła bije. Zostaw email, w marcu napiszę żebyś umówił przegląd zanim wszyscy się zgłoszą i terminy się zapełnią.</p>
+      <p class="reminder-sub reveal" data-delay="2">Wiosna przychodzi, rower stoi w garażu od jesieni, klocki są twarde, łańcuch zaciągnięty, koło bije. Zostaw email, w marcu napiszę, żebyś umówił przegląd zanim wszyscy się zgłoszą i terminy się zapełnią.</p>
     </div>
 
     <form class="reminder-form reveal" data-delay="3" id="reminder-form">
@@ -1951,7 +2125,7 @@
         <span>Zgadzam się na otrzymanie jednego przypomnienia mailem w marcu o przeglądzie rowerowym. Możesz zrezygnować w każdej chwili.</span>
       </label>
       <button type="submit" class="btn btn-green reminder-submit">Zapisz mnie</button>
-      <p class="reminder-msg" id="reminder-msg" hidden></p>
+      <p class="reminder-msg" id="reminder-msg" role="status" aria-live="polite"></p>
     </form>
   </div>
 </section>
@@ -1966,25 +2140,25 @@
     <h2 class="display reveal" data-delay="1">W SIECI</h2>
     <p class="social-sub reveal" data-delay="2">Tricki, sprzęt, życie za kierownicą. Wpadnij.</p>
 
-    <div class="social-cards reveal" data-delay="3">
-      <a class="social-card" href="https://www.instagram.com/xpyszczek_" target="_blank" rel="noopener">
+    <div class="social-links reveal" data-delay="3">
+      <a class="social-link" href="https://www.instagram.com/xpyszczek_" target="_blank" rel="noopener">
         <!-- Instagram icon -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
           <circle cx="12" cy="12" r="5"/>
           <circle cx="17.5" cy="6.5" r=".8" fill="currentColor" stroke="none"/>
         </svg>
-        <div class="social-card-name">INSTAGRAM</div>
-        <div class="social-card-handle">@xpyszczek_</div>
+        @XPYSZCZEK_
+        <span class="social-platform">Instagram</span>
       </a>
 
-      <a class="social-card" href="https://www.tiktok.com/@xpyszczek.dirt" target="_blank" rel="noopener">
+      <a class="social-link" href="https://www.tiktok.com/@xpyszczek.dirt" target="_blank" rel="noopener">
         <!-- TikTok icon -->
-        <svg viewBox="0 0 24 24" fill="currentColor">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.75a8.16 8.16 0 004.77 1.52V6.79a4.85 4.85 0 01-1-.1z"/>
         </svg>
-        <div class="social-card-name">TIKTOK</div>
-        <div class="social-card-handle">@xpyszczek.dirt</div>
+        @XPYSZCZEK.DIRT
+        <span class="social-platform">TikTok</span>
       </a>
     </div>
   </div>
@@ -1994,14 +2168,14 @@
 <!-- ═══════════════════════════════════════════════
      STICKER
 ════════════════════════════════════════════════ -->
-<section class="section" style="text-align:center;">
+<section class="section section-tilt" style="text-align:center;">
   <p class="eyebrow reveal">Naklejka</p>
   <h2 class="display reveal" data-delay="1">WKLEJ<br>GDZIE CHCESZ</h2>
   <p class="social-sub reveal" data-delay="2" style="margin:16px auto 40px;">Pobierz naklejkę i wrzuć gdzie chcesz. Na rower, kask, laptop, co tam masz.</p>
 
   <div class="reveal" data-delay="3" style="display:inline-block; position:relative;">
     <img src="uploads/logo.png" alt="skocznarower.pl naklejka"
-         width="500" height="515" loading="lazy"
+         width="784" height="1168" loading="lazy"
          style="width: min(320px, 70vw); height: auto; filter: drop-shadow(0 0 32px rgba(159,226,46,.35));">
   </div>
 
@@ -2018,9 +2192,9 @@
      CONTACT
 ════════════════════════════════════════════════ -->
 <section class="section" id="kontakt">
-  <p class="eyebrow reveal">Kontakt</p>
-  <h2 class="display reveal" data-delay="1">PRZYJEDŹ<br>DO NAS</h2>
-  <p class="about-body reveal" data-delay="1" style="max-width:600px; margin-top:16px;">Serwis jest na <strong>Jesionowej 18 w Grodzisku Mazowieckim</strong>. Z <strong>Pruszkowa</strong> ok. 15 min, z <strong>Milanówka</strong> minuta (jesteśmy na granicy), z zachodniej <strong>Warszawy</strong> ok. 30 min. Umów się, przyjedź, pogadamy.</p>
+  <p class="eyebrow reveal"><span class="eyebrow-no">05 /</span>Kontakt</p>
+  <h2 class="display reveal" data-delay="1">PRZYJEDŹ<br>NA JESIONOWĄ</h2>
+  <p class="about-body reveal" data-delay="1" style="max-width:600px; margin-top:16px;">Serwis jest na <strong>Jesionowej 18 w Grodzisku Mazowieckim</strong>. Z <strong>Pruszkowa</strong> ok. 15 min, z <strong>Milanówka</strong> minuta (warsztat stoi na granicy), z zachodniej <strong>Warszawy</strong> ok. 30 min. Umów się, przyjedź, pogadamy.</p>
 
   <div class="contact-grid">
     <div>
@@ -2043,11 +2217,12 @@
       <div class="contact-item reveal" data-delay="5">
         <div class="ci-label">Godziny</div>
         <span class="ci-val" style="font-size:17px; line-height:1.6">
-          Tylko po umówieniu
+          Codziennie 16:00 do 19:00<br>
+          <span style="font-size:13px; color:var(--muted)">Tylko po umówieniu</span>
         </span>
       </div>
       <div class="contact-item reveal" data-delay="6" style="margin-top:24px;">
-        <a href="/umow" class="btn btn-green" style="font-size:16px; padding:14px 22px;">Umów wizytę online →</a>
+        <a href="/umow" class="btn btn-green" style="font-size:16px; padding:14px 22px;">Umów wizytę online <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></a>
       </div>
     </div>
 
@@ -2138,7 +2313,7 @@
     const remBtn = remForm.querySelector('button[type="submit"]');
     remForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      remMsg.hidden = true; remMsg.className = 'reminder-msg';
+      remMsg.textContent = ''; remMsg.className = 'reminder-msg';
       const email = remForm.email.value.trim();
       const consent = remForm.consent.checked;
       if (!email) { showRemMsg('Wpisz adres email.', 'err'); return; }
@@ -2174,9 +2349,29 @@
     function showRemMsg(text, kind) {
       remMsg.textContent = text;
       remMsg.classList.add(kind);
-      remMsg.hidden = false;
     }
   }
+
+  // --- Hero wideo: pauza + prefers-reduced-motion (WCAG 2.2.2) ---
+  (function heroVideoCtl() {
+    const v = document.getElementById('hero-video');
+    const btn = document.getElementById('hero-pause');
+    if (!v || !btn) return;
+    const ICO_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+    const ICO_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>';
+    function setPaused(p) {
+      if (p) { v.pause(); } else { v.play().catch(() => {}); }
+      btn.innerHTML = p ? ICO_PLAY : ICO_PAUSE;
+      btn.setAttribute('aria-pressed', String(p));
+      btn.setAttribute('aria-label', p ? 'Wznów wideo' : 'Zatrzymaj wideo');
+    }
+    btn.hidden = false;
+    btn.addEventListener('click', () => setPaused(!v.paused));
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      v.removeAttribute('autoplay');
+      setPaused(true);
+    }
+  })();
 
   // --- Najbliższy wolny termin (live z /api/next-slot, pill chowa się gdy brak / błąd) ---
   (async function loadNextSlot() {
@@ -2189,6 +2384,10 @@
       // Etykieta liczona po stronie serwera (jedno źródło logiki dat warszawskich).
       if (!d || !d.label) return;
       document.getElementById('next-slot-when').textContent = d.label;
+      // Prefill: /umow czyta ?date= i ?slot= i zaznacza obiecany termin.
+      if (d.date && d.time) {
+        el.href = '/umow?date=' + encodeURIComponent(d.date) + '&slot=' + encodeURIComponent(d.time);
+      }
       el.hidden = false;
     } catch (_) {}
   })();
@@ -2211,12 +2410,20 @@
       const grid = document.getElementById('reviews-grid');
       if (!grid) return;
 
+      const STAR_PATH = 'M12 2.6l2.9 6.05 6.6.72-4.9 4.5 1.34 6.53L12 17.1l-5.94 3.3 1.34-6.53-4.9-4.5 6.6-.72z';
+      const starSvg = (filled) => filled
+        ? '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="' + STAR_PATH + '"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="' + STAR_PATH + '"/></svg>';
+
       const avg = data.profile?.rating;
       const totalGoogle = data.profile?.review_count;
       if (typeof avg === 'number') {
         score.textContent = avg.toFixed(1);
         const full = Math.round(avg);
-        stars.textContent = '★★★★★'.slice(0, full) + '☆☆☆☆☆'.slice(0, 5 - full);
+        let starRow = '';
+        for (let i = 0; i < 5; i++) starRow += starSvg(i < full);
+        stars.innerHTML = starRow;
+        stars.setAttribute('role', 'img');
         stars.setAttribute('aria-label', avg.toFixed(1) + ' na 5');
       } else {
         score.hidden = true;
@@ -2237,14 +2444,15 @@
       })[c]);
 
       grid.innerHTML = reviews.slice(0, 6).map((rv) => {
-        const stars = '★'.repeat(Math.max(1, Math.min(5, rv.rating || 5)));
+        const n = Math.max(1, Math.min(5, rv.rating || 5));
+        const starsHtml = '<span class="review-stars-sm" aria-hidden="true">' + starSvg(true).repeat(n) + '</span>';
         const date = rv.time ? new Date(rv.time).toLocaleDateString('pl-PL', { year: 'numeric', month: 'long' }) : '';
         return `
         <figure class="review">
           <blockquote>${esc(rv.text)}</blockquote>
           <figcaption>
             <strong>${esc(rv.author)}</strong>
-            <span aria-label="${rv.rating || 5} z 5">${stars}${date ? ' · ' + esc(date) : ''}</span>
+            <span aria-label="${n} z 5">${starsHtml}${date ? ' · ' + esc(date) : ''}</span>
           </figcaption>
         </figure>`;
       }).join('');
@@ -2258,6 +2466,7 @@
         ld.textContent = JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'LocalBusiness',
+          '@id': 'https://www.skocznarower.pl/#business',
           'name': 'skocznarower.pl – Serwis Rowerowy',
           'url': 'https://www.skocznarower.pl',
           'aggregateRating': {
@@ -2540,11 +2749,22 @@
   bindBtn(btnGas, 'gas');
   bindBtn(btnBrake, 'brake');
 
+  // Klawiatura steruje grą tylko, gdy scena jest na ekranie (running) i fokus
+  // nie siedzi w elemencie interaktywnym; inaczej preventDefault psułby
+  // formularze, aktywację przycisków Spacją i scroll na całej stronie.
+  function gameKeysBlocked(e) {
+    if (!running) return true;
+    const t = e.target;
+    return !!(t && t.closest && t.closest('input, textarea, select, button, a, [contenteditable]'));
+  }
   window.addEventListener('keydown', e => {
-    if (e.repeat) return;
+    if (e.repeat || gameKeysBlocked(e)) return;
     if (e.key === 'ArrowRight' || e.code === 'Space') { press('gas', true); e.preventDefault(); }
     else if (e.key === 'ArrowLeft') { press('brake', true); e.preventDefault(); }
   });
+  // keyup celowo BEZ guardów: zwolnienie klawisza musi zawsze zerować stan,
+  // inaczej gaz/hamulec zostaje "wciśnięty", gdy scena zjedzie z ekranu
+  // (running=false) między keydown a keyup.
   window.addEventListener('keyup', e => {
     if (e.key === 'ArrowRight' || e.code === 'Space') press('gas', false);
     else if (e.key === 'ArrowLeft') press('brake', false);

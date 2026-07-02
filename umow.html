@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Umów wizytę, skocznarower.pl, serwis rowerowy Grodzisk Mazowiecki</title>
-  <meta name="description" content="Umów wizytę w serwisie rowerowym w Grodzisku Mazowieckim. Wybierz usługę, datę i godzinę, oddzwonię żeby potwierdzić.">
+  <meta name="description" content="Umów wizytę w serwisie rowerowym w Grodzisku Mazowieckim. Wybierz usługę, datę i godzinę, oddzwonię, żeby potwierdzić.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://www.skocznarower.pl/umow">
 
@@ -147,17 +147,20 @@
     .step {
       background: var(--bg2);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: var(--radius);
       padding: 28px;
       margin-bottom: 18px;
     }
     .step-num {
-      font-family: var(--fd);
-      color: var(--accent);
-      font-size: 14px;
-      letter-spacing: .25em;
+      font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
       margin-bottom: 6px;
     }
+    .step-num .num { color: var(--accent); }
     .step-title {
       font-family: var(--fd);
       font-size: 26px;
@@ -178,12 +181,14 @@
     .choice-card {
       background: var(--bg3);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: var(--radius);
       padding: 14px 16px;
       transition: border-color .15s, background .15s;
     }
     .choice-name { font-size: 14px; font-weight: 500; }
     .choice-price {
+      font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+      font-variant-numeric: tabular-nums;
       font-size: 12px;
       color: var(--muted);
       margin-top: 4px;
@@ -201,13 +206,28 @@
       outline-offset: 2px;
     }
 
+    /* Mobile: kompaktowe wiersze zamiast wysokich kart, cena po prawej. */
+    @media (max-width: 600px) {
+      .choices { grid-template-columns: 1fr; gap: 6px; }
+      .choice-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 14px;
+        min-height: 44px;
+      }
+      .choice-price { margin-top: 0; text-align: right; white-space: nowrap; }
+    }
+
     .date-row { display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; }
+    .hours-info { color: var(--muted); font-size: 14px; margin: -6px 0 18px; }
     .date-input {
       background: var(--bg3);
       border: 1px solid var(--border);
       color: var(--white);
       padding: 14px 16px;
-      border-radius: 8px;
+      border-radius: var(--radius);
       font-family: var(--fb);
       font-size: 16px;
       min-width: 220px;
@@ -229,11 +249,17 @@
     .slot-card {
       background: var(--bg3);
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: var(--radius);
       padding: 12px;
       text-align: center;
+      font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+      font-variant-numeric: tabular-nums;
       font-size: 15px;
       font-weight: 600;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       transition: border-color .15s, background .15s, color .15s;
     }
     .slot:hover .slot-card { border-color: rgba(159,226,46,.4); }
@@ -241,6 +267,10 @@
       border-color: var(--accent);
       background: var(--accent);
       color: var(--bg);
+    }
+    .slot input:focus-visible + .slot-card {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
     }
     .slot.disabled { cursor: not-allowed; opacity: .35; }
     .slot.disabled .slot-card { text-decoration: line-through; }
@@ -250,6 +280,36 @@
       font-size: 14px;
       margin-top: 12px;
     }
+
+    .btn-retry {
+      display: inline-block;
+      margin-top: 10px;
+      background: none;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 10px 20px;
+      min-height: 44px;
+      border-radius: var(--radius);
+      font-family: var(--fb);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-retry:hover { background: var(--accent-dim); }
+
+    .field-error,
+    label.field .field-error {
+      display: block;
+      color: #f1a1a1;
+      font-size: 12.5px;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+      margin: 6px 0 0;
+    }
+    .field-error[hidden],
+    label.field .field-error[hidden] { display: none; }
 
     .fields { display: grid; gap: 14px; }
     .fields .row { display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -273,7 +333,7 @@
       border: 1px solid var(--border);
       color: var(--white);
       padding: 13px 14px;
-      border-radius: 6px;
+      border-radius: var(--radius);
       font-family: var(--fb);
       font-size: 15px;
     }
@@ -292,14 +352,31 @@
     }
     .consent-check input { margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
 
+    .summary {
+      margin-top: 26px;
+      padding: 12px 16px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius);
+      font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+      font-variant-numeric: tabular-nums;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--white);
+    }
+
     .submit-row {
-      margin-top: 28px;
+      margin-top: 24px;
       display: flex;
       align-items: center;
       gap: 18px;
       flex-wrap: wrap;
     }
     .btn-submit {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
       background: var(--accent);
       color: var(--bg);
       border: none;
@@ -310,18 +387,20 @@
       letter-spacing: .04em;
       font-weight: 700;
       cursor: pointer;
-      transition: transform .12s, background .15s;
+      transition: background .15s;
     }
-    .btn-submit:hover { background: var(--accent-hi); transform: translateY(-1px); }
-    .btn-submit:disabled { opacity: .5; cursor: wait; transform: none; }
+    .btn-submit:hover { background: var(--accent-hi); }
+    .btn-submit:disabled { opacity: .5; cursor: wait; }
+    .btn-submit svg { width: 18px; height: 18px; flex-shrink: 0; }
     .submit-note { font-size: 13px; color: var(--muted); }
 
     .alert {
       margin-top: 16px;
       padding: 14px 18px;
-      border-radius: 8px;
+      border-radius: var(--radius);
       font-size: 14px;
     }
+    .alert a { color: inherit; text-decoration: underline; }
     .alert-error { background: rgba(214,102,102,.12); border: 1px solid rgba(214,102,102,.4); color: #f1a1a1; }
     .alert-success { background: var(--accent-dim); border: 1px solid rgba(159,226,46,.4); color: var(--accent); }
 
@@ -329,7 +408,7 @@
     .success-box {
       background: var(--bg2);
       border: 1px solid rgba(159,226,46,.3);
-      border-radius: 12px;
+      border-radius: var(--radius);
       padding: 40px 32px;
       text-align: center;
     }
@@ -337,13 +416,13 @@
       width: 56px; height: 56px;
       background: var(--accent);
       color: var(--bg);
-      border-radius: 50%;
+      border-radius: var(--radius);
       display: inline-flex;
       align-items: center;
       justify-content: center;
       margin-bottom: 20px;
-      font-size: 28px;
     }
+    .success-box .check svg { width: 28px; height: 28px; }
     .success-box h2 {
       font-family: var(--fd);
       font-size: 36px;
@@ -351,9 +430,10 @@
       letter-spacing: .02em;
     }
     .success-box p { color: #ccc; margin-bottom: 8px; }
+    .success-box a { color: var(--accent); }
     .success-meta {
       background: var(--bg3);
-      border-radius: 8px;
+      border-radius: var(--radius);
       padding: 18px;
       margin: 24px auto;
       max-width: 380px;
@@ -362,6 +442,9 @@
     }
     .success-meta div { padding: 4px 0; }
     .success-meta strong { color: var(--accent); display: inline-block; min-width: 100px; }
+    .val-mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-variant-numeric: tabular-nums; }
+    .back-link { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+    .back-link svg { width: 16px; height: 16px; }
 
     /* ─── FOOTER ──────────────────────────────────────────── */
     footer {
@@ -407,49 +490,60 @@
 <form id="booking-form" autocomplete="on" novalidate>
 
   <section class="step">
-    <div class="step-num">01 · Usługa</div>
+    <div class="step-num"><span class="num">01</span> / Usługa</div>
     <h2 class="step-title" id="t-service">Co robimy?</h2>
     <div class="choices" id="services" role="radiogroup" aria-labelledby="t-service">
       <!-- wypełniane JS-em -->
     </div>
+    <p class="field-error" id="err-service" hidden></p>
   </section>
 
   <section class="step">
-    <div class="step-num">02 · Sprzęt</div>
+    <div class="step-num"><span class="num">02</span> / Sprzęt</div>
     <h2 class="step-title" id="t-bike">Jaki rower?</h2>
     <div class="choices" id="bike-types" role="radiogroup" aria-labelledby="t-bike">
       <!-- wypełniane JS-em -->
     </div>
+    <p class="field-error" id="err-bike" hidden></p>
   </section>
 
   <section class="step">
-    <div class="step-num">03 · Termin</div>
+    <div class="step-num"><span class="num">03</span> / Termin</div>
     <h2 class="step-title" id="t-termin">Kiedy przyjedziesz?</h2>
+    <p class="hours-info">Przyjmuję codziennie, także w weekendy, w godzinach <span class="val-mono">16:00-19:00</span>.</p>
     <div class="date-row">
-      <input id="date" class="date-input" type="date" required>
+      <label class="field">
+        <span>Data wizyty <em>*</em></span>
+        <input id="date" class="date-input" type="date" required aria-describedby="err-date">
+      </label>
     </div>
-    <div id="slots-area">
-      <p class="slots-hint">Wybierz datę żeby zobaczyć wolne godziny.</p>
+    <p class="field-error" id="err-date" hidden></p>
+    <div id="slots-area" aria-live="polite">
+      <p class="slots-hint">Wybierz datę, żeby zobaczyć wolne godziny.</p>
     </div>
+    <p class="field-error" id="err-slot" hidden></p>
   </section>
 
   <section class="step">
-    <div class="step-num">04 · Kontakt</div>
+    <div class="step-num"><span class="num">04</span> / Dane</div>
     <h2 class="step-title">Jak się skontaktować?</h2>
     <div class="fields">
       <div class="row">
         <label class="field">
           <span>Imię <em>*</em></span>
-          <input class="input" type="text" id="name" name="name" required maxlength="80" autocomplete="given-name">
+          <input class="input" type="text" id="name" name="name" required maxlength="80" autocomplete="given-name" aria-describedby="err-name">
+          <span class="field-error" id="err-name" hidden></span>
         </label>
         <label class="field">
           <span>Telefon <em>*</em></span>
-          <input class="input" type="tel" id="phone" name="phone" required inputmode="numeric" autocomplete="tel" placeholder="np. 600 123 456">
+          <input class="input" type="tel" id="phone" name="phone" required maxlength="20" inputmode="tel" autocomplete="tel" placeholder="np. 600 123 456" aria-describedby="err-phone">
+          <span class="field-error" id="err-phone" hidden></span>
         </label>
       </div>
       <label class="field">
         <span>Email (opcjonalnie)</span>
-        <input class="input" type="email" id="email" name="email" maxlength="120" autocomplete="email">
+        <input class="input" type="email" id="email" name="email" maxlength="120" autocomplete="email" aria-describedby="err-email">
+        <span class="field-error" id="err-email" hidden></span>
       </label>
       <label class="consent-check">
         <input type="checkbox" id="consent" name="consent">
@@ -461,9 +555,11 @@
       </label>
     </div>
 
+    <div class="summary" id="summary" hidden></div>
+
     <div class="submit-row">
-      <button class="btn-submit" type="submit" id="submit-btn">Umów wizytę →</button>
-      <span class="submit-note">Po wysłaniu oddzwonię żeby potwierdzić.</span>
+      <button class="btn-submit" type="submit" id="submit-btn">Umów wizytę<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      <span class="submit-note">Po wysłaniu oddzwonię, żeby potwierdzić.</span>
     </div>
 
     <div id="alert" role="alert" aria-live="assertive" hidden></div>
@@ -528,52 +624,156 @@ function renderChoices(containerId, options, fieldName) {
 renderChoices('services', SERVICES, 'service');
 renderChoices('bike-types', BIKE_TYPES, 'bike');
 
-// ─── Date / slots ───────────────────────────────────────────
+// ─── Daty liczone w strefie Europe/Warsaw ───────────────────
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+const MAX_DAYS_AHEAD = 60;
+const WA_LINK = 'https://wa.me/48600370810?text=Cze%C5%9B%C4%87%2C%20chcia%C5%82bym%20um%C3%B3wi%C4%87%20rower';
+
+function warsawToday() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Warsaw' }).format(new Date());
+}
+function warsawNowHM() {
+  return new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Warsaw', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
+}
+function addDaysISO(iso, n) {
+  const d = new Date(iso + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+function formatDatePl(iso) {
+  try {
+    return new Date(iso + 'T12:00:00Z').toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+  } catch (_) { return iso; }
+}
+
+// ─── Błędy inline przy polach ───────────────────────────────
+function showErr(id, msg, invalidEl) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.hidden = false;
+  if (invalidEl) invalidEl.setAttribute('aria-invalid', 'true');
+}
+function clearErr(id, invalidEl) {
+  const el = document.getElementById(id);
+  if (el) { el.hidden = true; el.textContent = ''; }
+  if (invalidEl) invalidEl.removeAttribute('aria-invalid');
+}
+
+// ─── Data / sloty ───────────────────────────────────────────
 const dateInput = $('#date');
 const slotsArea = $('#slots-area');
 
-const today = new Date();
-today.setDate(today.getDate() + 1);
-dateInput.min = today.toISOString().slice(0, 10);
+{
+  const t = warsawToday();
+  dateInput.min = t;
+  dateInput.max = addDaysISO(t, MAX_DAYS_AHEAD);
+}
 
 dateInput.addEventListener('change', loadSlots);
+
+let slotsReq = 0;       // licznik żądań: renderuje się tylko najnowsza odpowiedź
+let pendingSlot = null; // godzina z ?slot= do zaznaczenia po załadowaniu listy
+
+function slotsMsg(msg) {
+  slotsArea.innerHTML = '<p class="slots-empty"></p>';
+  slotsArea.firstElementChild.textContent = msg;
+  updateSummary();
+}
 
 async function loadSlots() {
   const date = dateInput.value;
   if (!date) return;
+  const seq = ++slotsReq;
+  const todayW = warsawToday();
+  if (!DATE_RE.test(date)) { slotsMsg('Nieprawidłowa data. Wybierz datę z kalendarza.'); return; }
+  if (date < todayW) { slotsMsg('Ta data już minęła. Wybierz dzisiejszą albo późniejszą.'); return; }
+  if (date > addDaysISO(todayW, MAX_DAYS_AHEAD)) { slotsMsg('Rezerwacja online obejmuje najbliższe 60 dni. Wybierz wcześniejszą datę.'); return; }
   slotsArea.innerHTML = '<p class="slots-hint">Ładuję wolne godziny...</p>';
   try {
     const r = await fetch('/api/availability?date=' + encodeURIComponent(date));
+    if (seq !== slotsReq) return;
+    if (!r.ok) { renderSlotsError(); return; }
     const data = await r.json();
-    renderSlots(data.slots || []);
+    if (seq !== slotsReq) return;
+    renderSlots(date, hidePastToday(date, data.slots || [], todayW));
   } catch (e) {
-    slotsArea.innerHTML = '<p class="slots-empty">Coś nie zagrało, spróbuj jeszcze raz.</p>';
+    if (seq !== slotsReq) return;
+    renderSlotsError();
   }
 }
 
-function renderSlots(slots) {
+// Dziś: godziny, które już minęły w Warszawie, pokazuj jako niedostępne.
+function hidePastToday(date, slots, todayW) {
+  if (date !== todayW) return slots;
+  const now = warsawNowHM();
+  return slots.map(s => (s.time <= now ? { time: s.time, available: false } : s));
+}
+
+function renderSlotsError() {
+  slotsArea.innerHTML =
+    '<p class="slots-empty">Nie udało się pobrać terminów. Sprawdź połączenie i spróbuj ponownie.</p>' +
+    '<button type="button" class="btn-retry" id="slots-retry">Spróbuj ponownie</button>';
+  document.getElementById('slots-retry').addEventListener('click', loadSlots);
+  updateSummary();
+}
+
+function renderSlots(date, slots) {
   if (slots.length === 0) {
-    slotsArea.innerHTML = '<p class="slots-empty">W tym dniu nie pracuję. Wybierz inną datę.</p>';
+    slotsMsg('Ten dzień jest niedostępny. Przyjmuję zwykle codziennie w godzinach 16:00-19:00, wybierz inną datę.');
+    pendingSlot = null;
     return;
   }
   const anyAvailable = slots.some(s => s.available);
+  const emptyMsg = date === warsawToday()
+    ? 'Na dziś nie ma już wolnych godzin. Wybierz inny dzień.'
+    : 'Wszystkie terminy zajęte. Wybierz inny dzień.';
   slotsArea.innerHTML = `
     <div class="slots" role="radiogroup" aria-labelledby="t-termin">
       ${slots.map(s => `
         <label class="slot ${s.available ? '' : 'disabled'}">
-          <input type="radio" name="slot" value="${s.time}" ${s.available ? '' : 'disabled'}>
-          <div class="slot-card">${s.time}</div>
+          <input type="radio" name="slot" value="${escapeHtml(s.time)}" ${s.available ? '' : 'disabled'}>
+          <div class="slot-card">${escapeHtml(s.time)}</div>
         </label>
       `).join('')}
     </div>
-    ${anyAvailable ? '' : '<p class="slots-empty">Wszystkie terminy zajęte. Wybierz inny dzień.</p>'}
+    ${anyAvailable ? '' : `<p class="slots-empty">${emptyMsg}</p>`}
   `;
+  if (pendingSlot) {
+    const pre = slotsArea.querySelector(`input[name="slot"][value="${pendingSlot}"]:not([disabled])`);
+    if (pre) pre.checked = true;
+    pendingSlot = null;
+  }
+  updateSummary();
 }
 
-// ─── Submit ─────────────────────────────────────────────────
+// ─── Podsumowanie wyboru nad przyciskiem ────────────────────
+const summaryEl = $('#summary');
+
+function updateSummary() {
+  const serviceId = form.querySelector('input[name="service"]:checked')?.value;
+  const bike = form.querySelector('input[name="bike"]:checked')?.value;
+  const slot = form.querySelector('input[name="slot"]:checked')?.value;
+  const date = dateInput.value;
+  const svc = SERVICES.find(s => s.id === serviceId);
+  const parts = [];
+  if (svc) parts.push(`${svc.name} (${svc.price})`);
+  if (bike) parts.push(bike);
+  if (date && DATE_RE.test(date)) parts.push(formatDatePl(date) + (slot ? ', ' + slot : ''));
+  else if (slot) parts.push('godz. ' + slot);
+  if (parts.length === 0) { summaryEl.hidden = true; summaryEl.textContent = ''; return; }
+  summaryEl.textContent = parts.join(' · ');
+  summaryEl.hidden = false;
+}
+
+// ─── Wysyłka ────────────────────────────────────────────────
 const form = $('#booking-form');
 const submitBtn = $('#submit-btn');
 const alertBox = $('#alert');
+const submitBtnHTML = submitBtn.innerHTML;
+const nameEl = $('#name'), phoneEl = $('#phone'), emailEl = $('#email'), consentEl = $('#consent');
+let submitting = false;
 
 function showAlert(msg, kind = 'error') {
   alertBox.className = 'alert alert-' + kind;
@@ -581,69 +781,157 @@ function showAlert(msg, kind = 'error') {
   alertBox.hidden = false;
 }
 
-// Pokaż błąd i przenieś focus na pierwsze problematyczne pole (a11y).
-function fail(msg, focusEl) {
-  showAlert(msg);
-  if (focusEl) {
-    focusEl.focus({ preventScroll: true });
-    focusEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
+// Tylko dla stałych, zaufanych treści (linki tel/WhatsApp), nigdy dla danych z formularza czy API.
+function showAlertHTML(html, kind = 'error') {
+  alertBox.className = 'alert alert-' + kind;
+  alertBox.innerHTML = html;
+  alertBox.hidden = false;
 }
+
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+const PHONE_MSG = 'Wpisz prawidłowy telefon: 9-15 cyfr, może być z +48.';
+const CONSENT_MSG = 'Podaj email albo odznacz zgodę na przypomnienie.';
+
+function phoneOk(v) {
+  return /^\+?[0-9]{9,15}$/.test(v.replace(/[\s\-()]/g, ''));
+}
+
+const ALL_ERR_IDS = ['err-service', 'err-bike', 'err-date', 'err-slot', 'err-name', 'err-phone', 'err-email'];
+function clearAllErrs() {
+  ALL_ERR_IDS.forEach(id => clearErr(id));
+  [nameEl, phoneEl, emailEl].forEach(el => el.removeAttribute('aria-invalid'));
+}
+
+function collectValues() {
+  return {
+    service: form.querySelector('input[name="service"]:checked')?.value,
+    bike:    form.querySelector('input[name="bike"]:checked')?.value,
+    slot:    form.querySelector('input[name="slot"]:checked')?.value,
+    date:    dateInput.value,
+    name:    nameEl.value.trim(),
+    phone:   phoneEl.value.trim(),
+    email:   emailEl.value.trim(),
+    notes:   $('#notes').value.trim(),
+    consent: consentEl?.checked || false,
+  };
+}
+
+// Zwraca wszystkie błędy naraz, w kolejności kroków formularza.
+function validateForm(v) {
+  const errors = [];
+  const todayW = warsawToday();
+  const maxW = addDaysISO(todayW, MAX_DAYS_AHEAD);
+  if (!v.service) errors.push({ id: 'err-service', msg: 'Wybierz usługę.', focus: form.querySelector('input[name="service"]') });
+  if (!v.bike) errors.push({ id: 'err-bike', msg: 'Wybierz typ roweru.', focus: form.querySelector('input[name="bike"]') });
+  if (!v.date) errors.push({ id: 'err-date', msg: 'Wybierz datę.', focus: dateInput });
+  else if (!DATE_RE.test(v.date)) errors.push({ id: 'err-date', msg: 'Nieprawidłowa data.', focus: dateInput });
+  else if (v.date < todayW) errors.push({ id: 'err-date', msg: 'Ta data już minęła. Wybierz dzisiejszą albo późniejszą.', focus: dateInput });
+  else if (v.date > maxW) errors.push({ id: 'err-date', msg: 'Rezerwacja online obejmuje najbliższe 60 dni. Wybierz wcześniejszą datę.', focus: dateInput });
+  if (!v.slot) errors.push({ id: 'err-slot', msg: 'Wybierz godzinę.', focus: form.querySelector('input[name="slot"]:not([disabled])') || dateInput });
+  if (v.name.length < 2) errors.push({ id: 'err-name', msg: 'Wpisz imię.', focus: nameEl, invalid: nameEl });
+  if (!phoneOk(v.phone)) errors.push({ id: 'err-phone', msg: PHONE_MSG, focus: phoneEl, invalid: phoneEl });
+  if (v.email && !EMAIL_RE.test(v.email)) errors.push({ id: 'err-email', msg: 'Wpisz prawidłowy email.', focus: emailEl, invalid: emailEl });
+  else if (!v.email && v.consent) errors.push({ id: 'err-email', msg: CONSENT_MSG, focus: emailEl, invalid: emailEl });
+  return errors;
+}
+
+// Walidacja inline przy opuszczeniu pola (tylko gdy coś wpisano; puste łapie submit).
+nameEl.addEventListener('blur', () => {
+  const val = nameEl.value.trim();
+  if (val && val.length < 2) showErr('err-name', 'Wpisz imię.', nameEl);
+});
+phoneEl.addEventListener('blur', () => {
+  const val = phoneEl.value.trim();
+  if (val && !phoneOk(val)) showErr('err-phone', PHONE_MSG, phoneEl);
+});
+emailEl.addEventListener('blur', () => {
+  const val = emailEl.value.trim();
+  if (val && !EMAIL_RE.test(val)) showErr('err-email', 'Wpisz prawidłowy email.', emailEl);
+});
+nameEl.addEventListener('input', () => clearErr('err-name', nameEl));
+phoneEl.addEventListener('input', () => clearErr('err-phone', phoneEl));
+emailEl.addEventListener('input', () => clearErr('err-email', emailEl));
+consentEl.addEventListener('change', () => {
+  if (consentEl.checked && !emailEl.value.trim()) showErr('err-email', CONSENT_MSG, emailEl);
+  else clearErr('err-email', emailEl);
+});
+
+// Czyszczenie błędów kroków po zmianie wyboru + odświeżenie podsumowania.
+form.addEventListener('change', (e) => {
+  const t = e.target;
+  if (t.name === 'service') clearErr('err-service');
+  else if (t.name === 'bike') clearErr('err-bike');
+  else if (t.name === 'slot') clearErr('err-slot');
+  else if (t === dateInput) { clearErr('err-date'); clearErr('err-slot'); pendingSlot = null; }
+  updateSummary();
+});
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
+  if (submitting) return;
   alertBox.hidden = true;
+  clearAllErrs();
 
-  const service = form.querySelector('input[name="service"]:checked')?.value;
-  const bike    = form.querySelector('input[name="bike"]:checked')?.value;
-  const slot    = form.querySelector('input[name="slot"]:checked')?.value;
-  const date    = dateInput.value;
-  const name    = $('#name').value.trim();
-  const phone   = $('#phone').value.trim();
-  const email   = $('#email').value.trim();
-  const notes   = $('#notes').value.trim();
-  const consent = $('#consent')?.checked || false;
+  const v = collectValues();
+  const errors = validateForm(v);
+  if (errors.length) {
+    errors.forEach(err => showErr(err.id, err.msg, err.invalid));
+    const first = errors[0];
+    if (first.focus) {
+      first.focus.focus({ preventScroll: true });
+      first.focus.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    return;
+  }
 
-  const nameEl = $('#name'), phoneEl = $('#phone');
-  nameEl.removeAttribute('aria-invalid');
-  phoneEl.removeAttribute('aria-invalid');
-
-  if (!service) return fail('Wybierz usługę.', form.querySelector('input[name="service"]'));
-  if (!bike)    return fail('Wybierz typ roweru.', form.querySelector('input[name="bike"]'));
-  if (!date)    return fail('Wybierz datę.', dateInput);
-  if (!slot)    return fail('Wybierz godzinę.', form.querySelector('input[name="slot"]:not([disabled])') || dateInput);
-  if (name.length < 2) { nameEl.setAttribute('aria-invalid', 'true'); return fail('Wpisz imię.', nameEl); }
-  if (!/[0-9]{9}/.test(phone.replace(/[^0-9+]/g, ''))) { phoneEl.setAttribute('aria-invalid', 'true'); return fail('Wpisz prawidłowy telefon.', phoneEl); }
-
+  submitting = true;
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Wysyłam...';
+  submitBtn.textContent = 'Wysyłanie...';
+  let done = false;
 
   try {
     const r = await fetch('/api/bookings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        date, time_slot: slot,
-        service_type: service, bike_type: bike,
-        customer_name: name, customer_phone: phone,
-        customer_email: email || null,
-        notes: notes || null,
-        consent,
+        date: v.date, time_slot: v.slot,
+        service_type: v.service, bike_type: v.bike,
+        customer_name: v.name, customer_phone: v.phone,
+        customer_email: v.email || null,
+        notes: v.notes || null,
+        consent: v.consent,
       }),
     });
-    const data = await r.json();
-    if (!r.ok) {
-      showAlert(data.error || 'Nie udało się umówić, spróbuj ponownie.');
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Umów wizytę →';
+    let data = null;
+    try { data = await r.json(); } catch (_) {}
+
+    if (r.status === 409) {
+      showAlert((data && data.error) || 'Ta godzina właśnie się zajęła. Wybierz inną.');
+      await loadSlots();
+      slotsArea.insertAdjacentHTML('afterbegin',
+        '<p class="slots-empty" role="status">Ta godzina właśnie się zajęła. Wybierz inną z odświeżonej listy.</p>');
+      document.getElementById('t-termin').scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-    showSuccess({ id: data.id, date, slot, service, bike, name, phone });
-    trackBookingSuccess({ service, bike });
+    if (!r.ok) {
+      showAlert((data && data.error) || 'Nie udało się umówić, spróbuj ponownie.');
+      return;
+    }
+    done = true;
+    showSuccess({ id: data && data.id, date: v.date, slot: v.slot, service: v.service, bike: v.bike, name: v.name, phone: v.phone });
+    trackBookingSuccess({ service: v.service, bike: v.bike });
   } catch (err) {
-    showAlert('Brak połączenia, spróbuj jeszcze raz.');
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Umów wizytę →';
+    showAlertHTML(
+      'Błąd połączenia. Rezerwacja mogła mimo to dojść, więc nie wysyłaj jej od razu drugi raz. ' +
+      'Napisz na <a href="' + WA_LINK + '" target="_blank" rel="noopener">WhatsApp</a> ' +
+      'albo zadzwoń: <a href="tel:+48501174195">501 174 195</a>, żeby sprawdzić, czy zgłoszenie doszło.'
+    );
+  } finally {
+    submitting = false;
+    if (!done) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = submitBtnHTML;
+    }
   }
 });
 
@@ -659,22 +947,29 @@ function trackBookingSuccess({ service, bike }) {
 }
 
 function showSuccess({ id, date, slot, service, bike, name, phone }) {
-  const serviceName = SERVICES.find(s => s.id === service)?.name || service;
+  const svc = SERVICES.find(s => s.id === service);
+  const serviceName = svc ? svc.name : service;
+  const servicePrice = svc && svc.price ? ' (' + svc.price + ')' : '';
+  const idShort = (id || '').slice(0, 8);
   form.hidden = true;
   const box = $('#success');
   box.hidden = false;
   box.innerHTML = `
     <div class="success-box">
-      <div class="check">✓</div>
-      <h2>Termin zarezerwowany</h2>
-      <p>Dzięki, ${escapeHtml(name)}! Oddzwonię na <strong>${escapeHtml(phone)}</strong> żeby potwierdzić.</p>
-      <div class="success-meta">
-        <div><strong>Data:</strong> ${date}, godz. ${slot}</div>
-        <div><strong>Usługa:</strong> ${escapeHtml(serviceName)}</div>
-        <div><strong>Rower:</strong> ${escapeHtml(bike)}</div>
-        <div><strong>Numer:</strong> ${id.slice(0, 8)}</div>
+      <div class="check" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.5 5.5L20 6.5"/></svg>
       </div>
-      <p><a href="/" style="color: var(--accent); text-decoration: none;">← Wróć na stronę</a></p>
+      <h2>Zgłoszenie przyjęte</h2>
+      <p>Dzięki, ${escapeHtml(name)}! Zgłoszenie czeka na potwierdzenie: odezwę się SMS-em albo telefonicznie na <strong>${escapeHtml(phone)}</strong>, zwykle tego samego dnia.</p>
+      <div class="success-meta">
+        <div><strong>Termin:</strong> <span class="val-mono">${escapeHtml(formatDatePl(date))}, godz. ${escapeHtml(slot)}</span></div>
+        <div><strong>Usługa:</strong> ${escapeHtml(serviceName + servicePrice)}</div>
+        <div><strong>Rower:</strong> ${escapeHtml(bike)}</div>
+        <div><strong>Adres:</strong> Jesionowa 18, Grodzisk Mazowiecki</div>
+        ${idShort ? `<div><strong>Zgłoszenie:</strong> <span class="val-mono">${escapeHtml(idShort)}</span></div>` : ''}
+      </div>
+      <p>Brak potwierdzenia do jutra? Napisz na <a href="${WA_LINK}" target="_blank" rel="noopener">WhatsApp</a> albo zadzwoń: <a href="tel:+48501174195">501 174 195</a>.</p>
+      <p><a class="back-link" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Wróć na stronę</a></p>
     </div>
   `;
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -685,6 +980,23 @@ function escapeHtml(s) {
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
   })[c]);
 }
+
+// ─── Prefill z query params (?date=YYYY-MM-DD&slot=HH:MM) ──
+// Strona główna linkuje tu z pilla "najbliższy wolny termin".
+(function prefillFromQuery() {
+  try {
+    const params = new URLSearchParams(location.search);
+    const qDate = params.get('date');
+    const qSlot = params.get('slot');
+    if (!qDate || !DATE_RE.test(qDate)) return;
+    const todayW = warsawToday();
+    if (qDate < todayW || qDate > addDaysISO(todayW, MAX_DAYS_AHEAD)) return;
+    dateInput.value = qDate;
+    if (qSlot && TIME_RE.test(qSlot)) pendingSlot = qSlot;
+    loadSlots();
+    updateSummary();
+  } catch (_) {}
+})();
 </script>
 
 </body>

@@ -1,13 +1,13 @@
 # skocznarower.pl
 
-> Specjalistyczny serwis rowerowy w Grodzisku Mazowieckim (woj. mazowieckie, 30 km na zachód od Warszawy). Specjalizacja: dirt jump, BMX, MTB, e-bike (część mechaniczna), rowery miejskie, hulajnogi. Profesjonalna centrównica z miernikiem, bleeding hamulców hydraulicznych Shimano/SRAM/TRP/Hope/Magura, zaplatanie kół, przeglądy, budowa rowerów na miarę.
+> Specjalistyczny serwis rowerowy w Grodzisku Mazowieckim (woj. mazowieckie, 30 km na zachód od Warszawy). Specjalizacja: dirt jump, BMX, MTB, e-bike (część mechaniczna), rowery miejskie, hulajnogi. Profesjonalna centrownica z miernikiem, bleeding hamulców hydraulicznych Shimano/SRAM/TRP/Hope/Magura, zaplatanie kół, przeglądy, budowa rowerów na miarę.
 
 Warsztat prowadzi Mateusz Mamcarz (xPyszczek) pod adresem Jesionowa 18, 05-825 Grodzisk Mazowiecki. Obsługa klientów z Grodziska, Milanówka, Pruszkowa, Brwinowa i zachodniej Warszawy. Wyłącznie po wcześniejszym umówieniu online lub telefonicznie. Telefon: +48 501 174 195. WhatsApp: https://wa.me/48600370810. Opinie: 5,0 na podstawie 7 opinii Google.
 
 ## Podstawowe strony
 
 - [Strona główna](https://www.skocznarower.pl/): usługi, cennik, FAQ, opinie Google, kontakt, formularz zapisu na przegląd sezonowy.
-- [Umów wizytę online](https://www.skocznarower.pl/umow): formularz rezerwacji z wyborem usługi, dnia i godziny. Cztery dyskretne sloty na pełne godziny (16:00, 17:00, 18:00, 19:00) codziennie, siedem dni w tygodniu.
+- [Umów wizytę online](https://www.skocznarower.pl/umow): formularz rezerwacji z wyborem usługi, dnia i godziny. Cztery sloty godzinne (16:00, 17:00, 18:00, 19:00) codziennie, siedem dni w tygodniu.
 - [Serwis rowerów Pruszków](https://www.skocznarower.pl/serwis-rowerow-pruszkow): landing dla klientów z Pruszkowa, dojazd ok. 15 minut samochodem.
 - [Serwis rowerów Milanówek](https://www.skocznarower.pl/serwis-rowerow-milanowek): landing dla klientów z Milanówka, dojazd 1-3 minuty samochodem (warsztat tuż za granicą Milanówka).
 - [Bleeding hamulców Shimano](https://www.skocznarower.pl/bleeding-hamulcow-shimano): odpowietrzanie i wymiana oleju mineralnego w hamulcach hydraulicznych Shimano, cena od 100 zł za obwód.

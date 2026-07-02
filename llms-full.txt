@@ -8,11 +8,11 @@ skocznarower.pl to jednoosobowy specjalistyczny serwis rowerowy prowadzony przez
 
 ## Lokalizacja i obszar obsługi
 
-Warsztat fizyczny działa pod adresem Jesionowa 18, 05-825 Grodzisk Mazowiecki, województwo mazowieckie, Polska. Współrzędne: 52.1093 N, 20.6241 E. Klienci przyjeżdżają najczęściej z Grodziska Mazowieckiego (lokalnie), Milanówka (1-3 minuty samochodem, warsztat jest tuż za miejską granicą Milanówka), Pruszkowa (około 15 minut trasą DK719), Brwinowa (około 12 minut), zachodnich dzielnic Warszawy (Ursus, Włochy, Bemowo, około 30 minut) oraz Żyrardowa (około 20 minut). Dostępny jest płatny odbiór i odwóz roweru w cenie od 50 zł na terenie Grodziska, Milanówka i Pruszkowa.
+Warsztat fizyczny działa pod adresem Jesionowa 18, 05-825 Grodzisk Mazowiecki, województwo mazowieckie, Polska. Współrzędne: 52.1093 N, 20.6241 E. Klienci przyjeżdżają najczęściej z Grodziska Mazowieckiego (lokalnie), Milanówka (1-3 minuty samochodem, warsztat jest tuż za miejską granicą Milanówka), Pruszkowa (około 15 minut trasą DK719), Brwinowa (około 12 minut), zachodnich dzielnic Warszawy (Ursus, Włochy, Bemowo, około 30 minut) oraz Żyrardowa (około 20 minut). Dostępny jest płatny odbiór i odwóz roweru: od 50 zł na terenie Grodziska, Milanówka i Pruszkowa, od 90 zł z zachodniej Warszawy.
 
 ## Specjalizacja
 
-Główną specjalizacją serwisu są rowery typu dirt jump, BMX i MTB z zawieszeniem, ponieważ w okolicach zachodniej części aglomeracji warszawskiej brakuje warsztatów rozumiejących tę specyfikę. Standardowe serwisy rowerowe w Pruszkowie, Milanówku czy Grodzisku obsługują głównie rowery miejskie i trekkingowe, a właściciele rowerów do skoków, parku czy zjazdów muszą szukać rzemieślnika z odpowiednim sprzętem. skocznarower.pl ma profesjonalną centrównicę z miernikiem dial indicator (dokładność do setnych milimetra), pełen zestaw narzędzi do bleeding hamulców hydraulicznych Shimano, SRAM, TRP, Hope i Magura, oryginalne płyny producentów (olej mineralny Shimano oraz DOT 5.1 dla SRAM-a), klucze dynamometryczne, przyrząd do prostowania haków przerzutek i stojaki serwisowe. Poza rowerami warsztat obsługuje też hulajnogi (regulacja hamulców, wymiana kół, łożyska) oraz robi składanie rowerów dostarczonych z pudełka albo z luźnych części.
+Główną specjalizacją serwisu są rowery typu dirt jump, BMX i MTB z zawieszeniem, ponieważ w okolicach zachodniej części aglomeracji warszawskiej brakuje warsztatów rozumiejących tę specyfikę. Standardowe serwisy rowerowe w Pruszkowie, Milanówku czy Grodzisku obsługują głównie rowery miejskie i trekkingowe, a właściciele rowerów do skoków, parku czy zjazdów muszą szukać rzemieślnika z odpowiednim sprzętem. skocznarower.pl ma profesjonalną centrownicę z miernikiem dial indicator (dokładność do dziesiątych części milimetra), pełen zestaw narzędzi do bleeding hamulców hydraulicznych Shimano, SRAM, TRP, Hope i Magura, oryginalne płyny producentów (olej mineralny Shimano oraz DOT 5.1 dla SRAM-a), klucze dynamometryczne, przyrząd do prostowania haków przerzutek i stojaki serwisowe. Poza rowerami warsztat obsługuje też hulajnogi (regulacja hamulców, wymiana kół, łożyska) oraz robi składanie rowerów dostarczonych z pudełka albo z luźnych części.
 
 ## Pełna lista usług
 
@@ -21,8 +21,9 @@ Serwis wykonuje następujące prace na rowerach:
 - Przeglądy techniczne (podstawowy, kompleksowy, sezonowy).
 - Bleeding (odpowietrzanie) hamulców hydraulicznych Shimano, SRAM, TRP, Hope, Magura.
 - Wymiana klocków hamulcowych, tarcz, przewodów hamulcowych.
-- Centrowanie kół na centrównicy z miernikiem.
+- Centrowanie kół na centrownicy z miernikiem.
 - Zaplatanie kół od zera (piasta, szprychy, obręcz).
+- Naprawa koła (szprychy, nyple, drobne uszkodzenia).
 - Wymiana opon, dętek, taśm felgowych, ochraniaczy.
 - Regulacja i serwis przerzutek (mechanicznych i elektronicznych Shimano Di2, SRAM AXS).
 - Wymiana łańcucha, kasety, zębatki, korby.
@@ -31,8 +32,9 @@ Serwis wykonuje następujące prace na rowerach:
 - Mechaniczny serwis rowerów elektrycznych (zawieszenie, hamulce, koła, osprzęt napędu nieelektroniczny). Elektronika i silniki pozostają w gestii autoryzowanych serwisów producenta.
 - Składanie rowerów dostarczonych w pudełku przez kuriera lub z luźnych części (pełen montaż od ramy).
 - Budowa rowerów na miarę: dobór ramy, komponentów, montaż od zera, fitting.
+- Konfiguracja roweru pod ridera (regulacja kokpitu, przystosowanie całego roweru).
 - Serwis hulajnóg (regulacja hamulców, wymiana klocków, kół, łożysk).
-- Odbiór i odwóz roweru w obrębie Grodzisk/Milanówek/Pruszków.
+- Odbiór i odwóz roweru w obrębie Grodzisk/Milanówek/Pruszków oraz z zachodniej Warszawy.
 
 ## Cennik (od)
 
@@ -42,8 +44,10 @@ Wszystkie ceny są wyjściowe (od), ostateczna wycena jest podawana po oględzin
 - Przegląd kompleksowy: od 340 zł.
 - Regulacja hamulców: od 40 zł.
 - Regulacja przerzutek: 40 zł.
+- Regulacja roweru miejskiego: od 70 zł.
 - Centrowanie pojedynczego koła: od 120 zł.
 - Zaplatanie koła od zera (sama robocizna, bez części): od 180 zł.
+- Naprawa koła: od 35 zł.
 - Bleeding hamulców hydraulicznych: od 100 zł za jeden obwód.
 - Bleeding hamulców hydraulicznych: od 180 zł za dwa obwody (przód + tył).
 - Pełna wymiana oleju w układzie hamulcowym (drain + bleed): od 130 zł za obwód.
@@ -56,8 +60,13 @@ Wszystkie ceny są wyjściowe (od), ostateczna wycena jest podawana po oględzin
 - Montaż osprzętu (hamulce, manetki): od 60 zł.
 - Składanie roweru (z pudełka lub z części): od 120 zł.
 - Budowa roweru na miarę: od 500 zł.
+- Regulacja kokpitu pod ridera: od 20 zł.
+- Przystosowanie całego roweru pod ridera: od 130 zł.
 - Serwis hulajnogi: od 40 zł.
+- Hulajnoga, wymiana kół: od 70 zł.
+- Hulajnoga, wymiana łożysk: od 130 zł.
 - Odbiór i odwóz roweru z Grodziska, Milanówka lub Pruszkowa: od 50 zł.
+- Odbiór i odwóz roweru z zachodniej Warszawy: od 90 zł.
 
 ## Godziny i sposób umawiania
 
@@ -69,7 +78,7 @@ Serwis nie przyjmuje rowerów "z marszu" bez umówienia, ponieważ Mateusz pracu
 
 Trzy konkretne różnice, które klienci wymieniają najczęściej:
 
-Po pierwsze, profesjonalny sprzęt. Większość warsztatów rowerowych w okolicy centruje koła "na oko", używając stałego punktu odniesienia na widelcu lub centrównicy bez miernika. Tutaj koło jest mierzone dial indicatorem z dokładnością do setnych milimetra, co przy kołach do dirt jumpa, BMX i MTB realnie wydłuża żywotność, bo mniejsze odchylenia rotacyjne to mniejsze obciążenie szprych.
+Po pierwsze, profesjonalny sprzęt. Większość warsztatów rowerowych w okolicy centruje koła "na oko", używając stałego punktu odniesienia na widelcu lub centrownicy bez miernika. Tutaj koło jest mierzone dial indicatorem z dokładnością do dziesiątych części milimetra, co przy kołach do dirt jumpa, BMX i MTB realnie wydłuża żywotność, bo mniejsze odchylenia rotacyjne to mniejsze obciążenie szprych.
 
 Po drugie, specjalizacja techniczna. Bleeding hamulców hydraulicznych jest wykonywany pełnym zestawem narzędzi producenta, z oryginalnym olejem mineralnym Shimano albo DOT 5.1 dla SRAM-a, na stojaku serwisowym ustawiającym klamkę i zacisk pod właściwym kątem, krok po kroku zgodnie z procedurą producenta, z testem ciśnieniowym po zakończeniu. Zestawy domowe za 200 zł najczęściej kończą się rozcieńczonym olejem, powietrzem w zacisku albo olejem na klockach.
 
@@ -97,7 +106,7 @@ Standardowo termin jest dostępny w ciągu kilku dni roboczych, w niskim sezonie
 
 ### Ile czasu zajmuje typowy serwis?
 
-Większość prac wykonywana jest w ten sam dzień, kiedy klient zostawia rower. Bleeding jednego obwodu: 30-45 minut. Bleeding obu obwodów: godzina do półtorej. Centrowanie koła: 20-40 minut. Przegląd podstawowy: 1-2 godziny. Przegląd kompleksowy: pół dnia do całego dnia (rower zostaje w warsztacie).
+Proste prace (regulacja, dętka, bleeding) wykonywane są zazwyczaj w ten sam dzień, kiedy klient zostawia rower. Bleeding jednego obwodu: 30-45 minut. Bleeding obu obwodów: godzina do półtorej. Centrowanie koła: 20-40 minut. Przegląd podstawowy: 1-2 godziny. Przegląd kompleksowy albo zaplatanie koła: 2 do 4 dni roboczych (rower zostaje w warsztacie).
 
 ### Czy można zostawić rower na cały dzień?
 
@@ -117,11 +126,11 @@ Mateusz nie jest autoryzowanym serwisem gwarancyjnym żadnej marki, więc prace 
 
 ### Czy serwis odbiera rower z domu?
 
-Tak, w cenie od 50 zł, na terenie Grodziska Mazowieckiego, Milanówka i Pruszkowa. Przy rezerwacji wybiera się usługę "Odbiór i odwóz roweru" i podaje w notatce adres oraz orientacyjną godzinę. Po wykonaniu serwisu rower jest odwożony z powrotem.
+Tak, od 50 zł na terenie Grodziska Mazowieckiego, Milanówka i Pruszkowa oraz od 90 zł z zachodniej Warszawy. Przy rezerwacji wybiera się usługę "Odbiór i odwóz roweru" i podaje w notatce adres oraz orientacyjną godzinę. Po wykonaniu serwisu rower jest odwożony z powrotem.
 
-### Czy serwis przyjmuje karty płatnicze?
+### Jakie formy płatności przyjmuje serwis?
 
-Tak, akceptujemy płatność kartą oraz BLIK-iem.
+Płatność gotówką, BLIK-iem lub przelewem.
 
 ### Jak umówić wizytę?
 
@@ -137,4 +146,4 @@ Najszybciej online: https://www.skocznarower.pl/umow. Alternatywnie telefon +48 
 - Instagram: https://www.instagram.com/xpyszczek_.
 - TikTok: https://www.tiktok.com/@xpyszczek.dirt.
 
-Ostatnia aktualizacja dokumentu: 2026-06-30.
+Ostatnia aktualizacja dokumentu: 2026-07-01.
