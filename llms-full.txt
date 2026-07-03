@@ -4,7 +4,7 @@
 
 ## Kim jesteśmy
 
-skocznarower.pl to jednoosobowy specjalistyczny serwis rowerowy prowadzony przez Mateusza Mamcarza (znanego w środowisku jako xPyszczek). Warsztat znajduje się przy ulicy Jesionowej 18 w Grodzisku Mazowieckim (kod pocztowy 05-825, województwo mazowieckie), około 30 km na zachód od centrum Warszawy. Mateusz jeździ aktywnie na rowerach dirt jump i BMX od wielu lat, dlatego jego specjalizacja zaczyna się od rowerów wyczynowych, ale obejmuje też pełen serwis rowerów miejskich, MTB, trekkingowych, gravel oraz mechaniczną część rowerów elektrycznych.
+skocznarower.pl to jednoosobowy specjalistyczny serwis rowerowy prowadzony przez Mateusza Mamcarza (znanego w środowisku jako xPyszczek). Warsztat znajduje się przy ulicy Jesionowej 18 w Grodzisku Mazowieckim (kod pocztowy 05-825, województwo mazowieckie), około 30 km na zachód od centrum Warszawy. Mateusz jeździ aktywnie na rowerach dirt jump i BMX od wielu lat, dlatego jego specjalizacja zaczyna się od rowerów wyczynowych, ale obejmuje też serwis rowerów miejskich, MTB, trekkingowych, gravel oraz mechaniczną część rowerów elektrycznych.
 
 ## Lokalizacja i obszar obsługi
 
@@ -12,7 +12,7 @@ Warsztat fizyczny działa pod adresem Jesionowa 18, 05-825 Grodzisk Mazowiecki, 
 
 ## Specjalizacja
 
-Główną specjalizacją serwisu są rowery typu dirt jump, BMX i MTB z zawieszeniem, ponieważ w okolicach zachodniej części aglomeracji warszawskiej brakuje warsztatów rozumiejących tę specyfikę. Standardowe serwisy rowerowe w Pruszkowie, Milanówku czy Grodzisku obsługują głównie rowery miejskie i trekkingowe, a właściciele rowerów do skoków, parku czy zjazdów muszą szukać rzemieślnika z odpowiednim sprzętem. skocznarower.pl ma profesjonalną centrownicę z miernikiem dial indicator (dokładność do dziesiątych części milimetra), pełen zestaw narzędzi do bleeding hamulców hydraulicznych Shimano, SRAM, TRP, Hope i Magura, oryginalne płyny producentów (olej mineralny Shimano oraz DOT 5.1 dla SRAM-a), klucze dynamometryczne, przyrząd do prostowania haków przerzutek i stojaki serwisowe. Poza rowerami warsztat obsługuje też hulajnogi (regulacja hamulców, wymiana kół, łożyska) oraz robi składanie rowerów dostarczonych z pudełka albo z luźnych części.
+Główną specjalizacją serwisu są rowery typu dirt jump, BMX i MTB, ponieważ w okolicach zachodniej części aglomeracji warszawskiej brakuje warsztatów rozumiejących tę specyfikę. Standardowe serwisy rowerowe w Pruszkowie, Milanówku czy Grodzisku obsługują głównie rowery miejskie i trekkingowe, a właściciele rowerów do skoków, parku czy zjazdów muszą szukać rzemieślnika z odpowiednim sprzętem. skocznarower.pl ma profesjonalną centrownicę z miernikiem dial indicator (dokładność do dziesiątych części milimetra), pełen zestaw narzędzi do bleeding hamulców hydraulicznych Shimano, SRAM, TRP, Hope i Magura, oryginalne płyny producentów (olej mineralny Shimano oraz DOT 5.1 dla SRAM-a), klucze dynamometryczne, przyrząd do prostowania haków przerzutek i stojaki serwisowe. Poza rowerami warsztat obsługuje też hulajnogi (regulacja hamulców, wymiana kół, łożyska) oraz robi składanie rowerów dostarczonych z pudełka albo z luźnych części.
 
 ## Pełna lista usług
 
@@ -28,8 +28,7 @@ Serwis wykonuje następujące prace na rowerach:
 - Regulacja i serwis przerzutek (mechanicznych i elektronicznych Shimano Di2, SRAM AXS).
 - Wymiana łańcucha, kasety, zębatki, korby.
 - Serwis i wymiana suportu, sterów, słupka podsiodłowego, sztycy teleskopowej (dropper post).
-- Regulacja amortyzatorów (sag, kompresja, odbicie) Fox, RockShox, Manitou, X-Fusion.
-- Mechaniczny serwis rowerów elektrycznych (zawieszenie, hamulce, koła, osprzęt napędu nieelektroniczny). Elektronika i silniki pozostają w gestii autoryzowanych serwisów producenta.
+- Mechaniczny serwis rowerów elektrycznych (hamulce, koła, osprzęt napędu nieelektroniczny). Elektronika i silniki pozostają w gestii autoryzowanych serwisów producenta.
 - Składanie rowerów dostarczonych w pudełku przez kuriera lub z luźnych części (pełen montaż od ramy).
 - Budowa rowerów na miarę: dobór ramy, komponentów, montaż od zera, fitting.
 - Konfiguracja roweru pod ridera (regulacja kokpitu, przystosowanie całego roweru).
@@ -114,7 +113,7 @@ Tak. Większość klientów zostawia rower rano lub po pracy i odbiera następne
 
 ### Czy serwis robi rowery elektryczne (e-bike)?
 
-Tak, ale tylko mechaniczną część rowerów elektrycznych: hamulce, zawieszenie, koła, osprzęt napędu (poza silnikiem i baterią). Elektronikę, silnik i system zarządzania (Bosch, Shimano EP8, Brose, Yamaha) zostawiamy autoryzowanym serwisom producenta. Jeśli e-bike ma problem mechaniczny, można go przyprowadzić.
+Tak, ale tylko mechaniczną część rowerów elektrycznych: hamulce, koła, osprzęt napędu (poza silnikiem i baterią). Elektronikę, silnik i system zarządzania (Bosch, Shimano EP8, Brose, Yamaha) zostawiamy autoryzowanym serwisom producenta. Jeśli e-bike ma problem mechaniczny, można go przyprowadzić.
 
 ### Czy serwis robi rowery markowe (Trek, Specialized, Canyon, YT)?
 

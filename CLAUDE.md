@@ -65,6 +65,8 @@ Two `index.html`-only mechanics tied to the above: (1) the homepage nav is trans
 ### JSON-LD blocks
 Each public page has its own JSON-LD. On `index.html` there are two (`FAQPage`, `LocalBusiness`); the landing pages each carry their own `LocalBusiness`. Keep them in sync with the visible FAQ/contact/address/phone whenever those change.
 
+**Google Maps wizytówka link**: the canonical link to the Google Business profile is `https://maps.google.com/?cid=6298905504059882234` (same place as the `REVIEW_LINK` place_id). Every `LocalBusiness` block carries it as `hasMap`, and the visible address in `#kontakt` on `index.html` links to it with `&hl=pl`. Never use `maps.app.goo.gl` short links on the site: their link previews render the business category in a random language (e.g. Danish "Cykelværksted"), which is what prompted this canon.
+
 ### `.assetsignore` (what does NOT get uploaded as a static asset)
 The Worker bundles the whole repo root as assets, so this file is what keeps junk out: large source media (`uploads/*.mp4`, `uploads/*.pdf`, `uploads/FastDL.to_*`), the Worker source (`src/`), migrations, dotfiles (`.wrangler/`, `.git/`, `.claude/`, `.playwright-mcp/`, `.DS_Store`), `node_modules/`, and the dev-only files (`CLAUDE.md`, `OUTREACH_PLAN.md`, `telnyx-voice-agent.md`, `whatsapp-setup.md`, `.assetsignore`, `.gitignore`, `.dev.vars*`). When adding new top-level files or directories, decide whether they belong in `.assetsignore`.
 
@@ -124,6 +126,7 @@ These come from explicit user preference, not house style — apply them to ever
 
 1. **No em-dashes (—).** Use a comma, semicolon, colon, or rewrite. This includes JSON-LD answer strings, meta descriptions, visible copy, and any SMS/email text in `src/index.js`.
 2. **Avoid "I-slope" narration.** No Polish sentences starting with "Ja" or leaning on first-person interjections as a stylistic device. Keep copy direct and second-person where possible.
+3. **No suspension service (decision 2026-07-02).** The shop does NOT service suspension: never list "zawieszenie", "amortyzatory", damper/fork service, sag/kompresja/odbicie tuning, or suspension brands (RockShox, Fox, Manitou, DVO, X-Fusion) as an offered service anywhere (visible copy, JSON-LD, meta descriptions, llms files, SMS). "Full suspension" / "MTB z zawieszeniem" may appear only as a *bike type* the shop accepts (e.g. "Hardtail i full suspension. Hamulce, koła, napęd."), never as a serviced component.
 
 Before committing any copy change (HTML or Worker strings), re-scan the diff for `—` characters.
 
