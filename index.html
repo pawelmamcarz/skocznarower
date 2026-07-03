@@ -27,6 +27,12 @@
   {
     "@context": "https://schema.org",
     "@type": "FAQPage",
+    "@id": "https://www.skocznarower.pl/#faq",
+    "inLanguage": "pl-PL",
+    "speakable": {
+      "@type": "SpeakableSpecification",
+      "cssSelector": [".faq-q", ".faq-a"]
+    },
     "mainEntity": [
       {
         "@type": "Question",
@@ -96,13 +102,29 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
+    "@type": ["LocalBusiness", "BicycleStore"],
     "@id": "https://www.skocznarower.pl/#business",
     "name": "skocznarower.pl – Serwis Rowerowy",
     "description": "Profesjonalny serwis rowerowy specjalizujący się w Dirt Jump, MTB, BMX i e-bike. Obsługuję klientów z Grodziska Mazowieckiego, Pruszkowa, Milanówka i okolic Warszawy.",
     "url": "https://www.skocznarower.pl",
     "telephone": "+48501174195",
     "image": "https://www.skocznarower.pl/uploads/photo-1778431658856.jpeg",
+    "currenciesAccepted": "PLN",
+    "paymentAccepted": "Gotówka, BLIK, przelew",
+    "knowsAbout": [
+      "Serwis rowerowy",
+      "Dirt jump",
+      "BMX",
+      "MTB",
+      "E-bike",
+      "Zaplatanie kół",
+      "Centrowanie kół",
+      "Bleeding hamulców hydraulicznych",
+      "Hamulce Shimano",
+      "Hamulce SRAM",
+      "Budowa rowerów na miarę"
+    ],
+    "slogan": "Serwis Dirt Jump, MTB, BMX i e-bike w Grodzisku Mazowieckim",
     "address": {
       "@type": "PostalAddress",
       "streetAddress": "Jesionowa 18",
@@ -150,6 +172,7 @@
     },
     "founder": {
       "@type": "Person",
+      "@id": "https://www.skocznarower.pl/#mateusz",
       "name": "Mateusz Mamcarz",
       "alternateName": "xPyszczek"
     },
@@ -157,6 +180,88 @@
     "sameAs": [
       "https://www.instagram.com/xpyszczek_",
       "https://www.tiktok.com/@xpyszczek.dirt"
+    ]
+  }
+  </script>
+
+  <!-- Schema.org WebSite (pomaga wyszukiwarkom generatywnym zrozumieć kontekst całej domeny) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": "https://www.skocznarower.pl/#website",
+    "url": "https://www.skocznarower.pl/",
+    "name": "skocznarower.pl",
+    "inLanguage": "pl-PL",
+    "description": "Serwis rowerowy w Grodzisku Mazowieckim, specjalizacja dirt jump, BMX, MTB i e-bike.",
+    "publisher": { "@id": "https://www.skocznarower.pl/#business" }
+  }
+  </script>
+
+  <!-- Schema.org Person, prowadzący serwis -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": "https://www.skocznarower.pl/#mateusz",
+    "name": "Mateusz Mamcarz",
+    "alternateName": "xPyszczek",
+    "jobTitle": "Mechanik rowerowy",
+    "worksFor": { "@id": "https://www.skocznarower.pl/#business" },
+    "knowsAbout": [
+      "Dirt jump",
+      "BMX",
+      "MTB",
+      "Zaplatanie kół rowerowych",
+      "Bleeding hamulców hydraulicznych",
+      "Serwis rowerów elektrycznych",
+      "Budowa rowerów na miarę"
+    ],
+    "url": "https://www.skocznarower.pl/#o-mnie",
+    "sameAs": [
+      "https://www.instagram.com/xpyszczek_",
+      "https://www.tiktok.com/@xpyszczek.dirt"
+    ]
+  }
+  </script>
+
+  <!-- Schema.org Service z cenami, ułatwia modelom językowym podawanie cen w rekomendacjach -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": "https://www.skocznarower.pl/#serwis",
+    "name": "Serwis rowerowy Grodzisk Mazowiecki",
+    "serviceType": "Serwis rowerowy",
+    "provider": { "@id": "https://www.skocznarower.pl/#business" },
+    "areaServed": [
+      {"@type": "City", "name": "Grodzisk Mazowiecki"},
+      {"@type": "City", "name": "Pruszków"},
+      {"@type": "City", "name": "Milanówek"},
+      {"@type": "City", "name": "Brwinów"},
+      {"@type": "City", "name": "Warszawa"}
+    ],
+    "availableChannel": {
+      "@type": "ServiceChannel",
+      "serviceUrl": "https://www.skocznarower.pl/umow",
+      "servicePhone": "+48501174195"
+    },
+    "offers": [
+      {"@type": "Offer", "name": "Przegląd podstawowy", "price": "150", "priceCurrency": "PLN", "priceSpecification": {"@type": "PriceSpecification", "price": "150", "priceCurrency": "PLN", "valueAddedTaxIncluded": true}, "availability": "https://schema.org/InStock", "url": "https://www.skocznarower.pl/umow", "description": "Cena wyjściowa, dokładna wycena po oględzinach."},
+      {"@type": "Offer", "name": "Przegląd kompleksowy", "price": "340", "priceCurrency": "PLN", "availability": "https://schema.org/InStock", "url": "https://www.skocznarower.pl/umow"},
+      {"@type": "Offer", "name": "Regulacja roweru miejskiego", "price": "70", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
+      {"@type": "Offer", "name": "Regulacja hamulców", "price": "40", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
+      {"@type": "Offer", "name": "Regulacja przerzutek", "price": "40", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
+      {"@type": "Offer", "name": "Centrowanie koła", "price": "120", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
+      {"@type": "Offer", "name": "Zaplatanie koła (robocizna)", "price": "180", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
+      {"@type": "Offer", "name": "Naprawa koła", "price": "35", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
+      {"@type": "Offer", "name": "Wymiana dętki", "price": "35", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
+      {"@type": "Offer", "name": "Wymiana opony", "price": "40", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
+      {"@type": "Offer", "name": "Montaż tubeless", "price": "70", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
+      {"@type": "Offer", "name": "Bleeding hamulców hydraulicznych (obwód)", "price": "100", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
+      {"@type": "Offer", "name": "Budowa roweru na miarę", "price": "500", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
+      {"@type": "Offer", "name": "Odbiór i odwóz roweru (Grodzisk, Milanówek, Pruszków)", "price": "50", "priceCurrency": "PLN"},
+      {"@type": "Offer", "name": "Odbiór i odwóz roweru (Warszawa zachodnia)", "price": "90", "priceCurrency": "PLN"}
     ]
   }
   </script>
