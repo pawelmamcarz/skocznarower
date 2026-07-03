@@ -494,6 +494,10 @@ async function sendNotifications(env, b) {
   if (!env.RESEND_API_KEY) return;
 
   const from = env.FROM_EMAIL || 'rezerwacje@skocznarower.pl';
+  // REPLY_TO_EMAIL should be a direct external address (e.g. Gmail) that does not
+  // rely on Cloudflare Email Routing, so that customer replies are deliverable even
+  // when the @skocznarower.pl forwarding chain is broken.
+  const replyTo = env.REPLY_TO_EMAIL || env.NOTIFY_EMAIL;
 
   // do właściciela, w osobnym try/catch żeby błąd nie zablokował maila do klienta
   if (env.NOTIFY_EMAIL) {
@@ -524,11 +528,11 @@ ID:    ${b.id}
   // do klienta, tylko jeśli podał email
   if (b.customer_email) {
     try {
-    await resendSend(env.RESEND_API_KEY, {
-      from,
-      to: b.customer_email,
-      subject: 'Rezerwacja przyjęta, czeka na potwierdzenie, skocznarower.pl',
-      text:
+      const payload = {
+        from,
+        to: b.customer_email,
+        subject: 'Rezerwacja przyjęta, czeka na potwierdzenie, skocznarower.pl',
+        text:
 `Cześć ${b.customer_name},
 
 Dziękuję za zgłoszenie. Twój termin jest wstępnie zarezerwowany, potwierdzę go telefonicznie.
@@ -542,7 +546,9 @@ Jeśli coś się zmieni, zadzwoń: ${PUBLIC_PHONE_DISPLAY}.
 Mateusz / skocznarower.pl
 Jesionowa 18, Grodzisk Mazowiecki
 `,
-    });
+      };
+      if (replyTo) payload.reply_to = replyTo;
+      await resendSend(env.RESEND_API_KEY, payload);
     } catch (e) { console.error('Mail do klienta error', e); }
   }
 }
@@ -2517,10 +2523,11 @@ async function sendSeasonalReminders(env) {
     return;
   }
   const from = env.FROM_EMAIL || 'rezerwacje@skocznarower.pl';
+  const replyTo = env.REPLY_TO_EMAIL || env.NOTIFY_EMAIL;
 
   for (const r of rows.results || []) {
     try {
-      await resendSend(env.RESEND_API_KEY, {
+      const payload = {
         from,
         to: r.email,
         subject: 'Czas na przegląd przed sezonem, skocznarower.pl',
@@ -2536,7 +2543,9 @@ Mateusz / skocznarower.pl
 Jesionowa 18, Grodzisk Mazowiecki
 Tel. ${PUBLIC_PHONE_DISPLAY}
 `,
-      });
+      };
+      if (replyTo) payload.reply_to = replyTo;
+      await resendSend(env.RESEND_API_KEY, payload);
       await env.DB.prepare('UPDATE seasonal_reminders SET sent_at = ?1 WHERE id = ?2')
         .bind(Date.now(), r.id).run();
     } catch (e) {

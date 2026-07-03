@@ -6,6 +6,10 @@ SESSION_SECRET=wygeneruj-losowy-ciag-np-openssl-rand-hex-32
 RESEND_API_KEY=
 NOTIFY_EMAIL=
 FROM_EMAIL=rezerwacje@skocznarower.pl
+# Adres reply-to dla maili do klienta (opcjonalne, fallback NOTIFY_EMAIL). Ustaw na
+# bezpośrednią skrzynkę zewnętrzną (np. Gmail), która nie zależy od Cloudflare Email
+# Routing, żeby odpowiedzi klientów docierały nawet gdy przekierowanie @skocznarower.pl nie działa.
+REPLY_TO_EMAIL=
 
 # SMSAPI (opcjonalne, bez tokena SMS-y idą tylko do logów workera)
 # Token wygenerujesz w panelu SMSAPI → Ustawienia → Token API (OAuth)
