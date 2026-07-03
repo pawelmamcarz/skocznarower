@@ -4,7 +4,7 @@
 !.dev.vars.example
 .env*
 !.env.example
-uploads/hero.mp4
+uploads/*.mp4
 uploads/FastDL.to_*
 
 # test artifacts
@@ -13,3 +13,6 @@ uploads/FastDL.to_*
 
 # Claude Code local config
 .claude/
+
+# node
+node_modules/

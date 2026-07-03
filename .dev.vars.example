@@ -43,6 +43,7 @@ WHATSAPP_PHONE_NUMBER_ID=
 # Token weryfikacyjny webhooka (sam wymyślasz, ten sam wpisujesz w panelu Meta). openssl rand -hex 16.
 WHATSAPP_VERIFY_TOKEN=
 # App Secret aplikacji Meta, do weryfikacji podpisu X-Hub-Signature-256 webhooka.
+# Bez niego POST /api/whatsapp/webhook zwraca 403 (fail-closed, jak VOICE_API_SECRET).
 WHATSAPP_APP_SECRET=
 # Opcjonalne nadpisania (domyślne wartości w kodzie):
 # WHATSAPP_API_BASE=graph.facebook.com
@@ -51,3 +52,6 @@ WHATSAPP_APP_SECRET=
 # WHATSAPP_TPL_CONFIRM=potwierdzenie_rezerwacji
 # WHATSAPP_TPL_REMINDER=przypomnienie_wizyty
 # WHATSAPP_AUTO_ACK=1   # auto-odpowiedź na przychodzące (domyślnie wyłączone)
+
+# Win-back: SMS reaktywacyjny do klientów nieaktywnych 6-18 mies. (opcjonalne, domyślnie wyłączony).
+# WINBACK_ENABLED=1

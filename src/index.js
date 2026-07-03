@@ -437,7 +437,7 @@ function validateBooking(b) {
   if (!BIKE_TYPES.includes(b?.bike_type)) e.push('Wybierz typ roweru');
   if (!b?.customer_name || b.customer_name.trim().length < 2) e.push('Wpisz imię');
   if (b?.customer_name && b.customer_name.length > 80) e.push('Imię za długie');
-  if (!b?.customer_phone || !/[0-9]{9}/.test(normalizePhone(b.customer_phone))) e.push('Wpisz telefon');
+  if (!b?.customer_phone || !/^(\+?48)?[0-9]{9}$/.test(normalizePhone(b.customer_phone))) e.push('Wpisz telefon');
   if (b?.customer_email && b.customer_email.length > 120) e.push('Email za długi');
   if (b?.customer_email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(b.customer_email)) e.push('Nieprawidłowy email');
   if (b?.notes && b.notes.length > 1000) e.push('Notatka za długa');
@@ -732,10 +732,21 @@ async function handleQuickAction(request, env, url) {
     `<p>${esc(b.date)}, godz. ${esc(b.time_slot)}<br>${esc(service)}, ${esc(b.bike_type)}</p>` +
     (b.notes ? `<p>Notatka: ${esc(b.notes)}</p>` : '');
 
+  // Komunikat dla rezerwacji, która nie jest już 'pending' (np. token z SMS-a przeżył zmianę
+  // stanu w /admin). Współdzielony przez GET (pokaż stan) i POST (link w starej, nieodświeżonej
+  // karcie nie może po cichu wykonać akcji na nieaktualnym stanie).
+  const alreadyDecided = () => {
+    if (b.status === 'confirmed') return htmlPage('Już potwierdzona', summary + '<p>Ta rezerwacja jest już potwierdzona.</p>');
+    if (b.status === 'cancelled') return htmlPage('Anulowana', summary + '<p>Ta rezerwacja jest już anulowana.</p>');
+    if (b.status === 'done') return htmlPage('Zrealizowana', summary + '<p>Ta rezerwacja jest oznaczona jako zrealizowana.</p>');
+    return null;
+  };
+
   if (request.method === 'POST') {
+    const already = alreadyDecided();
+    if (already) return already;
     const form = await request.formData();
     const action = String(form.get('action') || '');
-    // Ponowna walidacja tokenu z formularza, na wypadek innego id w polu.
     if (action === 'confirm') {
       const res = await confirmBooking(env, id);
       if (res.error === 'slot') {
@@ -751,15 +762,8 @@ async function handleQuickAction(request, env, url) {
   }
 
   // GET: pokaż stan i przyciski (POST). Dla już rozstrzygniętych tylko informacja.
-  if (b.status === 'confirmed') {
-    return htmlPage('Już potwierdzona', summary + '<p>Ta rezerwacja jest już potwierdzona.</p>');
-  }
-  if (b.status === 'cancelled') {
-    return htmlPage('Anulowana', summary + '<p>Ta rezerwacja jest już anulowana.</p>');
-  }
-  if (b.status === 'done') {
-    return htmlPage('Zrealizowana', summary + '<p>Ta rezerwacja jest oznaczona jako zrealizowana.</p>');
-  }
+  const already = alreadyDecided();
+  if (already) return already;
 
   const hidden = `<input type="hidden" name="id" value="${esc(id)}"><input type="hidden" name="t" value="${esc(token)}">`;
   const buttons =
@@ -1159,11 +1163,11 @@ async function adminCreateBooking(request, env) {
   const date = String(form.get('date') || '').trim();
   const time_slot = String(form.get('time_slot') || '').trim();
   const source = String(form.get('source') || '').trim();
-  const rawNotes = String(form.get('notes') || '').trim();
+  const rawNotes = String(form.get('notes') || '').trim().slice(0, 1000);
 
   const errors = [];
   if (name.length < 2 || name.length > 80) errors.push('imię');
-  if (!/[0-9]{9}/.test(phone)) errors.push('telefon');
+  if (!/^(\+?48)?[0-9]{9}$/.test(phone)) errors.push('telefon');
   if (!SERVICES.some(s => s.id === service_type)) errors.push('usługa');
   if (!BIKE_TYPES.includes(bike_type)) errors.push('typ roweru');
   if (!isValidDate(date)) errors.push('data');
@@ -1487,7 +1491,7 @@ async function adminZleceniePost(request, env) {
 async function adminSaveFinance(env, form) {
   const id = String(form.get('id') || '');
   if (!id) return new Response('Bad', { status: 400 });
-  const cur = await env.DB.prepare('SELECT accepted_at, final_price_override FROM bookings WHERE id=?1').bind(id).first();
+  const cur = await env.DB.prepare('SELECT accepted_at, final_price_override, final_price FROM bookings WHERE id=?1').bind(id).first();
   if (!cur) return new Response('Nie ma takiego zlecenia', { status: 404 });
   const backTo = '/admin/zlecenie?id=' + encodeURIComponent(id);
 
@@ -1520,10 +1524,12 @@ async function adminSaveFinance(env, form) {
   else { acceptedAt = dateToMs(acceptedRaw); if (acceptedAt == null) return redirect(withParam(backTo, 'err', 'zla-data')); }
 
   // final_price = ręczne nadpisanie, inaczej auto (części + robocizna). Zapisujemy też, gdy
-  // czyścimy poprzednie nadpisanie (cur.final_price_override != null), żeby final_price nie został stary.
+  // czyścimy poprzednie źródło (cur.final_price_override lub cur.final_price już ustawione),
+  // żeby final_price nie został stary po wyczyszczeniu obu pól bez użycia override.
   const autoTotal = (partsCharged != null || labor != null) ? (partsCharged || 0) + (labor || 0) : null;
   const finalPrice = override != null ? override : autoTotal;
-  const writeFinal = (override != null || autoTotal != null || cur.final_price_override != null) ? 1 : 0;
+  const writeFinal = (override != null || autoTotal != null
+    || cur.final_price_override != null || cur.final_price != null) ? 1 : 0;
 
   await env.DB.prepare(
     `UPDATE bookings SET
@@ -2456,20 +2462,32 @@ async function sendFollowUps(env) {
 
 // Win-back: SMS reaktywacyjny do klientów, których ostatnia wizyta była dawno (6 do 18 mies.) i nie wrócili.
 // WYŁĄCZONY domyślnie: rusza tylko gdy WINBACK_ENABLED === '1'. Limit 25 na dobę, żeby pierwszy przebieg
-// nie zrobił blastu do całej historii; cron toczy to dzień po dniu. Stempel per numer telefonu, więc
-// każdy klient dostaje win-back raz na cykl. Klient z przyszłą rezerwacją ma MAX(date) > cutoff i wypada.
+// nie zrobił blastu do całej historii; cron toczy to dzień po dniu, ORDER BY dla deterministycznego przydziału.
+// Kwalifikacja liczy się względem NAJNOWSZEJ rezerwacji danego telefonu (nie całej historii), a stempel
+// idzie tylko na ten jeden wiersz, więc klient dostaje win-back raz na cykl: nowa wizyta (nowy wiersz,
+// winback_sent_at puste) naturalnie odnawia kwalifikację po kolejnym zaniku. Klient z przyszłą rezerwacją
+// ma najnowszy date > cutoff i wypada.
 async function sendWinBack(env) {
   if (env.WINBACK_ENABLED !== '1') return;
   const cutoff = addDaysWarsaw(-180);
   const floor = addDaysWarsaw(-540);
+  // CTE z ROW_NUMBER wybiera dokładnie jeden (najnowszy) aktywny wiersz na numer telefonu,
+  // rozstrzygając remisy tej samej daty po id, żeby nigdy nie wysłać dwóch SMS-ów jednej osobie
+  // w tym samym przebiegu crona.
   const rows = await env.DB.prepare(
-    `SELECT customer_phone, MAX(customer_name) AS customer_name
-     FROM bookings
-     WHERE status != 'cancelled' AND customer_phone IS NOT NULL AND customer_phone != ''
-     GROUP BY customer_phone
-     HAVING MAX(date) <= ?1 AND MAX(date) >= ?2
-        AND SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) > 0
-        AND SUM(CASE WHEN winback_sent_at IS NOT NULL THEN 1 ELSE 0 END) = 0
+    `WITH latest AS (
+       SELECT id, customer_phone, customer_name, date, winback_sent_at,
+              ROW_NUMBER() OVER (PARTITION BY customer_phone ORDER BY date DESC, id DESC) AS rn
+       FROM bookings
+       WHERE status != 'cancelled' AND customer_phone IS NOT NULL AND customer_phone != ''
+     )
+     SELECT l.id, l.customer_phone, l.customer_name
+     FROM latest l
+     WHERE l.rn = 1
+       AND l.winback_sent_at IS NULL
+       AND l.date <= ?1 AND l.date >= ?2
+       AND EXISTS (SELECT 1 FROM bookings b3 WHERE b3.customer_phone = l.customer_phone AND b3.status = 'done')
+     ORDER BY l.date ASC
      LIMIT 25`
   ).bind(cutoff, floor).all();
 
@@ -2479,8 +2497,8 @@ async function sendWinBack(env) {
     const ok = await sendSms(env, b.customer_phone, text);
     if (ok) {
       await env.DB.prepare(
-        "UPDATE bookings SET winback_sent_at = ?1 WHERE customer_phone = ?2 AND winback_sent_at IS NULL"
-      ).bind(Date.now(), b.customer_phone).run();
+        "UPDATE bookings SET winback_sent_at = ?1 WHERE id = ?2"
+      ).bind(Date.now(), b.id).run();
     }
   }
 }
@@ -2617,21 +2635,25 @@ async function sendWhatsApp(env, phoneRaw, message) {
 
 /**
  * Odbiera webhook WhatsApp Cloud API (wiadomości przychodzące + statusy doręczeń).
- * Weryfikuje podpis X-Hub-Signature-256 (HMAC-SHA256 po WHATSAPP_APP_SECRET); bez sekretu pomija weryfikację (dev).
- * Zawsze odpowiada 200 (Meta ponawia przy innym kodzie), cała logika fail-soft.
+ * Weryfikuje podpis X-Hub-Signature-256 (HMAC-SHA256 po WHATSAPP_APP_SECRET); fail-closed
+ * (403) gdy sekret nieustawiony, tak jak VOICE_API_SECRET i WHATSAPP_VERIFY_TOKEN.
+ * Zawsze odpowiada 200 po przejściu weryfikacji (Meta ponawia przy innym kodzie), reszta
+ * logiki fail-soft.
  * W trybie coexistence rozmowy widzi też właściciel w aplikacji; tu logujemy, opcjonalnie zapisujemy do D1
  * i (jeśli WHATSAPP_AUTO_ACK=1) odsyłamy jedną wiadomość naprowadzającą na formularz.
  */
 async function handleWhatsAppWebhook(request, env, ctx) {
   const raw = await request.text();
 
-  if (env.WHATSAPP_APP_SECRET) {
-    const provided = request.headers.get('X-Hub-Signature-256') || '';
-    const expected = 'sha256=' + await hmacHex(env.WHATSAPP_APP_SECRET, raw);
-    if (!timingSafeEqual(provided, expected)) {
-      console.error('WA webhook: zły podpis');
-      return new Response('forbidden', { status: 403 });
-    }
+  if (!env.WHATSAPP_APP_SECRET) {
+    console.error('WA webhook: WHATSAPP_APP_SECRET nieustawiony, odrzucam');
+    return new Response('forbidden', { status: 403 });
+  }
+  const provided = request.headers.get('X-Hub-Signature-256') || '';
+  const expected = 'sha256=' + await hmacHex(env.WHATSAPP_APP_SECRET, raw);
+  if (!timingSafeEqual(provided, expected)) {
+    console.error('WA webhook: zły podpis');
+    return new Response('forbidden', { status: 403 });
   }
 
   let body;
