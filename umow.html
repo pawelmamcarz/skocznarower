@@ -12,7 +12,7 @@
   <meta property="og:type"        content="website">
   <meta property="og:url"         content="https://www.skocznarower.pl/umow">
   <meta property="og:title"       content="Umów wizytę | Serwis Rowerowy Grodzisk Mazowiecki">
-  <meta property="og:description" content="Wybierz usługę, datę i godzinę. Oddzwonię, żeby potwierdzić. Rezerwacja zajmuje minutę. Tel: 501 174 195.">
+  <meta property="og:description" content="Wybierz usługę, datę i godzinę. Oddzwonię, żeby potwierdzić. Tel: 501 174 195.">
   <meta property="og:image"       content="https://www.skocznarower.pl/uploads/photo-1778431658856.jpeg">
   <meta property="og:locale"      content="pl_PL">
   <meta name="twitter:card"       content="summary_large_image">
@@ -482,7 +482,7 @@
 <header class="header">
   <p class="eyebrow">Rezerwacja online</p>
   <h1 class="display">Umów<br><em>wizytę</em></h1>
-  <p class="lead">Wybierz usługę, dzień i godzinę. Oddzwonię, żeby potwierdzić termin. Cała rezerwacja zajmuje minutę.</p>
+  <p class="lead">Wybierz usługę, dzień i godzinę, a oddzwonię, żeby potwierdzić termin.</p>
 </header>
 
 <main class="form-wrap">
@@ -547,7 +547,7 @@
       </label>
       <label class="consent-check">
         <input type="checkbox" id="consent" name="consent">
-        <span>Chcę dostać jedno przypomnienie mailem przed sezonem. Zrezygnujesz w każdej chwili.</span>
+        <span>Chcę dostać jedno przypomnienie mailem przed sezonem, mogę się wypisać w każdej chwili.</span>
       </label>
       <label class="field">
         <span>Opisz krótko co dolega rowerowi</span>
@@ -585,7 +585,7 @@ const SERVICES = [
   { id: 'wymiana-czesci',       name: 'Wymiana części',              price: 'od 35 zł + część' },
   { id: 'kolo-centrowanie',     name: 'Centrowanie koła',            price: 'od 120 zł' },
   { id: 'kolo-naprawa',         name: 'Naprawa koła',                price: 'od 35 zł' },
-  { id: 'kolo-zaplatanie',      name: 'Zaplatanie koła',             price: 'od 180 zł' },
+  { id: 'kolo-zaplatanie',      name: 'Zaplatanie koła',             price: 'od 80 zł' },
   { id: 'pod-ridera',           name: 'Konfiguracja pod ridera',     price: 'od 20 zł' },
   { id: 'skladanie',            name: 'Składanie roweru (z pudełka / z części)', price: 'od 120 zł' },
   { id: 'budowa',               name: 'Budowa roweru na miarę',      price: 'od 500 zł' },
@@ -687,7 +687,7 @@ async function loadSlots() {
   if (!date) return;
   const seq = ++slotsReq;
   const todayW = warsawToday();
-  if (!DATE_RE.test(date)) { slotsMsg('Nieprawidłowa data. Wybierz datę z kalendarza.'); return; }
+  if (!DATE_RE.test(date)) { slotsMsg('Nieprawidłowa data.'); return; }
   if (date < todayW) { slotsMsg('Ta data już minęła. Wybierz dzisiejszą albo późniejszą.'); return; }
   if (date > addDaysISO(todayW, MAX_DAYS_AHEAD)) { slotsMsg('Rezerwacja online obejmuje najbliższe 60 dni. Wybierz wcześniejszą datę.'); return; }
   slotsArea.innerHTML = '<p class="slots-hint">Ładuję wolne godziny...</p>';
@@ -960,7 +960,7 @@ function showSuccess({ id, date, slot, service, bike, name, phone }) {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.5 5.5L20 6.5"/></svg>
       </div>
       <h2>Zgłoszenie przyjęte</h2>
-      <p>Dzięki, ${escapeHtml(name)}! Zgłoszenie czeka na potwierdzenie: odezwę się SMS-em albo telefonicznie na <strong>${escapeHtml(phone)}</strong>, zwykle tego samego dnia.</p>
+      <p>Dzięki, ${escapeHtml(name)}. Odezwę się SMS-em albo telefonicznie na <strong>${escapeHtml(phone)}</strong>, zwykle tego samego dnia, żeby potwierdzić termin.</p>
       <div class="success-meta">
         <div><strong>Termin:</strong> <span class="val-mono">${escapeHtml(formatDatePl(date))}, godz. ${escapeHtml(slot)}</span></div>
         <div><strong>Usługa:</strong> ${escapeHtml(serviceName + servicePrice)}</div>

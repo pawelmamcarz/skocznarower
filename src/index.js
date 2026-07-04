@@ -13,7 +13,7 @@ const SERVICES = [
   { id: 'wymiana-czesci',       name: 'Wymiana części (klocki, linki, dętka...)',  price: 'od 35 zł + część' },
   { id: 'kolo-centrowanie',     name: 'Centrowanie koła',                          price: 'od 120 zł' },
   { id: 'kolo-naprawa',         name: 'Naprawa koła',                              price: 'od 35 zł' },
-  { id: 'kolo-zaplatanie',      name: 'Zaplatanie koła',                           price: 'od 180 zł' },
+  { id: 'kolo-zaplatanie',      name: 'Zaplatanie koła',                           price: 'od 80 zł' },
   { id: 'pod-ridera',           name: 'Konfiguracja pod ridera',                   price: 'od 20 zł' },
   { id: 'skladanie',            name: 'Składanie roweru (z pudełka / z części)',   price: 'od 120 zł' },
   { id: 'budowa',               name: 'Budowa roweru na miarę',                    price: 'od 500 zł' },
@@ -1141,7 +1141,7 @@ async function cancelBooking(env, id) {
 // SMS po przyjęciu roweru do serwisu (status -> in_progress).
 function repairAcceptedSms(b) {
   const firstName = (b.customer_name || '').split(' ')[0];
-  return `Cześć ${firstName}! Przyjęliśmy Twój rower do serwisu (skocznarower.pl, Jesionowa 18, Grodzisk Maz.). Skoro rower jest u nas, dorzucić przegląd albo centrowanie kół? Daj znać. Damy znać SMS-em, gdy będzie gotowy. W razie pytań: ${PUBLIC_PHONE_DISPLAY}.`;
+  return `Cześć ${firstName}! Przyjęliśmy Twój rower do serwisu (skocznarower.pl, Jesionowa 18, Grodzisk Maz.). Skoro już u nas jest, dorzucić przegląd albo centrowanie kół? Damy znać SMS-em, gdy będzie gotowy. W razie pytań: ${PUBLIC_PHONE_DISPLAY}.`;
 }
 
 // SMS z podsumowaniem naprawy (status -> done). Zakres: repair_summary, a jak puste, nazwa usługi.
@@ -1150,7 +1150,7 @@ function repairDoneSms(b) {
   const svc = SERVICES.find(s => s.id === b.service_type)?.name || b.service_type;
   const zakres = (b.repair_summary && b.repair_summary.trim()) || svc;
   const koszt = b.final_price != null ? ` Koszt: ${b.final_price} zł.` : '';
-  return `Cześć ${firstName}! Rower po serwisie jest gotowy do odbioru. Zakres: ${zakres}.${koszt} Adres: Jesionowa 18, Grodzisk Maz. Następnym razem umówisz się tutaj: skocznarower.pl/umow. Dzięki za zaufanie! Zadowolony? Poleć nas znajomym.`;
+  return `Cześć ${firstName}! Rower po serwisie jest gotowy do odbioru. Zakres: ${zakres}.${koszt} Adres: Jesionowa 18, Grodzisk Maz. Następnym razem umówisz się tutaj: skocznarower.pl/umow.`;
 }
 
 // Ręczne dodanie rezerwacji z panelu (telefon, Google Places, wejście z ulicy).
@@ -2457,7 +2457,7 @@ async function sendFollowUps(env) {
     ? env.REVIEW_LINK : 'https://www.skocznarower.pl/';
   for (const b of rows.results || []) {
     const firstName = b.customer_name.split(' ')[0];
-    const text = `Dzięki za zaufanie, ${firstName}! Jeśli wszystko gra, zostaw opinię na Google: ${reviewLink} . To 30 sekund, a mi pomaga zdobywać klientów. Pozdrawiam, Mateusz / skocznarower.pl`;
+    const text = `Dzięki za zaufanie, ${firstName}! Jeśli wszystko gra, zostaw opinię na Google: ${reviewLink} . To 30 sekund, a mi pomaga zdobywać klientów.`;
     const ok = await sendSms(env, b.customer_phone, text);
     if (ok) {
       await env.DB.prepare('UPDATE bookings SET feedback_sent_at = ?1 WHERE id = ?2')
@@ -2499,7 +2499,7 @@ async function sendWinBack(env) {
 
   for (const b of rows.results || []) {
     const firstName = (b.customer_name || '').split(' ')[0];
-    const text = `Cześć ${firstName}! Minęło trochę od ostatniego serwisu Twojego roweru. Przed sezonem warto zrobić przegląd, żeby nic nie zaskoczyło na trasie. Umówisz się tutaj: skocznarower.pl/umow`;
+    const text = `Cześć ${firstName}! Minęło trochę od ostatniego serwisu Twojego roweru. Przed sezonem warto sprawdzić hamulce i łańcuch, po zimie zwykle najbardziej cierpią. Umówisz się tutaj: skocznarower.pl/umow`;
     const ok = await sendSms(env, b.customer_phone, text);
     if (ok) {
       await env.DB.prepare(
