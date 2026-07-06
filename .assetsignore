@@ -10,6 +10,7 @@ src/
 migrations/
 CLAUDE.md
 OUTREACH_PLAN.md
+WARSZTATY_PLAN.md
 telnyx-voice-agent.md
 whatsapp-setup.md
 .assetsignore
