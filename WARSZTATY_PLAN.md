@@ -77,7 +77,7 @@ Zajęcia 2x w tygodniu po 120 min (schemat: 15 min odprawa+sprzęt, 15 min rozgr
 - **Trening indywidualny:** 200 zł/h, pakiet 5h 900 zł (rynkowa stawka BMX School / Dirt It More).
 - **Półkolonie (5 dni, 9:00-15:00, wakacje/ferie):** 1090 zł, zniżka 100 zł dla rodzeństwa i za wczesny zapis (benchmark Warszawa: 840-1140 zł).
 - **Voucher prezentowy:** 90 / 250 / 560 zł (drop-in / 3 zajęcia / miesiąc), sprzedawany też przy ladzie serwisu, ważny 12 mies.
-- **Pierwsze zajęcia próbne: 1 zł** (wzór BMX School/WKK z darmowym treningiem; symboliczna złotówka zbiera dane kontaktowe i zobowiązuje do przyjścia).
+- **Pierwsze zajęcia próbne: 50 zł** (decyzja właściciela 2026-07-06: bez symbolicznej złotówki; 50 zł to nadal niska bariera wejścia, a odsiewa niepoważne zapisy i nie dewaluuje zajęć).
 - Zniżki krzyżowe ze sklepem: kursant = rabat 10% na serwis i akcesoria; klient serwisu = 20% na pierwszy miesiąc warsztatów.
 
 Zasada: nie schodzimy poniżej 40 zł/h Oskiery i nie konkurujemy ceną z zajęciami gminnymi; konkurujemy programem (progresja, mała grupa, serwis w pakiecie, jeden stały instruktor).
@@ -98,7 +98,7 @@ Zasada: nie schodzimy poniżej 40 zł/h Oskiery i nie konkurujemy ceną z zajęc
 ### Faza 1: pilotaż (wrzesień-październik 2026)
 - 2 grupy START w Grodzisku (pon/śr lub wt/czw po lekcjach, 16:30-18:30 zgodnie z godzinami serwisu do przemyślenia: warsztaty prowadzi instruktor, nie Piotrek w godzinach serwisu).
 - 1 grupa PROGRESS w Milanówku (jeśli dogadamy MCK; w wariancie z Oskierą: jego zajęcia zostają, my dokładamy poziom, którego nie prowadzi).
-- 2 dni otwarte (po jednym w Grodzisku i Milanówku) z zapisami na zajęcia próbne za 1 zł.
+- 2 dni otwarte (po jednym w Grodzisku i Milanówku) z zapisami na zajęcia próbne za 50 zł.
 - Cel pilotażu: 15-18 płacących kursantów do końca października. Poniżej 10: korekta cen/godzin/komunikacji zanim wpompujemy więcej w marketing.
 
 ### Faza 2: zima (listopad 2026 - luty 2027)
@@ -114,8 +114,8 @@ Zasada: nie schodzimy poniżej 40 zł/h Oskiery i nie konkurujemy ceną z zajęc
 
 ## 6. Marketing (kolejność wg stosunku efektu do kosztu)
 
-1. **Baza klientów serwisu** (mamy telefony i maile + zgody): SMS/mail "ruszają warsztaty, zajęcia próbne za 1 zł, rabat dla klientów serwisu". Najtańszy i najcieplejszy kanał, zacząć tu.
-2. **Dni otwarte + zajęcia próbne za 1 zł**: sprawdzony model (BMX School robi darmowe soboty, WKK darmowy pierwszy trening). Konwersja z próbnych na karnet to główny lejek.
+1. **Baza klientów serwisu** (mamy telefony i maile + zgody): SMS/mail "ruszają warsztaty, zajęcia próbne za 50 zł, rabat dla klientów serwisu". Najtańszy i najcieplejszy kanał, zacząć tu.
+2. **Dni otwarte + zajęcia próbne za 50 zł**: sprawdzony model (BMX School robi darmowe soboty, WKK darmowy pierwszy trening). Konwersja z próbnych na karnet to główny lejek.
 3. **Lokalne grupy FB**: Rowerowy Wawer, Tablica ogłoszeń milanowek.info, Grodzisk Mazowiecki Forum Mieszkańców + grupy rodzicielskie ("Mamy z Grodziska" itp.). Posty jako właściciel lokalnego serwisu, nie anonimowa reklama.
 4. **Instagram/TikTok**: klipy 30-60 s z zajęć (triki, progresja "pierwszy skok po 4 tygodniach"), hasztagi #biketok #pumptrack #dirtjump; wymaga zgód wizerunkowych, które i tak zbieramy. Konto wspólne ze sklepem, nie osobne.
 5. **Szkoły podstawowe** Grodzisk/Milanówek/Wawer: oferta pokazu na WF/festynie szkolnym + ulotka do dzienniczka. Wrzesień to moment, kiedy rodzice wybierają zajęcia pozalekcyjne, dlatego pilotaż musi wystartować z początkiem roku szkolnego.
