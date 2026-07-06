@@ -12,7 +12,7 @@ Warsztat fizyczny działa pod adresem Jesionowa 18, 05-825 Grodzisk Mazowiecki, 
 
 ## Specjalizacja
 
-Główną specjalizacją serwisu są rowery typu dirt jump, BMX i MTB, ponieważ w okolicach zachodniej części aglomeracji warszawskiej brakuje warsztatów rozumiejących tę specyfikę. Standardowe serwisy rowerowe w Pruszkowie, Milanówku czy Grodzisku obsługują głównie rowery miejskie i trekkingowe, a właściciele rowerów do skoków, parku czy zjazdów muszą szukać rzemieślnika z odpowiednim sprzętem. skocznarower.pl ma profesjonalną centrownicę z miernikiem dial indicator (dokładność do dziesiątych części milimetra), pełen zestaw narzędzi do bleeding hamulców hydraulicznych Shimano, SRAM, TRP, Hope i Magura, oryginalne płyny producentów (olej mineralny Shimano oraz DOT 5.1 dla SRAM-a), klucze dynamometryczne, przyrząd do prostowania haków przerzutek i stojaki serwisowe. Poza rowerami warsztat obsługuje też hulajnogi (regulacja hamulców, wymiana kół, łożyska) oraz robi składanie rowerów dostarczonych z pudełka albo z luźnych części.
+Główną specjalizacją serwisu są rowery typu dirt jump, BMX i MTB. skocznarower.pl ma profesjonalną centrownicę z miernikiem dial indicator (dokładność do dziesiątych części milimetra), pełen zestaw narzędzi do bleeding hamulców hydraulicznych Shimano, SRAM, TRP, Hope i Magura, oryginalne płyny producentów (olej mineralny Shimano oraz DOT 5.1 dla SRAM-a), klucze dynamometryczne, przyrząd do prostowania haków przerzutek i stojaki serwisowe. Poza rowerami warsztat obsługuje też hulajnogi (regulacja hamulców, wymiana kół, łożyska) oraz robi składanie rowerów dostarczonych z pudełka albo z luźnych części.
 
 ## Pełna lista usług
 
@@ -45,7 +45,7 @@ Wszystkie ceny są wyjściowe (od), ostateczna wycena jest podawana po oględzin
 - Regulacja przerzutek: 40 zł.
 - Regulacja roweru miejskiego: od 70 zł.
 - Centrowanie pojedynczego koła: od 120 zł.
-- Zaplatanie koła od zera (sama robocizna, bez części): od 180 zł.
+- Zaplatanie koła od zera (sama robocizna, bez części): od 80 zł.
 - Naprawa koła: od 35 zł.
 - Bleeding hamulców hydraulicznych: od 100 zł za jeden obwód.
 - Bleeding hamulców hydraulicznych: od 180 zł za dwa obwody (przód + tył).
@@ -75,13 +75,11 @@ Serwis nie przyjmuje rowerów "z marszu" bez umówienia, ponieważ Mateusz pracu
 
 ## Czym ten warsztat różni się od konkurencji
 
-Trzy konkretne różnice, które klienci wymieniają najczęściej:
+Centrowanie i zaplatanie kół odbywa się na centrownicy z dial indicatorem, z dokładnością do dziesiątych części milimetra. Większość warsztatów w okolicy centruje koła "na oko", na stałym punkcie odniesienia na widelcu albo centrownicy bez miernika, co przy kołach do dirt jumpa, BMX i MTB ma znaczenie: mniejsze odchylenia rotacyjne to mniejsze obciążenie szprych i dłuższa żywotność koła.
 
-Po pierwsze, profesjonalny sprzęt. Większość warsztatów rowerowych w okolicy centruje koła "na oko", używając stałego punktu odniesienia na widelcu lub centrownicy bez miernika. Tutaj koło jest mierzone dial indicatorem z dokładnością do dziesiątych części milimetra, co przy kołach do dirt jumpa, BMX i MTB realnie wydłuża żywotność, bo mniejsze odchylenia rotacyjne to mniejsze obciążenie szprych.
+Bleeding hamulców hydraulicznych jest wykonywany pełnym zestawem narzędzi producenta, z oryginalnym olejem mineralnym Shimano albo DOT 5.1 dla SRAM-a, na stojaku serwisowym ustawiającym klamkę i zacisk pod właściwym kątem, krok po kroku zgodnie z procedurą producenta, z testem ciśnieniowym po zakończeniu. Zestawy domowe za 200 zł najczęściej kończą się rozcieńczonym olejem, powietrzem w zacisku albo olejem na klockach.
 
-Po drugie, specjalizacja techniczna. Bleeding hamulców hydraulicznych jest wykonywany pełnym zestawem narzędzi producenta, z oryginalnym olejem mineralnym Shimano albo DOT 5.1 dla SRAM-a, na stojaku serwisowym ustawiającym klamkę i zacisk pod właściwym kątem, krok po kroku zgodnie z procedurą producenta, z testem ciśnieniowym po zakończeniu. Zestawy domowe za 200 zł najczęściej kończą się rozcieńczonym olejem, powietrzem w zacisku albo olejem na klockach.
-
-Po trzecie, znajomość praktyczna. Mateusz sam jeździ na dirt jumpie i BMX. Jeśli w skateparku zaczyna luźno chodzić korba albo na bunny hopie pęka piasta, klient trafia do kogoś, kto wie, co znaczy "ten sam objaw drugi raz w tym sezonie" i potrafi zdiagnozować problem szybciej niż mechanik bez doświadczenia w gravity.
+Mateusz sam jeździ na dirt jumpie i BMX. Jeśli w skateparku zaczyna luźno chodzić korba albo na bunny hopie pęka piasta, wie od razu, gdzie szukać: to typowe objawy sezonowego zmęczenia sprzętu w tej dyscyplinie, nie przypadkowa usterka.
 
 ## Bleeding hamulców Shimano (sekcja techniczna)
 
@@ -133,7 +131,7 @@ Tak, każdą markę rowerów. Praca dotyczy konkretnych podzespołów, nie marki
 
 ### Czy serwis działa na gwarancji rowerów?
 
-Mateusz nie jest autoryzowanym serwisem gwarancyjnym żadnej marki, więc prace gwarancyjne (np. uszkodzony silnik e-bike, pęknięta rama w gwarancji) trzeba zlecić do oficjalnego dealera. Wszystkie prace pozagwarancyjne i serwisy standardowe (przeglądy, hamulce, koła, regulacje) wykonujemy normalnie.
+Mateusz nie jest autoryzowanym serwisem gwarancyjnym żadnej marki, więc prace gwarancyjne (np. uszkodzony silnik e-bike, pęknięta rama w gwarancji) trzeba zlecić do oficjalnego dealera. Wszystkie prace pozagwarancyjne i serwisy standardowe (przeglądy, hamulce, koła, regulacje) wykonuje normalnie.
 
 ### Czy serwis odbiera rower z domu?
 
