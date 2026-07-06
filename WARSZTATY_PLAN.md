@@ -68,10 +68,10 @@ Trzy poziomy, nabór przez krótki test umiejętności, promocja między pozioma
 | PROGRESS (intermediate) | skatepark + małe hopki Milanówek | manual, małe skoki, drop, tabletop najazdowy, flow na torze | 10-13 i 14-17 lat, max 5 os. |
 | AIR (zaawansowani) | Milan dirt, wyjazdy Kazoora, docelowo Kiszona | airtime, whip, tabletop, linie dirt, przygotowanie do zawodów | 13+ lat, max 4 os. |
 
-Zajęcia 2x w tygodniu po 120 min (schemat: 15 min odprawa+sprzęt, 15 min rozgrzewka, 60-70 min obwód umiejętności metodą wprowadzenie-ćwiczenie-zastosowanie, 15 min jazda swobodna + feedback). Podział na grupy bardziej wg umiejętności niż metryki (różnice dojrzewania w tym samym roczniku sięgają kilku lat).
+Zajęcia 2x w tygodniu po 60 min (decyzja właściciela 2026-07-06, skrócone z pierwotnych 120 min; schemat: 5-10 min odprawa+sprzęt, 10 min rozgrzewka, 30-35 min obwód umiejętności metodą wprowadzenie-ćwiczenie-zastosowanie, 5-10 min jazda swobodna + feedback). Podział na grupy bardziej wg umiejętności niż metryki (różnice dojrzewania w tym samym roczniku sięgają kilku lat).
 
 ### Pakiety (propozycja cen, spozycjonowana między Oskierą 40 zł/h a BMX School 80 zł/90 min)
-- **Wejście pojedyncze (drop-in):** 90 zł / 120 min.
+- **Wejście pojedyncze (drop-in):** 90 zł / 60 min.
 - **Karnet miesięczny (8 zajęć, 2x/tydz.):** 560 zł (70 zł/zajęcia). To główny produkt.
 - **Karnet semestralny (wrzesień-styczeń lub luty-czerwiec, ~36 zajęć):** 2290 zł (ok. 64 zł/zajęcia) + przegląd roweru w serwisie gratis (wartość 100+ zł, koszt marginalny, silny wyróżnik).
 - **Trening indywidualny:** 200 zł/h, pakiet 5h 900 zł (rynkowa stawka BMX School / Dirt It More).
