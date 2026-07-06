@@ -143,10 +143,108 @@ async function handleApi(request, env, url, ctx) {
   if (url.pathname === '/api/reminders' && request.method === 'POST') {
     return await apiSeasonalReminder(request, env);
   }
+  if (url.pathname === '/api/warsztaty' && request.method === 'POST') {
+    return await apiWorkshopSignup(request, env);
+  }
   if (url.pathname === '/api/reviews' && request.method === 'GET') {
     return await apiReviews(env);
   }
   return json({ error: 'Not found' }, 404);
+}
+
+// ─── ZAPISY NA WARSZTATY (landing /warsztaty) ───────────────────────────────
+// Zgłoszenie z formularza na /warsztaty: zapis do workshop_signups + SMS i mail
+// do właściciela (oba fail-soft, jak przy nowej rezerwacji). To NIE jest
+// rezerwacja slotu serwisowego: warsztaty to zajęcia cykliczne, grupę dobiera
+// się ręcznie do wieku i poziomu, więc zgłoszenie nie dotyka SCHEDULE/bookings.
+
+const WORKSHOP_LEVELS = ['start', 'progress', 'air', 'nie-wiem'];
+const WORKSHOP_LOCATIONS = ['grodzisk', 'milanowek', 'obojetnie'];
+
+function validateWorkshopSignup(b) {
+  const e = [];
+  if (!b?.parent_name || b.parent_name.trim().length < 2) e.push('Wpisz imię i nazwisko');
+  if (b?.parent_name && b.parent_name.length > 80) e.push('Imię za długie');
+  if (!b?.phone || !/^(\+?48)?[0-9]{9}$/.test(normalizePhone(b.phone))) e.push('Wpisz telefon');
+  if (b?.email && !normalizeEmail(b.email)) e.push('Nieprawidłowy email');
+  const age = Number(b?.child_age);
+  if (!Number.isInteger(age) || age < 7 || age > 17) e.push('Wiek dziecka: 7-17 lat');
+  if (!WORKSHOP_LEVELS.includes(b?.level)) e.push('Wybierz poziom');
+  if (!WORKSHOP_LOCATIONS.includes(b?.location)) e.push('Wybierz lokalizację');
+  if (b?.notes && b.notes.length > 500) e.push('Uwagi za długie');
+  if (b?.consent !== true) e.push('Potrzebna zgoda na kontakt');
+  return e;
+}
+
+async function apiWorkshopSignup(request, env) {
+  let body;
+  try { body = await request.json(); }
+  catch { return json({ error: 'Bad JSON' }, 400); }
+
+  // Honeypot: pole "website" jest ukryte w formularzu, wypełniają je tylko boty.
+  // Odpowiadamy sukcesem bez zapisu, żeby bot nie uczył się na odpowiedziach.
+  if (body?.website) return json({ ok: true, message: 'Zgłoszenie przyjęte.' });
+
+  const errors = validateWorkshopSignup(body);
+  if (errors.length) return json({ error: errors[0] }, 400);
+
+  const row = {
+    id: crypto.randomUUID(),
+    parent_name: body.parent_name.trim(),
+    phone: normalizePhone(body.phone),
+    email: body.email ? normalizeEmail(body.email) : null,
+    child_age: Number(body.child_age),
+    level: body.level,
+    location: body.location,
+    notes: (body.notes || '').trim() || null,
+  };
+
+  try {
+    await env.DB.prepare(
+      `INSERT INTO workshop_signups (id, parent_name, phone, email, child_age, level, location, notes, created_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`
+    ).bind(row.id, row.parent_name, row.phone, row.email, row.child_age, row.level, row.location, row.notes, Date.now()).run();
+  } catch (e) {
+    console.error('workshop signup insert error', e);
+    return json({ error: 'Błąd zapisu, spróbuj ponownie albo napisz na WhatsApp' }, 500);
+  }
+
+  // Powiadomienia właściciela: oba fail-soft, zgłoszenie jest już zapisane w D1.
+  // SMS bez polskich znaków, żeby liczyć się jako tańszy GSM-7.
+  try {
+    await sendSms(
+      env,
+      env.OWNER_PHONE || '600370810',
+      `Nowy zapis na warsztaty: ${row.parent_name}, tel ${row.phone}, dziecko ${row.child_age} lat, poziom ${row.level}, ${row.location}.`,
+    );
+  } catch (e) { console.error('SMS o zapisie na warsztaty error', e); }
+
+  if (env.RESEND_API_KEY && env.NOTIFY_EMAIL) {
+    try {
+      await resendSend(env.RESEND_API_KEY, {
+        from: env.FROM_EMAIL || 'rezerwacje@skocznarower.pl',
+        to: env.NOTIFY_EMAIL,
+        subject: `Nowy zapis na warsztaty: ${row.parent_name}, dziecko ${row.child_age} lat`,
+        text:
+`Nowe zgłoszenie na warsztaty dirt/slopestyle (formularz /warsztaty)
+
+Rodzic:      ${row.parent_name}
+Telefon:     ${row.phone}
+${row.email ? 'Email:       ' + row.email + '\n' : ''}Wiek dziecka: ${row.child_age} lat
+Poziom:      ${row.level}
+Lokalizacja: ${row.location}
+Uwagi:       ${row.notes || 'brak'}
+
+ID: ${row.id}
+`,
+      });
+    } catch (e) { console.error('Mail o zapisie na warsztaty error', e); }
+  }
+
+  return json({
+    ok: true,
+    message: 'Zgłoszenie przyjęte. Odezwiemy się, żeby dobrać grupę i potwierdzić termin zajęć próbnych.',
+  });
 }
 
 async function apiReviews(env) {

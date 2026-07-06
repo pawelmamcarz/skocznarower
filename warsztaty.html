@@ -122,7 +122,7 @@
         "name": "Jak zapisać dziecko na warsztaty?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Napisz na WhatsApp (https://wa.me/48600370810) albo zadzwoń pod +48 501 174 195. Podaj wiek dziecka, poziom (czy jeździło już po pumptracku albo hopkach) i preferowaną lokalizację. Po skompletowaniu grupy potwierdzamy grafik i zapraszamy na zajęcia próbne za 50 zł. Pierwsze grupy testowe startują w sierpniu 2026, pełny program od września."
+          "text": "Wypełnij formularz zapisu na stronie https://www.skocznarower.pl/warsztaty: podajesz wiek dziecka, poziom i preferowaną lokalizację. Można też napisać na WhatsApp (https://wa.me/48600370810) albo zadzwonić pod +48 501 174 195. Po skompletowaniu grupy potwierdzamy grafik i zapraszamy na zajęcia próbne za 50 zł. Pierwsze grupy testowe startują w sierpniu 2026, pełny program od września."
         }
       },
       {
@@ -135,10 +135,10 @@
       },
       {
         "@type": "Question",
-        "name": "Czy warsztaty można zarezerwować przez formularz na stronie?",
+        "name": "Czy warsztaty można zarezerwować przez formularz rezerwacji serwisu?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nie, formularz online służy do umawiania serwisu roweru. Zapisy na warsztaty przyjmujemy przez WhatsApp (https://wa.me/48600370810) i telefonicznie pod +48 501 174 195, bo dobieramy grupę do wieku i poziomu dziecka."
+          "text": "Nie, formularz rezerwacji online służy do umawiania serwisu roweru. Warsztaty mają własny formularz zapisu na stronie https://www.skocznarower.pl/warsztaty; można też napisać na WhatsApp (https://wa.me/48600370810) albo zadzwonić pod +48 501 174 195. Grupę dobieramy do wieku i poziomu dziecka."
         }
       }
     ]
@@ -257,6 +257,28 @@
     }
     .cta-box h3 { font-family: var(--fd); font-size: 28px; margin-bottom: 12px; color: var(--white); }
     .cta-box p { color: #ccc; margin-bottom: 18px; }
+    .signup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    @media (max-width: 720px) { .signup-grid { grid-template-columns: 1fr; } }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+    .field input, .field select, .field textarea {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius);
+      color: var(--white); font-family: var(--fb); font-size: 15px; padding: 12px 14px;
+      width: 100%; outline: none;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+    .field textarea { min-height: 80px; resize: vertical; }
+    .consent-row { display: flex; align-items: flex-start; gap: 10px; margin: 4px 0 18px; }
+    .consent-row input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--accent); flex: none; }
+    .consent-row label { font-size: 13.5px; line-height: 1.5; color: #ccc; }
+    .hp { position: absolute; left: -9999px; opacity: 0; height: 0; overflow: hidden; }
+    #signup-status { margin-top: 14px; font-size: 15px; display: none; }
+    #signup-status.ok { display: block; color: var(--accent); }
+    #signup-status.err { display: block; color: #ff7b6b; }
+    .signup-alt { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; }
+    .signup-alt a { color: var(--accent); text-decoration: none; }
+    .signup-alt a:hover { text-decoration: underline; }
     .btn-green {
       display: inline-block; background: var(--accent); color: var(--bg);
       padding: 14px 32px; border-radius: var(--radius); font-weight: 700;
@@ -300,7 +322,7 @@
     <li><a href="/#uslugi">Usługi</a></li>
     <li><a href="/#cennik">Cennik</a></li>
     <li><a href="/#kontakt">Kontakt</a></li>
-    <li><a class="nav-cta" href="https://wa.me/48600370810?text=Cze%C5%9B%C4%87%2C%20chc%C4%99%20zapisa%C4%87%20si%C4%99%20na%20warsztaty" rel="noopener" target="_blank">Zapisz się</a></li>
+    <li><a class="nav-cta" href="#zapisy">Zapisz się</a></li>
   </ul>
 </nav>
 
@@ -410,12 +432,109 @@
   </ul>
 </section>
 
-<div class="cta-box">
+<div class="cta-box" id="zapisy">
   <h3>Zapisz dziecko na zajęcia próbne za 50 zł</h3>
-  <p>Napisz na WhatsApp albo zadzwoń: podaj wiek, poziom (czy jeździło już po pumptracku albo hopkach) i preferowaną lokalizację. Po skompletowaniu grupy potwierdzimy grafik i zaprosimy na zajęcia próbne.</p>
-  <a href="https://wa.me/48600370810?text=Cze%C5%9B%C4%87%2C%20chc%C4%99%20zapisa%C4%87%20si%C4%99%20na%20warsztaty" class="btn-green" rel="noopener" target="_blank">Napisz na WhatsApp →</a>
-  <a href="tel:+48501174195" class="btn-outline">Zadzwoń: 501 174 195</a>
+  <p>Wypełnij formularz, oddzwonimy żeby dobrać grupę do wieku i poziomu, a potem potwierdzimy termin zajęć próbnych.</p>
+  <form id="signup-form" novalidate>
+    <div class="signup-grid">
+      <div class="field">
+        <label for="f-name">Imię i nazwisko rodzica *</label>
+        <input id="f-name" name="parent_name" type="text" autocomplete="name" maxlength="80" required>
+      </div>
+      <div class="field">
+        <label for="f-phone">Telefon *</label>
+        <input id="f-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="600 000 000" required>
+      </div>
+      <div class="field">
+        <label for="f-email">Email (opcjonalnie)</label>
+        <input id="f-email" name="email" type="email" autocomplete="email" maxlength="120">
+      </div>
+      <div class="field">
+        <label for="f-age">Wiek dziecka (7-17) *</label>
+        <input id="f-age" name="child_age" type="number" min="7" max="17" inputmode="numeric" required>
+      </div>
+      <div class="field">
+        <label for="f-level">Poziom dziecka</label>
+        <select id="f-level" name="level">
+          <option value="nie-wiem">Nie wiem / do oceny na zajęciach próbnych</option>
+          <option value="start">Start: pewnie jeździ, ale nie trenowało techniki</option>
+          <option value="progress">Progress: jeździ po pumptracku, chce zacząć skakać</option>
+          <option value="air">Air: skacze, chce rozwijać triki</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="f-location">Preferowana lokalizacja</label>
+        <select id="f-location" name="location">
+          <option value="obojetnie">Obojętnie</option>
+          <option value="grodzisk">Grodzisk Mazowiecki</option>
+          <option value="milanowek">Milanówek</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label for="f-notes">Uwagi (opcjonalnie)</label>
+        <textarea id="f-notes" name="notes" maxlength="500" placeholder="Np. rodzeństwo, dostępne dni, własny rower czy wypożyczenie"></textarea>
+      </div>
+    </div>
+    <div class="hp" aria-hidden="true">
+      <label for="f-website">Strona www</label>
+      <input id="f-website" name="website" type="text" tabindex="-1" autocomplete="off">
+    </div>
+    <div class="consent-row">
+      <input id="f-consent" name="consent" type="checkbox" required>
+      <label for="f-consent">Wyrażam zgodę na kontakt telefoniczny lub mailowy w sprawie zapisu na warsztaty. *</label>
+    </div>
+    <button type="submit" class="btn-green" id="signup-btn">Wyślij zgłoszenie →</button>
+    <p id="signup-status" role="status"></p>
+  </form>
+  <p class="signup-alt">Wolisz napisać? <a href="https://wa.me/48600370810?text=Cze%C5%9B%C4%87%2C%20chc%C4%99%20zapisa%C4%87%20si%C4%99%20na%20warsztaty" rel="noopener" target="_blank">WhatsApp</a> albo telefon: <a href="tel:+48501174195">501 174 195</a>.</p>
 </div>
+<script>
+(function(){
+  var form = document.getElementById('signup-form');
+  if (!form) return;
+  var btn = document.getElementById('signup-btn');
+  var status = document.getElementById('signup-status');
+  function show(msg, ok) { status.textContent = msg; status.className = ok ? 'ok' : 'err'; }
+  form.addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var payload = {
+      parent_name: form.parent_name.value.trim(),
+      phone: form.phone.value.trim(),
+      email: form.email.value.trim() || undefined,
+      child_age: parseInt(form.child_age.value, 10),
+      level: form.level.value,
+      location: form.location.value,
+      notes: form.notes.value.trim() || undefined,
+      consent: form.consent.checked,
+      website: form.website.value || undefined
+    };
+    if (!payload.parent_name || payload.parent_name.length < 2) return show('Wpisz imię i nazwisko.', false);
+    if (!/^(\+?48)?[0-9]{9}$/.test(payload.phone.replace(/[^0-9+]/g, ''))) return show('Wpisz poprawny numer telefonu (9 cyfr).', false);
+    if (!(payload.child_age >= 7 && payload.child_age <= 17)) return show('Wiek dziecka: 7-17 lat.', false);
+    if (!payload.consent) return show('Zaznacz zgodę na kontakt.', false);
+    btn.disabled = true; btn.textContent = 'Wysyłanie...';
+    fetch('/api/warsztaty', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
+      .then(function(res){
+        if (res.ok && res.d.ok) {
+          show(res.d.message || 'Zgłoszenie przyjęte, odezwiemy się.', true);
+          btn.textContent = 'Wysłane ✓';
+          form.querySelectorAll('input, select, textarea').forEach(function(el){ el.disabled = true; });
+        } else {
+          show(res.d.error || 'Coś poszło nie tak, spróbuj ponownie albo napisz na WhatsApp.', false);
+          btn.disabled = false; btn.textContent = 'Wyślij zgłoszenie →';
+        }
+      })
+      .catch(function(){
+        show('Błąd połączenia. Spróbuj ponownie albo napisz na WhatsApp.', false);
+        btn.disabled = false; btn.textContent = 'Wyślij zgłoszenie →';
+      });
+  });
+})();
+</script>
 
 <section class="seo-section">
   <h2>FAQ</h2>
@@ -435,7 +554,7 @@
   <p>Pierwsze zajęcia próbne 50 zł. Karnet miesięczny (8 zajęć) 560 zł, czyli 70 zł za trening. Pojedyncze wejście 90 zł, trening indywidualny 200 zł za godzinę, półkolonie od 1090 zł za 5 dni. Kursanci mają 10% rabatu na serwis i akcesoria.</p>
 
   <h3>Jak się zapisać?</h3>
-  <p>Przez <a href="https://wa.me/48600370810?text=Cze%C5%9B%C4%87%2C%20chc%C4%99%20zapisa%C4%87%20si%C4%99%20na%20warsztaty" rel="noopener" target="_blank">WhatsApp</a> albo telefonicznie: <a href="tel:+48501174195">501 174 195</a>. Formularz online na stronie służy do umawiania serwisu roweru, nie do zapisów na warsztaty, bo grupę dobieramy do wieku i poziomu dziecka.</p>
+  <p>Najprościej przez <a href="#zapisy">formularz zapisu</a> na tej stronie: podajesz wiek dziecka, poziom i preferowaną lokalizację, a my oddzwaniamy z propozycją grupy. Można też napisać na <a href="https://wa.me/48600370810?text=Cze%C5%9B%C4%87%2C%20chc%C4%99%20zapisa%C4%87%20si%C4%99%20na%20warsztaty" rel="noopener" target="_blank">WhatsApp</a> albo zadzwonić: <a href="tel:+48501174195">501 174 195</a>. Uwaga: formularz rezerwacji serwisu (/umow) nie służy do zapisów na warsztaty.</p>
 
   <h3>Co zimą?</h3>
   <p>Program jest całoroczny. Od listopada do lutego część zajęć przenosimy na kryte skateparki w Warszawie, a część zastępujemy treningiem ogólnorozwojowym pod jazdę. W ferie organizujemy półkolonie.</p>
