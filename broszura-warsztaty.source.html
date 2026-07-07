@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Książeczka uczestnika, warsztaty dirt i slopestyle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f2ec; --ink:#181818; --muted:#6c6a63; --green:#4c7a1f; --green-hi:#5c9226;
+    --green-bg:#e6ecd8; --border:rgba(24,24,24,.14); --fd:'Bebas Neue',sans-serif; --fb:'DM Sans',sans-serif;
+  }
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+  @page{ size:A4; margin:0; }
+  body{ font-family:var(--fb); color:var(--ink); background:var(--bg); }
+  .page{
+    width:210mm; min-height:297mm; padding:18mm 16mm; background:var(--bg);
+    page-break-after:always; position:relative; display:flex; flex-direction:column;
+  }
+  .page:last-child{ page-break-after:auto; }
+  .eyebrow{ font:700 12px/1 var(--fb); letter-spacing:.14em; color:var(--green); text-transform:uppercase; margin-bottom:10px; }
+  h1,h2{ font-family:var(--fd); font-weight:400; line-height:.94; letter-spacing:.01em; }
+  h1{ font-size:56px; } h2{ font-size:38px; }
+  .black{ color:var(--ink); } .accent{ color:var(--green); }
+  .lead{ font-size:15px; line-height:1.55; color:#333; margin-top:16px; max-width:420px; }
+  .loc{ font-weight:700; margin-top:10px; font-size:14px; }
+  .wave{ margin:20px 0 26px; }
+  .fill-line{ border-bottom:1px solid var(--ink); flex:1; display:inline-block; margin-left:8px; }
+  .cover-fill{ display:flex; align-items:baseline; gap:6px; font-size:14px; margin-top:auto; }
+  .cover-footer{
+    display:flex; justify-content:space-between; align-items:flex-end; border-top:1px solid var(--border);
+    padding-top:14px; margin-top:18px; font-size:12px; color:var(--muted);
+  }
+  .cover-footer .right{ text-align:right; font:700 11px/1.6 var(--fb); letter-spacing:.06em; color:var(--ink); text-transform:uppercase; }
+  section.body{ margin-top:2px; }
+  p.copy{ font-size:14px; line-height:1.6; color:#2a2a2a; margin-bottom:18px; max-width:640px; }
+  .stat-bar{
+    background:var(--green-bg); color:#2f4a12; font-weight:700; font-size:14px;
+    padding:12px 18px; border-radius:2px; margin-bottom:22px; display:inline-block;
+  }
+  .levels{ display:flex; flex-direction:column; gap:14px; }
+  .level-card{ border:1px solid var(--border); border-radius:2px; padding:16px 18px; }
+  .level-head{ display:flex; align-items:baseline; gap:10px; margin-bottom:8px; }
+  .level-head .dot{ width:14px; height:14px; border-radius:50%; background:var(--green); flex:none; }
+  .level-head .square{ width:14px; height:14px; background:#3b5a86; flex:none; }
+  .level-head .diamond{ width:13px; height:13px; background:#181818; transform:rotate(45deg); flex:none; }
+  .level-head .name{ font-family:var(--fd); font-size:24px; letter-spacing:.01em; }
+  .level-head .tag{ font-size:11px; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; }
+  .level-card .desc{ font-size:13px; color:#333; margin-bottom:10px; }
+  .skills{ display:grid; grid-template-columns:1fr 1fr; gap:4px 20px; list-style:none; font-size:13px; color:#2a2a2a; }
+  .skills li{ padding:2px 0; }
+  .foot-note{ font-size:12.5px; color:var(--muted); line-height:1.6; margin-top:auto; padding-top:16px; border-top:1px dashed var(--border); }
+  .cols{ display:flex; gap:36px; margin-bottom:10px; }
+  .cols > div{ flex:1; }
+  .col-h{ font-family:var(--fd); font-size:19px; letter-spacing:.01em; margin-bottom:10px; }
+  ul.check{ list-style:none; }
+  ul.check li{ font-size:13.5px; line-height:1.5; color:#2a2a2a; padding:5px 0 5px 24px; position:relative; }
+  ul.check.box li::before{ content:""; position:absolute; left:0; top:6px; width:12px; height:12px; border:1.4px solid #444; }
+  ul.dash li{ padding-left:16px; }
+  ul.dash li::before{ content:"–"; position:absolute; left:0; color:var(--green); font-weight:700; }
+  .info-box{ background:var(--green-bg); border-radius:2px; padding:16px 18px; font-size:13px; line-height:1.6; margin-top:auto; }
+  .info-box p{ margin-bottom:6px; } .info-box p:last-child{ margin-bottom:0; }
+  .loc-list .item{ margin-bottom:14px; }
+  .loc-list .name{ font-weight:700; font-size:14px; }
+  .loc-list .sub{ font-size:12.5px; color:var(--muted); }
+  .schedule-box{ border:1px dashed var(--border); border-radius:2px; padding:16px 18px; font-size:13px; margin:18px 0 22px; }
+  .schedule-box .row{ display:flex; gap:10px; align-items:baseline; margin-top:10px; }
+  .schedule-box .row .fill-line{ min-width:160px; }
+  table.price{ width:100%; border-collapse:collapse; font-size:13.5px; margin-bottom:14px; }
+  table.price td{ padding:8px 0; border-bottom:1px solid var(--border); }
+  table.price td:last-child{ text-align:right; font-weight:700; white-space:nowrap; padding-left:12px; }
+  .price-note{ font-size:12px; color:var(--muted); line-height:1.6; }
+  .contact-bar{ display:flex; gap:24px; border-top:1px solid var(--border); padding-top:14px; margin-top:auto; font-size:12px; }
+  .contact-bar > div{ flex:1 1 0; min-width:0; }
+  .contact-bar > div:nth-child(1) .v, .contact-bar > div:nth-child(2) .v, .contact-bar > div:nth-child(4) .v{ white-space:nowrap; }
+  .contact-bar .k{ letter-spacing:.08em; color:var(--muted); text-transform:uppercase; font-size:10.5px; margin-bottom:3px; }
+  .contact-bar .v{ font-weight:700; }
+  .form-grid .row{ display:flex; align-items:baseline; gap:10px; margin-top:14px; font-size:13px; }
+  .form-grid .label{ min-width:190px; color:#333; }
+  .check-row{ display:flex; gap:22px; flex-wrap:wrap; }
+  .check-inline{ display:flex; align-items:center; gap:6px; font-size:13px; }
+  .check-inline .box{ width:12px; height:12px; border:1.4px solid #444; display:inline-block; }
+  .consent{ display:flex; gap:8px; align-items:flex-start; font-size:12.5px; line-height:1.5; margin-top:14px; }
+  .consent .box{ width:12px; height:12px; border:1.4px solid #444; flex:none; margin-top:2px; }
+  .sign-row{ display:flex; gap:60px; margin-top:auto; padding-top:14px; border-top:1px solid var(--border); font-size:12.5px; }
+  .footer-logo{ text-align:center; margin-top:auto; padding-top:16px; border-top:2px solid var(--ink); }
+  .footer-logo .name{ font-family:var(--fd); font-size:22px; letter-spacing:.03em; }
+  .footer-logo .sub{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .footer-logo .line{ font-size:11.5px; color:var(--muted); margin-top:6px; }
+  .notes-lines div{ border-bottom:1px solid var(--border); height:26px; }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: COVER -->
+<div class="page">
+  <div class="eyebrow">Książeczka uczestnika</div>
+  <h1 class="black">WARSZTATY</h1>
+  <h1 class="accent">DIRT &amp; SLOPESTYLE</h1>
+  <p class="lead">Nauka jazdy dirt, slopestyle i pumptrack dla dzieci i młodzieży w wieku 7-17 lat.</p>
+  <p class="loc">Grodzisk Mazowiecki · Milanówek</p>
+
+  <svg class="wave" width="620" height="230" viewBox="0 0 620 230" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0 210 L60 210 Q100 210 120 185 Q140 160 160 185 Q180 210 210 200 Q250 185 265 160 Q280 135 300 160 Q320 190 300 205 Q280 220 320 200 Q380 170 420 110 Q450 65 480 55 Q520 42 560 20 L610 4" stroke="#4c7a1f" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M0 210 L60 210 Q100 210 120 185 Q140 160 160 185 Q180 210 210 200 Q250 185 265 160 Q280 135 300 160 Q320 190 300 205 Q280 220 320 200 Q380 170 420 110 Q450 65 480 55 Q520 42 560 20 L610 4 L610 210 L0 210 Z" fill="#e6ecd8"/>
+    <circle cx="160" cy="185" r="5" fill="#8a5a2a"/>
+    <circle cx="265" cy="160" r="5" fill="#8a5a2a"/>
+    <circle cx="480" cy="55" r="5" fill="#8a5a2a"/>
+  </svg>
+
+  <div class="cover-fill">Uczestnik / uczestniczka:<span class="fill-line"></span></div>
+
+  <div class="cover-footer">
+    <div>Prowadzi skocznarower.pl, serwis i szkoła jazdy<br>w Grodzisku Mazowieckim, ul. Jesionowa 18.</div>
+    <div class="right">SEZON 2026/2027<br>GRUPY STARTOWE: SIERPIEŃ</div>
+  </div>
+</div>
+
+<!-- PAGE 2: O PROGRAMIE -->
+<div class="page">
+  <div class="eyebrow">O programie</div>
+  <h2 class="black">TRZY POZIOMY,</h2>
+  <h2 class="accent">JEDNA ŚCIEŻKA</h2>
+  <svg class="wave" width="620" height="16" viewBox="0 0 620 16"><path d="M0 8 Q30 -4 60 8 T120 8 T180 8 T240 8 T300 8 T360 8 T420 8 T480 8 T540 8 T600 8" stroke="#4c7a1f" stroke-width="2.5" fill="none"/></svg>
+
+  <p class="copy">Stały program treningowy: trafiasz do małej, stałej grupy dobranej pod wiek i umiejętności, z jednym prowadzącym i jasną ścieżką, najpierw pewnie na płasko, potem coraz wyżej.</p>
+
+  <div class="stat-bar">2 razy w tygodniu &nbsp;·&nbsp; 90 minut &nbsp;·&nbsp; maks. 6 osób w grupie</div>
+
+  <div class="levels">
+    <div class="level-card">
+      <div class="level-head"><span class="dot"></span><span class="name">START</span><span class="tag">Podstawy · Pumptrack</span></div>
+      <p class="desc">Dla dzieci, które pewnie jeżdżą na rowerze, ale nigdy nie trenowały techniki.</p>
+      <ul class="skills">
+        <li>Pozycja podstawowa i aktywna</li><li>Pompowanie na rolkach (pump)</li>
+        <li>Balans i praca ciałem w bandach</li><li>Bunny hop na płaskim</li>
+        <li>Pierwsze pełne kółka na pumptracku</li>
+      </ul>
+    </div>
+    <div class="level-card">
+      <div class="level-head"><span class="square"></span><span class="name">PROGRESS</span><span class="tag">Intermediate · Skatepark i małe hopki</span></div>
+      <p class="desc">Dla jeżdżących płynnie po pumptracku, gotowych na pierwsze skoki.</p>
+      <ul class="skills">
+        <li>Manual i utrzymanie balansu</li><li>Małe skoki i lądowania</li>
+        <li>Drop: technika i pewność</li><li>Flow na skateparku</li>
+        <li>Przygotowanie do linii dirt</li>
+      </ul>
+    </div>
+    <div class="level-card">
+      <div class="level-head"><span class="diamond"></span><span class="name">AIR</span><span class="tag">Zaawansowani · Dirt i slopestyle</span></div>
+      <p class="desc">Dla młodzieży 13+ pewnie skaczącej, która chce realnie rozwijać triki.</p>
+      <ul class="skills">
+        <li>Airtime: kontrola roweru w locie</li><li>Tabletop, whip</li>
+        <li>Pełne linie dirt</li><li>Wyjazdowe sesje w bikeparku</li>
+        <li>Przygotowanie do pierwszych zawodów</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="foot-note">Przydział do grupy odbywa się na zajęciach próbnych, według umiejętności, nie tylko wieku. Przejście na wyższy poziom następuje po zaliczeniu progresji, patrz ścieżka postępów na końcu książeczki.</p>
+</div>
+
+<!-- PAGE 3: ZASADY -->
+<div class="page">
+  <div class="eyebrow">Zasady</div>
+  <h2 class="black">BEZPIECZEŃSTWO</h2>
+  <h2 class="accent">NAJPIERW</h2>
+  <svg class="wave" width="620" height="16" viewBox="0 0 620 16"><path d="M0 8 Q30 -4 60 8 T120 8 T180 8 T240 8 T300 8 T360 8 T420 8 T480 8 T540 8 T600 8" stroke="#4c7a1f" stroke-width="2.5" fill="none"/></svg>
+
+  <div class="cols">
+    <div>
+      <div class="col-h">NA KAŻDYCH ZAJĘCIACH</div>
+      <ul class="check box">
+        <li>Kask rowerowy (norma EN 1078), zawsze i bez wyjątków</li>
+        <li>Na hopkach i skateparku: kask fullface, ochraniacze kolan</li>
+        <li>Ochraniacze łokci (zalecane, zwłaszcza Progress i Air)</li>
+        <li>Sprawny rower ze sprawnymi hamulcami</li>
+        <li>Wygodne ubranie sportowe, niekrępujące ruchów</li>
+        <li>Butelka wody</li>
+      </ul>
+    </div>
+    <div>
+      <div class="col-h">ZASADY GRUPY</div>
+      <ul class="check dash">
+        <li>Przychodzimy punktualnie, rozgrzewka zaczyna się o czasie</li>
+        <li>Słuchamy prowadzącego, nowy element ćwiczymy na jego sygnał</li>
+        <li>Na torze jedna osoba naraz, czekamy na swoją kolej</li>
+        <li>Ból albo dyskomfort zgłaszamy od razu, nie na koniec zajęć</li>
+        <li>Dbamy o wspólny sprzęt, do wypożyczenia mamy tylko kaski, ochraniacze są własne</li>
+        <li>Bez kasku nie wjeżdżamy na tor, zero wyjątków</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <p><strong>Zła pogoda?</strong> Prowadzący informuje o zmianie terminu przez WhatsApp lub telefon.</p>
+    <p><strong>Nie możesz przyjść?</strong> Daj znać wcześniej, ktoś z listy rezerwowej skorzysta z wolnego miejsca.</p>
+  </div>
+</div>
+
+<!-- PAGE 4: PRAKTYCZNIE -->
+<div class="page">
+  <div class="eyebrow">Praktycznie</div>
+  <h2 class="black">GDZIE, KIEDY,</h2>
+  <h2 class="accent">ILE</h2>
+  <svg class="wave" width="620" height="16" viewBox="0 0 620 16"><path d="M0 8 Q30 -4 60 8 T120 8 T180 8 T240 8 T300 8 T360 8 T420 8 T480 8 T540 8 T600 8" stroke="#4c7a1f" stroke-width="2.5" fill="none"/></svg>
+
+  <div class="col-h" style="font-size:15px;color:var(--muted);letter-spacing:.08em;margin-bottom:10px;">LOKALIZACJE</div>
+  <div class="loc-list">
+    <div class="item"><div class="name">Grodzisk Mazowiecki, pumptrack</div><div class="sub">Poziomy Start i Progress</div></div>
+    <div class="item"><div class="name">Milanówek, Turczynek (skatepark i pumptrack)</div><div class="sub">Poziomy Progress i Air</div></div>
+    <div class="item"><div class="name">Wyjazdy grupy Air do bikeparku</div><div class="sub">Raz w miesiącu, pełnowymiarowe linie dirt</div></div>
+  </div>
+
+  <div class="schedule-box">
+    Dokładne dni i godziny Twojej grupy potwierdzamy przy zapisie. Wpisz je tutaj, żeby mieć zawsze pod ręką:
+    <div class="row">Dzień 1:<span class="fill-line"></span>godz.<span class="fill-line" style="max-width:90px;"></span></div>
+    <div class="row">Dzień 2:<span class="fill-line"></span>godz.<span class="fill-line" style="max-width:90px;"></span></div>
+    <div class="row">Lokalizacja:<span class="fill-line"></span></div>
+  </div>
+
+  <table class="price">
+    <tr><td>Zajęcia próbne (90 min)</td><td>50 zł</td></tr>
+    <tr><td>Pojedyncze zajęcia (90 min)</td><td>90 zł</td></tr>
+    <tr><td>Karnet miesięczny, 8 zajęć</td><td>560 zł</td></tr>
+    <tr><td>Karnet semestralny, ok. 36 zajęć + przegląd gratis</td><td>2290 zł</td></tr>
+    <tr><td>Trening indywidualny (60 min)</td><td>200 zł</td></tr>
+    <tr><td>Pakiet 5 treningów indywidualnych</td><td>900 zł</td></tr>
+    <tr><td>Półkolonie, 5 dni</td><td>od 1090 zł</td></tr>
+    <tr><td>Wypożyczenie BMX-a na zajęcia</td><td>40 zł</td></tr>
+    <tr><td>Voucher prezentowy (pojedyncze zajęcia, 3 zajęcia albo miesiąc)</td><td>od 90 zł</td></tr>
+  </table>
+  <p class="price-note">Kursanci mają 10% rabatu na serwis i akcesoria w sklepie skocznarower.pl. Klienci serwisu mają 20% zniżki na pierwszy miesiąc warsztatów, rodzeństwo 10% na drugi karnet.</p>
+
+  <div class="contact-bar">
+    <div><div class="k">Telefon</div><div class="v">501 174 195</div></div>
+    <div><div class="k">WhatsApp</div><div class="v">wa.me/48600370810</div></div>
+    <div><div class="k">Adres</div><div class="v">Jesionowa 18, Grodzisk Mazowiecki</div></div>
+    <div><div class="k">Strona</div><div class="v">skocznarower.pl/warsztaty</div></div>
+  </div>
+</div>
+
+<!-- PAGE 5: KARTA UCZESTNIKA -->
+<div class="page">
+  <div class="eyebrow">Do wypełnienia</div>
+  <h2 class="black">KARTA</h2>
+  <h2 class="accent">UCZESTNIKA</h2>
+  <svg class="wave" width="620" height="16" viewBox="0 0 620 16"><path d="M0 8 Q30 -4 60 8 T120 8 T180 8 T240 8 T300 8 T360 8 T420 8 T480 8 T540 8 T600 8" stroke="#4c7a1f" stroke-width="2.5" fill="none"/></svg>
+
+  <p class="copy">Wypełnia rodzic lub opiekun prawny. Przynieś tę stronę na pierwsze zajęcia, możesz też przesłać zdjęcie wypełnionej karty na WhatsApp przed przyjściem. Dane służą wyłącznie prowadzącemu zajęcia, na wypadek nagłej sytuacji.</p>
+
+  <div class="form-grid">
+    <div class="row"><span class="label">Imię i nazwisko uczestnika</span><span class="fill-line"></span></div>
+    <div class="row"><span class="label">Data urodzenia / wiek</span><span class="fill-line"></span></div>
+    <div class="row"><span class="label">Poziom przy zapisie</span>
+      <span class="check-row">
+        <span class="check-inline"><span class="box"></span>Start</span>
+        <span class="check-inline"><span class="box"></span>Progress</span>
+        <span class="check-inline"><span class="box"></span>Air</span>
+        <span class="check-inline"><span class="box"></span>Nie wiem</span>
+      </span>
+    </div>
+    <div class="row"><span class="label">Lokalizacja</span>
+      <span class="check-row">
+        <span class="check-inline"><span class="box"></span>Grodzisk</span>
+        <span class="check-inline"><span class="box"></span>Milanówek</span>
+        <span class="check-inline"><span class="box"></span>Obojętnie</span>
+      </span>
+    </div>
+    <div class="row"><span class="label">Rodzic / opiekun</span><span class="fill-line"></span></div>
+    <div class="row"><span class="label">Telefon kontaktowy</span><span class="fill-line"></span></div>
+    <div class="row"><span class="label">Telefon w nagłych wypadkach</span><span class="fill-line"></span></div>
+    <div class="row"><span class="label">Zdrowie, alergie, przeciwwskazania</span><span class="fill-line"></span></div>
+    <div class="row"><span class="label">Grupa krwi (opcjonalnie)</span><span class="fill-line" style="max-width:200px;"></span></div>
+    <div class="row"><span class="label">Uwagi dodatkowe</span><span class="fill-line"></span></div>
+  </div>
+
+  <div class="consent"><span class="box"></span>Wyrażam zgodę na udział dziecka w zajęciach i oświadczam brak przeciwwskazań zdrowotnych.</div>
+  <div class="consent"><span class="box"></span>Wyrażam zgodę na kontakt telefoniczny lub mailowy w sprawach organizacyjnych.</div>
+  <div class="consent"><span class="box"></span>Wyrażam zgodę na publikację zdjęć lub wideo z zajęć w celach promocyjnych (zgoda dobrowolna i osobna).</div>
+
+  <div class="sign-row">
+    <div>Data<span class="fill-line" style="min-width:140px;"></span></div>
+    <div>Podpis rodzica / opiekuna<span class="fill-line" style="min-width:200px;"></span></div>
+  </div>
+</div>
+
+<!-- PAGE 6: ŚCIEŻKA POSTĘPÓW -->
+<div class="page">
+  <div class="eyebrow">Twoja ścieżka</div>
+  <h2 class="black">ODZNACZ,</h2>
+  <h2 class="accent">CO JUŻ POTRAFISZ</h2>
+  <svg class="wave" width="620" height="16" viewBox="0 0 620 16"><path d="M0 8 Q30 -4 60 8 T120 8 T180 8 T240 8 T300 8 T360 8 T420 8 T480 8 T540 8 T600 8" stroke="#4c7a1f" stroke-width="2.5" fill="none"/></svg>
+
+  <p class="copy">Znaczniki obok poziomów to te same oznaczenia, co na trasach rowerowych: zielone koło to najłatwiejszy poziom, niebieski kwadrat średni, czarny diament najbardziej wymagający. Odznacz umiejętność, kiedy prowadzący potwierdzi, że ją opanowałeś.</p>
+
+  <div class="level-head" style="margin-bottom:6px;"><span class="dot"></span><span class="name">START</span></div>
+  <ul class="skills check box" style="margin-bottom:16px;">
+    <li>Pozycja podstawowa i aktywna</li><li>Bunny hop na płaskim</li>
+    <li>Pompowanie na rolkach (pump)</li><li>Pełne kółko na pumptracku</li>
+    <li>Balans w bandach</li>
+  </ul>
+
+  <div class="level-head" style="margin-bottom:6px;"><span class="square"></span><span class="name">PROGRESS</span></div>
+  <ul class="skills check box" style="margin-bottom:16px;">
+    <li>Manual i balans</li><li>Flow na skateparku</li>
+    <li>Małe skoki i lądowania</li><li>Gotowość do linii dirt</li>
+    <li>Drop: technika i pewność</li>
+  </ul>
+
+  <div class="level-head" style="margin-bottom:6px;"><span class="diamond"></span><span class="name">AIR</span></div>
+  <ul class="skills check box" style="margin-bottom:22px;">
+    <li>Airtime, kontrola w locie</li><li>Sesje w bikeparku</li>
+    <li>Tabletop, whip</li><li>Gotowość do zawodów</li>
+    <li>Pełne linie dirt</li>
+  </ul>
+
+  <div class="col-h" style="font-size:14px;color:var(--muted);letter-spacing:.08em;">NOTATKI PROWADZĄCEGO</div>
+  <div class="notes-lines" style="margin-top:10px;">
+    <div></div><div></div><div></div><div></div><div></div>
+  </div>
+
+  <div class="footer-logo">
+    <div class="name">SKOCZNA ROWER</div>
+    <div class="sub">Serwis i szkoła jazdy w Grodzisku Mazowieckim</div>
+    <div class="line">501 174 195 · skocznarower.pl · Zachowaj tę książeczkę i przynoś ją na zajęcia.</div>
+  </div>
+</div>
+
+</body>
+</html>
