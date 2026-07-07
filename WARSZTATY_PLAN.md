@@ -74,17 +74,17 @@ Zajęcia 2x w tygodniu po 60 min (decyzja właściciela 2026-07-06, skrócone z 
 - **Wejście pojedyncze (drop-in):** 90 zł / 60 min.
 - **Karnet miesięczny (8 zajęć, 2x/tydz.):** 560 zł (70 zł/zajęcia). To główny produkt.
 - **Karnet semestralny (wrzesień-styczeń lub luty-czerwiec, ~36 zajęć):** 2290 zł (ok. 64 zł/zajęcia) + przegląd roweru w serwisie gratis (wartość 100+ zł, koszt marginalny, silny wyróżnik).
-- **Trening indywidualny:** 200 zł/h, pakiet 5h 900 zł (rynkowa stawka BMX School / Dirt It More).
+- **Trening indywidualny:** 200 zł / 90 min (decyzja właściciela 2026-07-07: wydłużone z 60 do 90 min, cena bez zmian), pakiet 5 treningów 900 zł.
 - **Półkolonie (5 dni, 9:00-15:00, wakacje/ferie):** 1090 zł, zniżka 100 zł dla rodzeństwa i za wczesny zapis (benchmark Warszawa: 840-1140 zł).
-- **Voucher prezentowy:** 90 / 250 / 560 zł (drop-in / 3 zajęcia / miesiąc), sprzedawany też przy ladzie serwisu, ważny 12 mies.
-- **Pierwsze zajęcia próbne: 50 zł** (decyzja właściciela 2026-07-06: bez symbolicznej złotówki; 50 zł to nadal niska bariera wejścia, a odsiewa niepoważne zapisy i nie dewaluuje zajęć).
+- **Vouchery prezentowe:** Pierwszy skok 90 zł (1 zajęcia), Rozbieg 250 zł (3 zajęcia), Miesiąc na kołach 560 zł (karnet), Sam na torze 280 zł (trening indywidualny 90 min), voucher kwotowy od 100 zł. Sekcja i karta do druku (PDF) od 2026-07-07 na `/warsztaty#vouchery`, ważność 6 mies. od zakupu, sprzedaż telefon/WhatsApp, bez integracji płatności online.
+- **Pierwsze zajęcia próbne: 50 zł, 60 minut** (decyzja właściciela 2026-07-06: bez symbolicznej złotówki, niska bariera wejścia bez dewaluacji zajęć; 2026-07-07: skrócone z 90 do 60 min, żeby test faktycznie był krótkim testem, nie pełną jednostką).
 - Zniżki krzyżowe ze sklepem: kursant = rabat 10% na serwis i akcesoria; klient serwisu = 20% na pierwszy miesiąc warsztatów.
 
 Zasada: nie schodzimy poniżej 40 zł/h Oskiery i nie konkurujemy ceną z zajęciami gminnymi; konkurujemy programem (progresja, mała grupa, serwis w pakiecie, jeden stały instruktor).
 
 ### Sprzęt
 - Uczestnik: sprawny rower (MTB hardtail lub dirt; na pumptracku dowolny), kask (EN 1078, na dircie fullface), ochraniacze kolan (obowiązkowo), łokci (zalecane). Przegląd techniczny roweru kursanta w serwisie przed pierwszym miesiącem: w cenie karnetu.
-- Nasze: 2-3 rowery dirt/MTB do wypożyczenia (40 zł/zajęcia; niski koszt startu, można zacząć od rowerów komisowych), 4-6 kasków i kompletów ochraniaczy na wymianę (dezynfekcja), zestaw pachołków/przeszkód treningowych, apteczka. Budżet startowy sprzętu: 6-10 tys. zł.
+- Nasze: 2-3 rowery dirt/MTB do wypożyczenia (65 zł/zajęcia, podniesione z 40 zł 2026-07-07; niski koszt startu, można zacząć od rowerów komisowych), 4-6 kasków i kompletów ochraniaczy na wymianę (dezynfekcja), zestaw pachołków/przeszkód treningowych, apteczka. Budżet startowy sprzętu: 6-10 tys. zł.
 
 ## 5. Plan wdrożenia (fazy)
 
@@ -159,6 +159,48 @@ Uwaga: liczby kosztów kadrowych i część cen konkurencji z pierwszej rundy re
 - [ ] Broker ubezpieczeniowy (iExpert / PewniSportu): wycena OC + NNW z dirt/slopestyle w zakresie
 - [ ] Księgowa: PKD 85.51.Z, VAT, forma umów instruktorskich
 - [ ] KRK online (30 zł/os.) + weryfikacja RSTPS dla przyszłych instruktorów
+
+## 10. Marketing warsztatów: dogrywka 2026-07-07 (kalendarz, treści, konkurencja)
+
+Uzupełnienie sekcji 6 po fan-oucie 4 agentów (analiza Ave BMX / Ave Park jako wzorzec, wzorce voucherów, strategia marketingowa, kreacja voucherów). Nie powtarza sekcji 6, buduje na niej.
+
+### 10.1 Benchmark: Ave BMX (Ave Park)
+Ave BMX prowadzi szkółkę BMX na Ave Parku (avebmx.pl): zajęcia grupowe sobota/niedziela, 60 min, 50 zł/os., zajęcia indywidualne pon-pt dowolna godzina, 60 min, 100 zł. Brak formalnej siatki poziomów (segmentacja opisowa "początkujący" vs "chce się rozwijać"), brak jawnej oferty voucherów/kart podarunkowych (niepotwierdzone, możliwe że istnieją poza indeksem). Wypożyczenie kasku i BMX-a jest praktycznie darmowe/wliczone na pierwsze zajęcia zamiast osobnej, tańszej oferty próbnej. Ton komunikacji: przyjazny, rodzinny, mało "sprzedażowy", nacisk na brak barier wejścia (nie trzeba mieć sprzętu) i indywidualne dopasowanie programu przez instruktora.
+
+Wniosek dla nas: nasza przewaga nad tym wzorcem to jawna siatka poziomów (Start/Progress/Air) i teraz też jawna, rozbudowana oferta voucherów, dwóch rzeczy, których u Ave BMX nie widać. Nie kopiować ich modelu cenowego 1:1 (jesteśmy niżej na próbnych 50 zł/60 min, wyżej na indywidualnych 200 zł/90 min, bo dłuższa sesja), tylko przejąć prostotę komunikacji "sprzętu nie musisz mieć".
+
+### 10.2 Kalendarz kampanii (nakłada się na sezonowość z sekcji 5/6)
+- **Fala 1, 15 sierpnia - 20 września:** główny nabór. Wrzesień jest szczytem decyzji rodziców o zajęciach pozalekcyjnych; dziecko wybiera obrazem (skok, trik), rodzic decyduje argumentem (bezpieczeństwo, mała grupa, stały instruktor, serwis w cenie). Dwie różne kreacje reklamowe pod ten sam produkt: do dziecka wideo z trikiem, do rodzica tekst o bezpieczeństwie i progresji.
+- **Fala 2, koniec listopada:** voucher jako prezent pod choinkę (sekcja `/warsztaty#vouchery` już gotowa do promocji, patrz punkt 10.4).
+- **Fala 3, styczeń:** półkolonie na ferie mazowieckie (luty) + karnet zimowy indoor.
+- **Fala 4, kwiecień-maj:** półkolonie letnie (najlepsza jednostka ekonomiczna, patrz sekcja 7) + "Dzień Dziecka" jako pretekst na pokaz/festyn.
+
+### 10.3 Format treści: nie wymyślać, adaptować sprawdzony wzorzec
+Bracia Godziek (Dawid Godziek, złoto X-Games, Suszec, kanał Godziek Brothers) to najbardziej rozpoznawalny polski wzorzec dirt/slopestyle na YouTube/social, znany dzieciom z naszej grupy docelowej. Adaptować format, nie próbować ściągnąć osobę:
+- Cykliczna rubryka **"HOW_TO po naszemu"**: 30-60 s reel, jedna umiejętność (bunny hop, manual, pierwsza rolka), instruktor + kursant. Regularność ważniejsza niż produkcja: 2 reelsy/tydzień, stały dzień publikacji.
+- Seria **"pierwszy skok po 4 tygodniach"**: before/after tego samego dziecka. Najsilniejszy dowód społeczny dla rodzica, konwertuje lepiej niż triki pro (rodzic kupuje bezpieczny, widoczny postęp, nie estetykę).
+- Konto wspólne ze sklepem (decyzja z sekcji 6), osobny highlight/playlista "Warsztaty". Hasztagi lokalne + niszowe: #pumptrackgrodzisk #dirtmilanowek #biketok.
+
+### 10.4 Ambasadorzy, trójstopniowo (realistyczna wersja punktu 6.7)
+Godziek jako płatna współpraca jest nieosiągalny, ale grywalny jako aspiracja w treści ("uczymy tricków, które robi Godziek"). Realny kanał to mikro-lokalni: ekipa z Kiszonej (patrz sekcja 1, już wskazana jako przyszły kanał i kadra pomocnicza) + Marcin Oskiera jeśli partnerstwo dojdzie do skutku (sekcja 2) + kursanci-seniorzy 16-18 lat jako "ambasadorzy" na barter (serwis za obecność na dniach otwartych i tagowanie w social). Jeden większy regionalny rider na płatny wyjazdowy pokaz raz na sezon jako event napędzający zapisy, nie stała współpraca.
+
+### 10.5 Szkoły: konkret zamiast ulotki
+Nie ulotka do dzienniczka ogólnie (jak w punkcie 6.5), tylko pokaz na festynie/pikniku szkolnym (SP Grodzisk/Milanówek/Wawer robią je we wrześniu i maju/czerwcu) z prostymi przeszkodami/pumptrackiem mobilnym i banerem z kodem QR do formularza `#zapisy`. Miara: 1 pokaz = liczba skanów QR, konkretna liczba, nie "zasięg".
+
+### 10.6 Vouchery jako kanał (nowe od 2026-07-07)
+Sekcja `/warsztaty#vouchery` i karta do druku `voucher-warsztaty.pdf` (5 wariantów: Pierwszy skok 90 zł, Rozbieg 250 zł, Miesiąc na kołach 560 zł, Sam na torze 280 zł, kwotowy od 100 zł) to nie tylko produkt, ale kanał marketingowy na Falę 2 (listopad/grudzień) i przy okazjach typu Dzień Dziecka. Sprzedaż bez e-commerce: telefon/WhatsApp 600 370 810, płatność BLIK/przelew/gotówka, ręczne wystawienie karty (od ręki w serwisie albo PDF mailem). Warto rozważyć w przyszłości pole "skąd wiesz o nas" przy sprzedaży vouchera, patrz 10.7.
+
+### 10.7 Mierzalność (rekomendacja techniczna, nie wdrożona w tej sesji)
+Dodanie do formularza zapisu (`POST /api/warsztaty`) opcjonalnego pola źródła (np. select: FB / szkoła / serwis / IG / znajomy / voucher) pozwoliłoby po pilotażu ocenić, który kanał faktycznie konwertuje, zanim wyda się cokolwiek na płatną reklamę. To osobna, drobna zmiana w `src/index.js` (`apiWorkshopSignup`) i `warsztaty.html`, do rozważenia jako następny krok, nie zrobiona teraz.
+
+### Czego nie robić (potwierdzone researchem)
+Nie naśladować globalnego BMX-Instagramu (idealne dirt buildy, profesjonalna produkcja) zamiast pokazywać realnej progresji lokalnych dzieci; rodzic kupuje bezpieczeństwo i widoczny efekt, nie estetykę wyczynową.
+
+### Źródła (dogrywka 2026-07-07)
+- avebmx.pl (Szkółka BMX, zajęcia grupowe i indywidualne), avepark.pl
+- Godziek Brothers (YouTube), redbull.com/int-en/athlete/dawid-godziek
+- polskieradio.pl (zajęcia pozalekcyjne dla dzieci), news.empik.com (popularność sportu jako kategorii prezentowej/pozalekcyjnej)
+- Wzorce voucherów: fitmore.pl, kurs-skalkowy.pl, katalogmarzen.pl, superprezenty.pl, movementgyms.com, buysocialscotland.com, nartybiegowe.org, ski24.pl
 
 ## Źródła kluczowych faktów
 

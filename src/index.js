@@ -42,9 +42,9 @@ const SCHEDULE = {
 };
 
 // Publiczny numer pokazywany klientom w SMS/mailach (jeden punkt edycji po stronie Workera).
-// Obecnie komórka Piotrka (serwisant) - numer Telnyx z agentem głosowym nie zadziałał, więc klienci dzwonią wprost do serwisanta.
-// To NIE jest OWNER_PHONE: SMS o nowej rezerwacji do właściciela idzie osobno (patrz sendNotifications).
-const PUBLIC_PHONE_DISPLAY = '501 174 195';
+// Komórka właściciela (Mateusz), ten sam numer co WhatsApp; poprzednio 501 174 195 (komórka Piotrka, serwisanta).
+// To NIE jest OWNER_PHONE: SMS o nowej rezerwacji do właściciela idzie osobno (patrz sendNotifications), mimo że oba stałe dziś mają tę samą wartość domyślną.
+const PUBLIC_PHONE_DISPLAY = '600 370 810';
 
 export default {
   async fetch(request, env, ctx) {

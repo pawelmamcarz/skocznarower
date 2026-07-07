@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Voucher prezentowy, warsztaty dirt i slopestyle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --dark-bg:#0b0b0b; --dark-ink:#f0f0f0; --accent:#9fe22e; --accent-dim:rgba(159,226,46,.14);
+    --light-bg:#f4f2ec; --ink:#181818; --muted:#6c6a63; --green:#4c7a1f; --green-bg:#e6ecd8;
+    --border-l:rgba(24,24,24,.14); --border-d:rgba(255,255,255,.16);
+    --fd:'Bebas Neue',sans-serif; --fb:'DM Sans',sans-serif; --fm:'DM Mono',monospace;
+  }
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+  @page{ size:210mm 148mm; margin:0; }
+  body{ font-family:var(--fb); }
+  .card{
+    width:210mm; height:148mm; padding:14mm 16mm; position:relative;
+    page-break-after:always; display:flex; flex-direction:column; overflow:hidden;
+  }
+  .card:last-child{ page-break-after:auto; }
+  h1,h2{ font-family:var(--fd); font-weight:400; letter-spacing:.01em; line-height:.92; }
+
+  /* ---------- FRONT (awers) ---------- */
+  .front{ background:var(--dark-bg); color:var(--dark-ink); border:1px solid var(--border-d); }
+  .front .eyebrow{ font:700 12px/1 var(--fb); letter-spacing:.24em; color:var(--accent); text-transform:uppercase; }
+  .front h1{ font-size:64px; margin-top:10px; }
+  .front h1 .hi{ color:var(--accent); }
+  .front .sub{ font-size:14.5px; color:#c8c8c8; max-width:360px; margin-top:10px; line-height:1.5; }
+
+  .art{ position:absolute; right:14mm; top:14mm; width:78mm; height:78mm; }
+  .art .traj{ stroke:var(--accent); stroke-width:2; stroke-dasharray:6 7; fill:none; opacity:.85; }
+  .art .ramp{ fill:#1c1c1c; stroke:var(--border-d); stroke-width:1; }
+  .art .rider{ fill:var(--accent); }
+  .art .wheel{ fill:none; stroke:var(--accent); stroke-width:3; }
+
+  .variant-legend{
+    margin-top:auto; display:flex; flex-wrap:wrap; gap:8px 18px;
+    border-top:1px solid var(--border-d); padding-top:12px; font-size:11px;
+    letter-spacing:.03em; color:#b8b8b8;
+  }
+  .variant-legend b{ color:var(--dark-ink); font-weight:700; }
+  .front-footer{
+    display:flex; justify-content:space-between; align-items:baseline;
+    margin-top:10px; font:700 11px/1 var(--fb); letter-spacing:.14em; text-transform:uppercase; color:var(--accent);
+  }
+  .front-footer span.muted{ color:#888; letter-spacing:.06em; text-transform:none; font-weight:500; }
+
+  /* ---------- BACK (rewers) ---------- */
+  .back{ background:var(--light-bg); color:var(--ink); }
+  .back .eyebrow{ font:700 12px/1 var(--fb); letter-spacing:.14em; color:var(--green); text-transform:uppercase; }
+  .back h2{ font-size:32px; margin-top:8px; }
+  .back h2 .hi{ color:var(--green); }
+  .wave{ margin:10px 0 14px; display:block; }
+
+  .fill-row{ display:flex; align-items:baseline; gap:8px; font-size:13.5px; margin-top:11px; }
+  .fill-row .label{ min-width:150px; color:#333; font-weight:500; }
+  .fill-line{ flex:1; border-bottom:1px solid var(--ink); display:inline-block; height:1px; }
+  .fill-row.mono .fill-line{ font-family:var(--fm); }
+  .hint{ font-size:11px; color:var(--muted); margin-left:8px; white-space:nowrap; }
+
+  .variant-check{ display:flex; flex-direction:column; gap:5px; margin-top:10px; }
+  .variant-check .opt{ display:flex; align-items:center; gap:8px; font-size:12.5px; }
+  .variant-check .box{ width:11px; height:11px; border:1.4px solid #444; flex:none; }
+  .variant-check .opt b{ font-weight:700; }
+  .variant-check .opt .p{ color:var(--muted); margin-left:auto; font-family:var(--fm); font-size:11.5px; }
+
+  .terms{ margin-top:auto; padding-top:10px; border-top:1px dashed var(--border-l); font-size:10.5px; line-height:1.55; color:var(--muted); }
+  .terms strong{ color:var(--ink); }
+
+  .contact-bar{ display:flex; gap:20px; border-top:1px solid var(--border-l); padding-top:10px; margin-top:10px; font-size:11px; }
+  .contact-bar > div{ flex:1 1 0; min-width:0; }
+  .contact-bar .k{ letter-spacing:.08em; color:var(--muted); text-transform:uppercase; font-size:9.5px; margin-bottom:2px; }
+  .contact-bar .v{ font-weight:700; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<!-- FRONT: awers -->
+<div class="card front">
+  <div class="eyebrow">Voucher prezentowy</div>
+  <h1>PODARUJ<br><span class="hi">HOPKI</span></h1>
+  <p class="sub">Warsztaty jazdy dirt, slopestyle i pumptrack dla dzieci i młodzieży. Grodzisk Mazowiecki i Milanówek.</p>
+
+  <svg class="art" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+    <path class="ramp" d="M20 260 L120 260 L190 190 L230 190 L230 260 L280 260 L280 275 L20 275 Z"/>
+    <path class="traj" d="M40 240 Q 130 60 260 70"/>
+    <g transform="translate(228,58) rotate(-18)">
+      <circle class="wheel" cx="-22" cy="26" r="15"/>
+      <circle class="wheel" cx="26" cy="26" r="15"/>
+      <path class="rider" d="M-22 26 L4 -2 L26 26 L18 26 L2 8 L-10 26 Z"/>
+      <path class="rider" d="M4 -2 L2 -26 L14 -26 L14 -20 L8 -20 L9 -3 Z"/>
+      <circle class="rider" cx="9" cy="-33" r="7"/>
+    </g>
+  </svg>
+
+  <div class="variant-legend">
+    <span><b>PIERWSZY SKOK</b> 90 zł</span>
+    <span><b>ROZBIEG</b> 250 zł</span>
+    <span><b>MIESIĄC NA KOŁACH</b> 560 zł</span>
+    <span><b>SAM NA TORZE</b> 280 zł</span>
+    <span><b>KWOTOWY</b> od 100 zł</span>
+  </div>
+  <div class="front-footer">
+    <span>skocznarower.pl/warsztaty</span>
+    <span class="muted">Ważny 6 miesięcy od zakupu</span>
+  </div>
+</div>
+
+<!-- BACK: rewers, do wypełnienia przy sprzedaży -->
+<div class="card back">
+  <div class="eyebrow">Do wypełnienia przy sprzedaży</div>
+  <h2>KARTA <span class="hi">VOUCHERA</span></h2>
+  <svg class="wave" width="560" height="14" viewBox="0 0 560 14"><path d="M0 7 Q25 -3 50 7 T100 7 T150 7 T200 7 T250 7 T300 7 T350 7 T400 7 T450 7 T500 7 T550 7" stroke="#4c7a1f" stroke-width="2.2" fill="none"/></svg>
+
+  <div class="fill-row"><span class="label">Dla</span><span class="fill-line"></span></div>
+  <div class="fill-row"><span class="label">Od</span><span class="fill-line"></span></div>
+
+  <div class="variant-check">
+    <div class="opt"><span class="box"></span><b>Pierwszy skok</b>, jedne zajęcia grupowe (60 min)<span class="p">90 zł</span></div>
+    <div class="opt"><span class="box"></span><b>Rozbieg</b>, 3 zajęcia grupowe (90 min)<span class="p">250 zł</span></div>
+    <div class="opt"><span class="box"></span><b>Miesiąc na kołach</b>, karnet miesięczny, 8 zajęć<span class="p">560 zł</span></div>
+    <div class="opt"><span class="box"></span><b>Sam na torze</b>, trening indywidualny (90 min)<span class="p">280 zł</span></div>
+    <div class="opt"><span class="box"></span><b>Voucher kwotowy</b>, dowolna kwota<span class="p">od 100 zł</span></div>
+  </div>
+
+  <div class="fill-row mono"><span class="label">Kwota (jeśli kwotowy)</span><span class="fill-line" style="max-width:120px;"></span><span class="hint">zł</span></div>
+  <div class="fill-row mono"><span class="label">Numer vouchera</span><span class="fill-line" style="max-width:220px;"></span><span class="hint">format SNR-2026-XXX</span></div>
+  <div class="fill-row"><span class="label">Ważny do</span><span class="fill-line" style="max-width:220px;"></span></div>
+
+  <div class="terms">
+    <strong>Zasady:</strong> voucher ważny 6 miesięcy od daty zakupu wpisanej powyżej. Termin zajęć ustalamy telefonicznie lub na WhatsApp po stronie obdarowanego, zależnie od wieku i poziomu dziecka. Voucher nie podlega zwrotowi na gotówkę, można go przepisać na inną osobę. Kask obowiązkowy na każdych zajęciach.
+  </div>
+
+  <div class="contact-bar">
+    <div><div class="k">Telefon / WhatsApp</div><div class="v">600 370 810</div></div>
+    <div><div class="k">Adres</div><div class="v">Jesionowa 18, Grodzisk Mazowiecki</div></div>
+    <div><div class="k">Strona</div><div class="v">skocznarower.pl/warsztaty</div></div>
+  </div>
+</div>
+
+</body>
+</html>

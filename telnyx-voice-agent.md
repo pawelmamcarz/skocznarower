@@ -1,6 +1,6 @@
 # Telnyx AI Voice Agent, konfiguracja (skocznarower.pl)
 
-> **STATUS (2026-06-23): ZAPARKOWANE / BACKUP DO NAPRAWY.** Agent głosowy na Telnyx nie zadziałał w produkcji, więc numer publiczny zmieniono na komórkę Piotrka (serwisant) `501 174 195`. Numer Telnyx `+48 22 181 15 07` i ta konfiguracja zostają jako referencja na później; kod `/api/voice/*` jest w repo, ale dormant (gated `VOICE_API_SECRET`). Do naprawy gdy będzie czas. Numery `22 181 15 07` / `221811507` niżej dotyczą Telnyx i są zostawione celowo, nie podmieniać.
+> **STATUS (2026-07-07): ZAPARKOWANE / BACKUP DO NAPRAWY.** Agent głosowy na Telnyx nie zadziałał w produkcji, więc numer publiczny zmieniono na komórkę Piotrka (serwisant) `501 174 195`, a od 2026-07-07 na komórkę właściciela `600 370 810` (ten sam numer co WhatsApp). Numer Telnyx `+48 22 181 15 07` i ta konfiguracja zostają jako referencja na później; kod `/api/voice/*` jest w repo, ale dormant (gated `VOICE_API_SECRET`). Do naprawy gdy będzie czas. Numery `22 181 15 07` / `221811507` niżej dotyczą Telnyx i są zostawione celowo, nie podmieniać.
 
 Gotowiec do wklejenia w panelu Telnyx (AI Assistants). Agent odbiera połączenia na numerze wirtualnym, umawia wizyty przez nasze endpointy `/api/voice/*` i przełącza do człowieka na żądanie. Dev-only (nie jest publikowany jako asset, patrz `.assetsignore`).
 

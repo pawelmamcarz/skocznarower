@@ -69,7 +69,7 @@ Wszystkie ceny są wyjściowe (od), ostateczna wycena jest podawana po oględzin
 
 ## Godziny i sposób umawiania
 
-Serwis pracuje wyłącznie po umówieniu. Sloty rezerwacyjne są dostępne codziennie od 16:00 do 19:00 (cztery sloty: 16:00, 17:00, 18:00, 19:00). Najszybszy sposób umawiania to formularz online pod adresem https://www.skocznarower.pl/umow: wybierasz usługę, dzień i godzinę, a Mateusz oddzwania w ten sam dzień żeby potwierdzić termin. Alternatywnie można zadzwonić bezpośrednio na +48 501 174 195 lub napisać na WhatsApp (https://wa.me/48600370810). Wizyta jest potwierdzona dopiero po telefonie zwrotnym.
+Serwis pracuje wyłącznie po umówieniu. Sloty rezerwacyjne są dostępne codziennie od 16:00 do 19:00 (cztery sloty: 16:00, 17:00, 18:00, 19:00). Najszybszy sposób umawiania to formularz online pod adresem https://www.skocznarower.pl/umow: wybierasz usługę, dzień i godzinę, a Mateusz oddzwania w ten sam dzień żeby potwierdzić termin. Alternatywnie można zadzwonić bezpośrednio na +48 600 370 810 lub napisać na WhatsApp (https://wa.me/48600370810). Wizyta jest potwierdzona dopiero po telefonie zwrotnym.
 
 Serwis nie przyjmuje rowerów "z marszu" bez umówienia, ponieważ Mateusz pracuje sam i wolny moment poświęca konkretnemu rowerowi, a nie żonglowaniu kilkoma w tym samym czasie.
 
@@ -97,17 +97,17 @@ Poza serwisem rowerów skocznarower.pl prowadzi warsztaty szkoleniowe jazdy dirt
 
 Format: zajęcia 2 razy w tygodniu po 90 minut, w stałych grupach maksymalnie 6-osobowych, na trzech poziomach zaawansowania. Poziom Start (podstawy: pozycja, pompowanie, balans, bunny hop, pumptrack), poziom Progress (intermediate: manual, małe skoki, drop, skatepark), poziom Air (zaawansowani 13+: airtime, tabletop, whip, pełne linie dirt, wyjazdowe sesje w bikeparku). Przydział do grupy według umiejętności na zajęciach próbnych. Lokalizacje: pumptrack w Grodzisku Mazowieckim oraz skatepark i pumptrack na Turczynku w Milanówku. Zimą (listopad-luty) część zajęć odbywa się na krytych skateparkach w Warszawie, a część jako trening ogólnorozwojowy; program jest całoroczny. Warunek wejściowy: dziecko samodzielnie i pewnie jeździ na rowerze.
 
-Cennik warsztatów: pierwsze zajęcia próbne 50 zł, pojedyncze zajęcia 90 zł, karnet miesięczny (8 zajęć) 560 zł, karnet semestralny (ok. 36 zajęć, z przeglądem roweru w serwisie gratis) 2290 zł, trening indywidualny 200 zł za 60 minut (pakiet 5 treningów 900 zł), półkolonie w wakacje i ferie od 1090 zł za 5 dni, wypożyczenie BMX-a na zajęcia 40 zł, voucher prezentowy od 90 zł. Kursanci mają 10% rabatu na serwis i akcesoria, klienci serwisu 20% zniżki na pierwszy miesiąc warsztatów.
+Cennik warsztatów: pierwsze zajęcia próbne 50 zł (60 minut), pojedyncze zajęcia 90 zł, karnet miesięczny (8 zajęć) 560 zł, karnet semestralny (ok. 36 zajęć, z przeglądem roweru w serwisie gratis) 2290 zł, trening indywidualny 200 zł za 90 minut (pakiet 5 treningów 900 zł), półkolonie w wakacje i ferie od 1090 zł za 5 dni, wypożyczenie BMX-a na zajęcia 65 zł, vouchery prezentowe od 90 zł (warianty: pojedyncze zajęcia, karnet miesięczny, trening indywidualny, voucher kwotowy). Kursanci mają 10% rabatu na serwis i akcesoria, klienci serwisu 20% zniżki na pierwszy miesiąc warsztatów.
 
 Bezpieczeństwo: kask obowiązkowy na każdych zajęciach (norma EN 1078; dla osób poniżej 16 lat kask to od 3 czerwca 2026 wymóg prawny), na hopkach i skateparku kask fullface i ochraniacze kolan, pisemna zgoda rodzica z oświadczeniem zdrowotnym, ubezpieczenie NNW uczestników, instruktor przeszkolony z pierwszej pomocy.
 
-Zapisy na warsztaty przez formularz zapisu na stronie https://www.skocznarower.pl/warsztaty (imię i nazwisko rodzica, telefon, wiek dziecka, poziom, preferowana lokalizacja), alternatywnie przez WhatsApp (https://wa.me/48600370810) lub telefonicznie (+48 501 174 195). Grupa jest dobierana do wieku i poziomu dziecka, dlatego po zgłoszeniu oddzwaniamy. Formularz online https://www.skocznarower.pl/umow służy tylko do umawiania serwisu roweru, nie do zapisów na warsztaty.
+Zapisy na warsztaty przez formularz zapisu na stronie https://www.skocznarower.pl/warsztaty (imię i nazwisko rodzica, telefon, wiek dziecka, poziom, preferowana lokalizacja), alternatywnie przez WhatsApp (https://wa.me/48600370810) lub telefonicznie (+48 600 370 810). Grupa jest dobierana do wieku i poziomu dziecka, dlatego po zgłoszeniu oddzwaniamy. Formularz online https://www.skocznarower.pl/umow służy tylko do umawiania serwisu roweru, nie do zapisów na warsztaty.
 
 ## FAQ: typowe pytania użytkowników
 
 ### Czy serwis przyjmuje bez umówienia?
 
-Nie. Wszystkie wizyty są wyłącznie po umówieniu online (https://www.skocznarower.pl/umow), telefonicznie (+48 501 174 195) lub przez WhatsApp. Powodem jest jednoosobowa praca: lepsza jakość przy jednym rowerze niż żonglowanie kilkoma jednocześnie.
+Nie. Wszystkie wizyty są wyłącznie po umówieniu online (https://www.skocznarower.pl/umow), telefonicznie (+48 600 370 810) lub przez WhatsApp. Powodem jest jednoosobowa praca: lepsza jakość przy jednym rowerze niż żonglowanie kilkoma jednocześnie.
 
 ### Jak szybko jest termin?
 
@@ -143,12 +143,12 @@ Płatność gotówką, BLIK-iem lub przelewem.
 
 ### Jak umówić wizytę?
 
-Najszybciej online: https://www.skocznarower.pl/umow. Alternatywnie telefon +48 501 174 195 lub WhatsApp https://wa.me/48600370810.
+Najszybciej online: https://www.skocznarower.pl/umow. Alternatywnie telefon +48 600 370 810 lub WhatsApp https://wa.me/48600370810.
 
 ## Kontakt
 
 - Adres: Jesionowa 18, 05-825 Grodzisk Mazowiecki, Polska.
-- Telefon: +48 501 174 195.
+- Telefon: +48 600 370 810.
 - WhatsApp: https://wa.me/48600370810.
 - Strona umawiania: https://www.skocznarower.pl/umow.
 - Strona główna: https://www.skocznarower.pl/.
