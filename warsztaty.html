@@ -201,11 +201,20 @@
     .nav-links a:hover { color: var(--accent); }
     .nav-cta { background: var(--accent); color: var(--bg) !important; padding: 9px 18px; border-radius: var(--radius); font-weight: 700; }
     .nav-cta:hover { background: var(--accent-hi); }
+    .nav-toggle { display: none; background: none; border: none; color: var(--white); cursor: pointer; padding: 8px; margin: -8px -8px -8px 0; line-height: 0; }
+    .nav-toggle svg { width: 26px; height: 26px; }
+    .nav-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     @media (max-width: 720px) {
       body { padding-top: 70px; }
       .nav { padding: 14px 20px; }
       .nav-links { gap: 14px; }
-      .nav-links li:not(:last-child) { display: none; }
+      .nav-toggle { display: inline-flex; }
+      .nav-links { position: absolute; inset-block-start: 100%; inset-inline: 0; flex-direction: column; align-items: stretch; gap: 0; background: rgba(8,8,8,.98); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 4px 20px 14px; display: none; }
+      .nav-links.open { display: flex; }
+      .nav-links li { width: 100%; }
+      .nav-links a { display: block; padding: 15px 2px; font-size: 14px; border-bottom: 1px solid var(--border); }
+      .nav-links li:last-child a { border-bottom: none; }
+      .nav-cta { text-align: center; margin-top: 12px; padding: 14px 20px; }
     }
     .container { max-width: 880px; margin: 0 auto; padding: 0 32px; }
     .hero { padding: 64px 0 48px; }
@@ -213,7 +222,7 @@
     .breadcrumb { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
     .breadcrumb a { color: var(--accent); text-decoration: none; }
     .breadcrumb a:hover { text-decoration: underline; }
-    h1.display { font-family: var(--fd); font-size: clamp(40px, 6vw, 76px); line-height: .96; letter-spacing: .01em; margin-bottom: 24px; }
+    h1.display { font-family: var(--fd); font-size: clamp(44px, 7vw, 84px); line-height: .96; letter-spacing: .01em; margin-bottom: 24px; }
     h1.display em { color: var(--accent); font-style: normal; }
     .lead { font-size: 18px; color: #ccc; max-width: 680px; line-height: 1.6; }
     .seo-section { padding: 40px 0; border-top: 1px solid var(--border); }
@@ -286,7 +295,7 @@
       color: var(--white); font-family: var(--fb); font-size: 15px; padding: 12px 14px;
       width: 100%; outline: none;
     }
-    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); outline: 2px solid var(--accent); outline-offset: 1px; }
     .field textarea { min-height: 80px; resize: vertical; }
     .consent-row { display: flex; align-items: flex-start; gap: 10px; margin: 4px 0 18px; }
     .consent-row input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--accent); flex: none; }
@@ -327,17 +336,13 @@
 </head>
 <body>
 
-<div id="holiday-banner" style="display:none;background:var(--bg2);border-bottom:1px solid var(--border);color:var(--white);text-align:center;padding:12px 18px;font:600 14px/1.5 var(--fb)">
-  <span style="color:var(--accent)">Tryb wakacyjny do 12 lipca.</span>
-  Godziny bywają zmienne. Rezerwuj przez <a href="/umow" style="color:var(--accent);text-decoration:underline">formularz</a> lub <a href="https://wa.me/48600370810?text=Cze%C5%9B%C4%87%2C%20chcia%C5%82bym%20um%C3%B3wi%C4%87%20rower" style="color:var(--accent);text-decoration:underline" rel="noopener" target="_blank">WhatsApp</a>; potwierdzam zwykle tego samego dnia, w wakacje czasem później. Telefon w wakacje bywa nieodebrany.
-</div>
-<script>(function(){try{var b=document.getElementById('holiday-banner');if(b&&Date.now()<new Date('2026-07-12T23:59:59+02:00').getTime())b.style.display='block';}catch(e){}})();</script>
 
 <nav class="nav">
   <a class="logo" href="/">
     <img class="logo-icon" src="/uploads/logo-icon.png" alt="Skocz na Rower" width="44" height="48">
   </a>
-  <ul class="nav-links">
+  <button class="nav-toggle" id="nav-toggle" aria-label="Otwórz menu" aria-expanded="false" aria-controls="nav-links"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg></button>
+  <ul class="nav-links" id="nav-links">
     <li><a href="/#uslugi">Usługi</a></li>
     <li><a href="/#cennik">Cennik</a></li>
     <li><a href="#vouchery">Vouchery</a></li>
@@ -446,7 +451,7 @@
     <div class="voucher-card">
       <div class="voucher-price">90 zł</div>
       <h3>Pierwszy skok</h3>
-      <p>Jedne zajęcia grupowe, 60 minut. Test, czy to jego bajka, zanim zdecydujecie o czymś większym.</p>
+      <p>Jedne zajęcia grupowe, 90 minut. Test, czy to jego bajka, zanim zdecydujecie o czymś większym.</p>
     </div>
     <div class="voucher-card">
       <div class="voucher-price">250 zł</div>
@@ -551,6 +556,16 @@
 </div>
 <script>
 (function(){
+  var navToggle = document.getElementById('nav-toggle');
+  var navLinks = document.getElementById('nav-links');
+  if (navToggle && navLinks) {
+    var setMenu = function(open) { navLinks.classList.toggle('open', open); navToggle.setAttribute('aria-expanded', open ? 'true' : 'false'); };
+    navToggle.addEventListener('click', function(){ setMenu(!navLinks.classList.contains('open')); });
+    navLinks.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', function(){ setMenu(false); }); });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') setMenu(false); });
+  }
+})();
+(function(){
   var form = document.getElementById('signup-form');
   if (!form) return;
   var btn = document.getElementById('signup-btn');
@@ -570,7 +585,7 @@
       website: form.website.value || undefined
     };
     if (!payload.parent_name || payload.parent_name.length < 2) return show('Wpisz imię i nazwisko.', false);
-    if (!/^(\+?48)?[0-9]{9}$/.test(payload.phone.replace(/[^0-9+]/g, ''))) return show('Wpisz poprawny numer telefonu (9 cyfr).', false);
+    if (!/^\+?[0-9]{9,15}$/.test(payload.phone.replace(/[^0-9+]/g, ''))) return show('Wpisz prawidłowy telefon: 9-15 cyfr, może być z +48.', false);
     if (!(payload.child_age >= 7 && payload.child_age <= 17)) return show('Wiek dziecka: 7-17 lat.', false);
     if (!payload.consent) return show('Zaznacz zgodę na kontakt.', false);
     btn.disabled = true; btn.textContent = 'Wysyłanie...';

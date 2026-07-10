@@ -587,7 +587,7 @@
       border: none;
     }
     /* mechaniczny "stempel" zamiast unoszenia: przycisk dociska się jak fizyczny klawisz */
-    .btn-green { background: var(--accent); color: #080808; box-shadow: 3px 3px 0 rgba(159,226,46,.30); }
+    .btn-green { background: var(--accent); color: var(--bg); box-shadow: 3px 3px 0 rgba(159,226,46,.30); }
     .btn-green:hover { background: var(--accent-hi); transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(159,226,46,.30); }
     .btn-ghost { background: transparent; color: var(--white); border: 1.5px solid rgba(255,255,255,.25); }
     .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
@@ -1585,14 +1585,6 @@
   </ul>
 </nav>
 
-<!-- ═══════════════════════════════════════════════
-     TRYB WAKACYJNY (znika sam po dacie)
-════════════════════════════════════════════════ -->
-<div id="holiday-banner" style="display:none;background:var(--bg2);border-bottom:1px solid var(--border);color:var(--white);text-align:center;padding:12px 18px;font:600 14px/1.5 var(--fb)">
-  <span style="color:var(--accent)">Tryb wakacyjny do 12 lipca.</span>
-  Godziny bywają zmienne. Rezerwuj przez <a href="/umow" style="color:var(--accent);text-decoration:underline">formularz</a> lub <a href="https://wa.me/48600370810?text=Cze%C5%9B%C4%87%2C%20chcia%C5%82bym%20um%C3%B3wi%C4%87%20rower" style="color:var(--accent);text-decoration:underline" rel="noopener" target="_blank">WhatsApp</a>; potwierdzam zwykle tego samego dnia, w wakacje czasem później. Telefon w wakacje bywa nieodebrany.
-</div>
-<script>(function(){try{var b=document.getElementById('holiday-banner');if(b&&Date.now()<new Date('2026-07-12T23:59:59+02:00').getTime()){b.style.display='block';var setH=function(){document.documentElement.style.setProperty('--banner-h',b.offsetHeight+'px');};setH();window.addEventListener('resize',setH,{passive:true});}}catch(e){}})();</script>
 
 
 <!-- ═══════════════════════════════════════════════

@@ -103,11 +103,21 @@
     }
     .nav-cta:hover { color: var(--bg) !important; background: var(--accent-hi); }
 
+    .nav-toggle { display: none; background: none; border: none; color: var(--white); cursor: pointer; padding: 8px; margin: -8px -8px -8px 0; line-height: 0; }
+    .nav-toggle svg { width: 26px; height: 26px; }
+    .nav-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
     @media (max-width: 720px) {
       body { padding-top: 70px; }
       .nav { padding: 14px 20px; }
       .nav-links { gap: 14px; }
-      .nav-links li:not(:last-child) { display: none; }
+      .nav-toggle { display: inline-flex; }
+      .nav-links { position: absolute; inset-block-start: 100%; inset-inline: 0; flex-direction: column; align-items: stretch; gap: 0; background: rgba(8,8,8,.98); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 4px 20px 14px; display: none; }
+      .nav-links.open { display: flex; }
+      .nav-links li { width: 100%; }
+      .nav-links a { display: block; padding: 15px 2px; font-size: 14px; border-bottom: 1px solid var(--border); }
+      .nav-links li:last-child a { border-bottom: none; }
+      .nav-links .nav-cta { text-align: center; margin-top: 12px; padding: 14px 20px; }
     }
 
     /* ─── HEADER ──────────────────────────────────────────── */
@@ -125,7 +135,7 @@
     }
     .display {
       font-family: var(--fd);
-      font-size: clamp(48px, 8vw, 96px);
+      font-size: clamp(44px, 7vw, 84px);
       line-height: .92;
       letter-spacing: .01em;
       margin-bottom: 24px;
@@ -465,7 +475,8 @@
   <a class="logo" href="/">
     <img class="logo-icon" src="/uploads/logo-icon.png" alt="Skocz na Rower" width="44" height="48">
   </a>
-  <ul class="nav-links">
+  <button class="nav-toggle" id="nav-toggle" aria-label="Otwórz menu" aria-expanded="false" aria-controls="nav-links"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg></button>
+  <ul class="nav-links" id="nav-links">
     <li><a href="/#uslugi">Usługi</a></li>
     <li><a href="/#cennik">Cennik</a></li>
     <li><a href="/#kontakt">Kontakt</a></li>
@@ -473,16 +484,11 @@
   </ul>
 </nav>
 
-<div id="holiday-banner" style="display:none;background:var(--bg2);border-bottom:1px solid var(--border);color:var(--white);text-align:center;padding:12px 18px;font:600 14px/1.5 var(--fb)">
-  <span style="color:var(--accent)">Tryb wakacyjny do 12 lipca.</span>
-  Godziny bywają zmienne. Po wysłaniu rezerwacji potwierdzam zwykle tego samego dnia, w wakacje czasem później. Szybki kontakt: <a href="https://wa.me/48600370810?text=Cze%C5%9B%C4%87%2C%20chcia%C5%82bym%20um%C3%B3wi%C4%87%20rower" style="color:var(--accent);text-decoration:underline" rel="noopener" target="_blank">WhatsApp</a>. Telefon w wakacje bywa nieodebrany.
-</div>
-<script>(function(){try{var b=document.getElementById('holiday-banner');if(b&&Date.now()<new Date('2026-07-12T23:59:59+02:00').getTime())b.style.display='block';}catch(e){}})();</script>
 
 <header class="header">
   <p class="eyebrow">Rezerwacja online</p>
   <h1 class="display">Umów<br><em>wizytę</em></h1>
-  <p class="lead">Wybierz usługę, dzień i godzinę, a oddzwonię, żeby potwierdzić termin.</p>
+  <p class="lead">Wybierz usługę, dzień i godzinę, potwierdzę termin telefonicznie albo SMS-em, zwykle tego samego dnia.</p>
 </header>
 
 <main class="form-wrap">
@@ -509,7 +515,7 @@
 
   <section class="step">
     <div class="step-num"><span class="num">03</span> / Termin</div>
-    <h2 class="step-title" id="t-termin">Kiedy przyjedziesz?</h2>
+    <h2 class="step-title" id="t-termin">Kiedy pasuje Ci termin?</h2>
     <p class="hours-info">Przyjmuję codziennie, także w weekendy, w godzinach <span class="val-mono">16:00-19:00</span>.</p>
     <div class="date-row">
       <label class="field">
@@ -559,7 +565,7 @@
 
     <div class="submit-row">
       <button class="btn-submit" type="submit" id="submit-btn">Umów wizytę<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-      <span class="submit-note">Po wysłaniu oddzwonię, żeby potwierdzić.</span>
+      <span class="submit-note">Po wysłaniu potwierdzę termin telefonicznie albo SMS-em, zwykle tego samego dnia.</span>
     </div>
 
     <div id="alert" role="alert" aria-live="assertive" hidden></div>
@@ -573,6 +579,7 @@
 
 <footer>
   <p>skocznarower.pl · Jesionowa 18, Grodzisk Mazowiecki · <a href="tel:+48600370810">600 370 810</a></p>
+  <p>Mateusz Mamcarz / xPyszczek</p>
 </footer>
 
 <script>
@@ -960,12 +967,12 @@ function showSuccess({ id, date, slot, service, bike, name, phone }) {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.5 5.5L20 6.5"/></svg>
       </div>
       <h2>Zgłoszenie przyjęte</h2>
-      <p>Dzięki, ${escapeHtml(name)}. Odezwę się SMS-em albo telefonicznie na <strong>${escapeHtml(phone)}</strong>, zwykle tego samego dnia, żeby potwierdzić termin.</p>
+      <p>Dzięki, ${escapeHtml(name)}. Potwierdzę termin telefonicznie albo SMS-em na <strong>${escapeHtml(phone)}</strong>, zwykle tego samego dnia.</p>
       <div class="success-meta">
         <div><strong>Termin:</strong> <span class="val-mono">${escapeHtml(formatDatePl(date))}, godz. ${escapeHtml(slot)}</span></div>
         <div><strong>Usługa:</strong> ${escapeHtml(serviceName + servicePrice)}</div>
         <div><strong>Rower:</strong> ${escapeHtml(bike)}</div>
-        <div><strong>Adres:</strong> Jesionowa 18, Grodzisk Mazowiecki</div>
+        <div><strong>${service === 'odbior' ? 'Odbiór roweru' : 'Adres'}:</strong> ${service === 'odbior' ? 'pod adresem podanym w notatce' : 'Jesionowa 18, Grodzisk Mazowiecki'}</div>
         ${idShort ? `<div><strong>Zgłoszenie:</strong> <span class="val-mono">${escapeHtml(idShort)}</span></div>` : ''}
       </div>
       <p>Brak potwierdzenia do jutra? Napisz na <a href="${WA_LINK}" target="_blank" rel="noopener">WhatsApp</a> albo zadzwoń: <a href="tel:+48600370810">600 370 810</a>.</p>
@@ -997,6 +1004,15 @@ function escapeHtml(s) {
     updateSummary();
   } catch (_) {}
 })();
+
+const navToggle = document.getElementById('nav-toggle');
+const navLinks = document.getElementById('nav-links');
+if (navToggle && navLinks) {
+  const setMenu = (open) => { navLinks.classList.toggle('open', open); navToggle.setAttribute('aria-expanded', open ? 'true' : 'false'); };
+  navToggle.addEventListener('click', () => setMenu(!navLinks.classList.contains('open')));
+  navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setMenu(false)));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
+}
 </script>
 
 </body>
