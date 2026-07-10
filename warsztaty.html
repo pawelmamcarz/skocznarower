@@ -304,6 +304,14 @@
     #signup-status { margin-top: 14px; font-size: 15px; display: none; }
     #signup-status.ok { display: block; color: var(--accent); }
     #signup-status.err { display: block; color: #ff7b6b; }
+    .field-error { display: block; color: #f1a1a1; font-size: 12.5px; font-weight: 400; letter-spacing: 0; text-transform: none; margin: 2px 0 0; }
+    .field-error[hidden] { display: none; }
+    .success-box { background: var(--bg2); border: 1px solid rgba(159,226,46,.3); border-radius: var(--radius); padding: 40px 32px; text-align: center; }
+    .success-box .check { width: 56px; height: 56px; background: var(--accent); color: var(--bg); border-radius: var(--radius); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+    .success-box .check svg { width: 28px; height: 28px; }
+    .success-box h2 { font-family: var(--fd); font-size: 36px; font-weight: 400; letter-spacing: .02em; margin-bottom: 10px; color: var(--white); }
+    .success-box p { color: #ccc; margin-bottom: 8px; }
+    .success-box a { color: var(--accent); }
     .signup-alt { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; }
     .signup-alt a { color: var(--accent); text-decoration: none; }
     .signup-alt a:hover { text-decoration: underline; }
@@ -505,19 +513,23 @@
     <div class="signup-grid">
       <div class="field">
         <label for="f-name">Imię i nazwisko rodzica *</label>
-        <input id="f-name" name="parent_name" type="text" autocomplete="name" maxlength="80" required>
+        <input id="f-name" name="parent_name" type="text" autocomplete="name" maxlength="80" required aria-describedby="err-f-name">
+        <span class="field-error" id="err-f-name" hidden></span>
       </div>
       <div class="field">
         <label for="f-phone">Telefon *</label>
-        <input id="f-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="600 000 000" required>
+        <input id="f-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="600 000 000" required aria-describedby="err-f-phone">
+        <span class="field-error" id="err-f-phone" hidden></span>
       </div>
       <div class="field">
         <label for="f-email">Email (opcjonalnie)</label>
-        <input id="f-email" name="email" type="email" autocomplete="email" maxlength="120">
+        <input id="f-email" name="email" type="email" autocomplete="email" maxlength="120" aria-describedby="err-f-email">
+        <span class="field-error" id="err-f-email" hidden></span>
       </div>
       <div class="field">
         <label for="f-age">Wiek dziecka (7-17) *</label>
-        <input id="f-age" name="child_age" type="number" min="7" max="17" inputmode="numeric" required>
+        <input id="f-age" name="child_age" type="number" min="7" max="17" inputmode="numeric" required aria-describedby="err-f-age">
+        <span class="field-error" id="err-f-age" hidden></span>
       </div>
       <div class="field">
         <label for="f-level">Poziom dziecka</label>
@@ -546,9 +558,10 @@
       <input id="f-website" name="website" type="text" tabindex="-1" autocomplete="off">
     </div>
     <div class="consent-row">
-      <input id="f-consent" name="consent" type="checkbox" required>
+      <input id="f-consent" name="consent" type="checkbox" required aria-describedby="err-f-consent">
       <label for="f-consent">Wyrażam zgodę na kontakt telefoniczny lub mailowy w sprawie zapisu na warsztaty. *</label>
     </div>
+    <p class="field-error" id="err-f-consent" hidden></p>
     <button type="submit" class="btn-green" id="signup-btn">Wyślij zgłoszenie →</button>
     <p id="signup-status" role="status"></p>
   </form>
@@ -570,9 +583,42 @@
   if (!form) return;
   var btn = document.getElementById('signup-btn');
   var status = document.getElementById('signup-status');
+  var ERR_IDS = ['err-f-name', 'err-f-phone', 'err-f-email', 'err-f-age', 'err-f-consent'];
   function show(msg, ok) { status.textContent = msg; status.className = ok ? 'ok' : 'err'; }
+  function showErr(id, msg, field) {
+    var el = document.getElementById(id);
+    if (el) { el.textContent = msg; el.hidden = false; }
+    if (field) field.setAttribute('aria-invalid', 'true');
+  }
+  function clearErr(id, field) {
+    var el = document.getElementById(id);
+    if (el) el.hidden = true;
+    if (field) field.removeAttribute('aria-invalid');
+  }
+  function clearAll() {
+    ERR_IDS.forEach(function(id){ var el = document.getElementById(id); if (el) el.hidden = true; });
+    form.querySelectorAll('[aria-invalid]').forEach(function(el){ el.removeAttribute('aria-invalid'); });
+    status.textContent = ''; status.className = '';
+  }
+  [['f-name', 'err-f-name'], ['f-phone', 'err-f-phone'], ['f-email', 'err-f-email'], ['f-age', 'err-f-age']].forEach(function(pair){
+    var el = document.getElementById(pair[0]);
+    if (el) el.addEventListener('input', function(){ clearErr(pair[1], el); });
+  });
+  var consentEl = document.getElementById('f-consent');
+  if (consentEl) consentEl.addEventListener('change', function(){ clearErr('err-f-consent', consentEl); });
+  function showSuccess() {
+    var box = document.createElement('div');
+    box.className = 'success-box';
+    box.innerHTML = '<div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>'
+      + '<h2>ZGŁOSZENIE WYSŁANE</h2>'
+      + '<p>Oddzwonimy, żeby dobrać grupę do wieku i poziomu dziecka, a potem potwierdzimy termin zajęć próbnych.</p>'
+      + '<p>Pilna sprawa? Napisz na <a href="https://wa.me/48600370810" rel="noopener" target="_blank">WhatsApp</a> albo zadzwoń: <a href="tel:+48600370810">600 370 810</a>.</p>';
+    form.replaceWith(box);
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
   form.addEventListener('submit', function(ev){
     ev.preventDefault();
+    clearAll();
     var payload = {
       parent_name: form.parent_name.value.trim(),
       phone: form.phone.value.trim(),
@@ -584,10 +630,17 @@
       consent: form.consent.checked,
       website: form.website.value || undefined
     };
-    if (!payload.parent_name || payload.parent_name.length < 2) return show('Wpisz imię i nazwisko.', false);
-    if (!/^\+?[0-9]{9,15}$/.test(payload.phone.replace(/[^0-9+]/g, ''))) return show('Wpisz prawidłowy telefon: 9-15 cyfr, może być z +48.', false);
-    if (!(payload.child_age >= 7 && payload.child_age <= 17)) return show('Wiek dziecka: 7-17 lat.', false);
-    if (!payload.consent) return show('Zaznacz zgodę na kontakt.', false);
+    var errors = [];
+    if (!payload.parent_name || payload.parent_name.length < 2) errors.push(['err-f-name', 'Wpisz imię i nazwisko.', form.parent_name]);
+    if (!/^\+?[0-9]{9,15}$/.test(payload.phone.replace(/[^0-9+]/g, ''))) errors.push(['err-f-phone', 'Wpisz prawidłowy telefon: 9-15 cyfr, może być z +48.', form.phone]);
+    if (payload.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) errors.push(['err-f-email', 'Wpisz poprawny email albo zostaw pole puste.', form.email]);
+    if (!(payload.child_age >= 7 && payload.child_age <= 17)) errors.push(['err-f-age', 'Wiek dziecka: 7-17 lat.', form.child_age]);
+    if (!payload.consent) errors.push(['err-f-consent', 'Zaznacz zgodę na kontakt.', consentEl]);
+    if (errors.length) {
+      errors.forEach(function(e){ showErr(e[0], e[1], e[2]); });
+      if (errors[0][2] && errors[0][2].focus) errors[0][2].focus();
+      return;
+    }
     btn.disabled = true; btn.textContent = 'Wysyłanie...';
     fetch('/api/warsztaty', {
       method: 'POST',
@@ -596,9 +649,7 @@
     }).then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
       .then(function(res){
         if (res.ok && res.d.ok) {
-          show(res.d.message || 'Zgłoszenie przyjęte, odezwiemy się.', true);
-          btn.textContent = 'Wysłane ✓';
-          form.querySelectorAll('input, select, textarea').forEach(function(el){ el.disabled = true; });
+          showSuccess();
         } else {
           show(res.d.error || 'Coś poszło nie tak, spróbuj ponownie albo napisz na WhatsApp.', false);
           btn.disabled = false; btn.textContent = 'Wyślij zgłoszenie →';
