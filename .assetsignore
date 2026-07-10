@@ -8,6 +8,7 @@ uploads/FastDL.to_*
 node_modules/
 src/
 migrations/
+partners/
 CLAUDE.md
 OUTREACH_PLAN.md
 WARSZTATY_PLAN.md
