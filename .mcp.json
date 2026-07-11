@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "ark-seedance": {
+      "command": "node",
+      "args": ["scripts/ark-seedance-mcp.mjs"],
+      "env": { "ARK_API_KEY": "${ARK_API_KEY}" }
+    }
+  }
+}

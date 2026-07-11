@@ -256,6 +256,20 @@
     .level-card p { font-size: 14.5px; line-height: 1.6; color: #d8d8d8; margin-bottom: 10px; }
     .level-card ul { margin: 0 0 0 18px; }
     .level-card li { font-size: 14px; line-height: 1.55; color: #d8d8d8; margin-bottom: 4px; }
+    .clip-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 24px 0 10px; }
+    @media (max-width: 900px) { .clip-grid { grid-template-columns: repeat(2, 1fr); } }
+    .clip-card {
+      position: relative; margin: 0; overflow: hidden;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+    }
+    .clip-card video { display: block; width: 100%; height: auto; aspect-ratio: 496 / 864; object-fit: cover; cursor: pointer; }
+    .clip-card figcaption {
+      position: absolute; inset-inline: 0; bottom: 0; padding: 34px 12px 10px;
+      font-size: 13px; line-height: 1.4; color: #e8e8e8; pointer-events: none;
+      background: linear-gradient(to top, rgba(0,0,0,.78), rgba(0,0,0,0));
+    }
+    .clip-card figcaption strong { color: var(--accent); }
+    .clip-note { font-size: 13px; color: var(--muted); }
     .voucher-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 24px 0; }
     .voucher-card {
       background: var(--bg2); border: 1px solid var(--border);
@@ -421,6 +435,30 @@
 </section>
 
 <section class="seo-section">
+  <h2>Tak to <em>wygląda</em></h2>
+  <p>Od pierwszych kółek na pumptracku po whipy na dużych hopkach. Cztery krótkie klipy pokazują, dokąd prowadzi każdy poziom programu.</p>
+  <div class="clip-grid">
+    <figure class="clip-card">
+      <video muted loop playsinline preload="none" poster="/uploads/warsztaty-pumptrack-poster.webp" data-src="https://pub-b615f83299d84d5b917ae79ae5f22198.r2.dev/warsztaty-pumptrack.mp4" aria-label="Rider pompuje przez bandy pumptracku o zachodzie słońca"></video>
+      <figcaption><strong>Start</strong> · pump i flow na pumptracku</figcaption>
+    </figure>
+    <figure class="clip-card">
+      <video muted loop playsinline preload="none" poster="/uploads/warsztaty-airbag-poster.webp" data-src="https://pub-b615f83299d84d5b917ae79ae5f22198.r2.dev/warsztaty-airbag.mp4" aria-label="Rider ląduje miękko na wielkiej dmuchanej poduszce treningowej"></video>
+      <figcaption><strong>Progress</strong> · nowe skoki najpierw na miękkie</figcaption>
+    </figure>
+    <figure class="clip-card">
+      <video muted loop playsinline preload="none" poster="/uploads/warsztaty-tor-poster.webp" data-src="https://pub-b615f83299d84d5b917ae79ae5f22198.r2.dev/warsztaty-tor.mp4" aria-label="Przejazd wzdłuż linii hopek na leśnym torze dirtowym"></video>
+      <figcaption>Linia hopek okiem ridera</figcaption>
+    </figure>
+    <figure class="clip-card">
+      <video muted loop playsinline preload="none" poster="/uploads/warsztaty-whip-poster.webp" data-src="https://pub-b615f83299d84d5b917ae79ae5f22198.r2.dev/warsztaty-whip.mp4" aria-label="Rider wyrzuca whipa nad hopką i ląduje w kurzu"></video>
+      <figcaption><strong>Air</strong> · whip nad dużą hopką</figcaption>
+    </figure>
+  </div>
+  <p class="clip-note">Klipy wygenerowane cyfrowo (AI) na bazie prawdziwych kadrów z torów, na których jeździmy.</p>
+</section>
+
+<section class="seo-section">
   <h2>Gdzie i <em>kiedy</em></h2>
   <ul>
     <li><strong>Grodzisk Mazowiecki</strong>: pumptrack, grupy Start i Progress. Dwa popołudnia w tygodniu, po lekcjach.</li>
@@ -567,6 +605,31 @@
   </form>
   <p class="signup-alt">Wolisz napisać? <a href="https://wa.me/48600370810?text=Cze%C5%9B%C4%87%2C%20chc%C4%99%20zapisa%C4%87%20si%C4%99%20na%20warsztaty" rel="noopener" target="_blank">WhatsApp</a> albo telefon: <a href="tel:+48600370810">600 370 810</a>.</p>
 </div>
+<script>
+(function(){
+  var vids = document.querySelectorAll('.clip-card video');
+  if (!vids.length || !('IntersectionObserver' in window)) return;
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      var v = e.target;
+      if (e.isIntersecting) {
+        if (!v.src) { v.src = v.dataset.src; }
+        if (!reduced) { v.play().catch(function(){}); }
+      } else if (!v.paused) {
+        v.pause();
+      }
+    });
+  }, { rootMargin: '120px' });
+  vids.forEach(function(v){
+    io.observe(v);
+    v.addEventListener('click', function(){
+      if (!v.src) { v.src = v.dataset.src; }
+      if (v.paused) { v.play().catch(function(){}); } else { v.pause(); }
+    });
+  });
+})();
+</script>
 <script>
 (function(){
   var navToggle = document.getElementById('nav-toggle');

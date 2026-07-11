@@ -21,3 +21,5 @@ whatsapp-setup.md
 .dev.vars
 .dev.vars.example
 .DS_Store
+scripts/
+.mcp.json
