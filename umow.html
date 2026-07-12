@@ -7,6 +7,7 @@
   <meta name="description" content="Umów wizytę w serwisie rowerowym w Grodzisku Mazowieckim. Wybierz usługę, datę i godzinę, oddzwonię, żeby potwierdzić.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://www.skocznarower.pl/umow">
+  <link rel="alternate" type="text/plain" href="/llms.txt" title="Indeks dla LLM (llms.txt)">
 
   <!-- Open Graph -->
   <meta property="og:type"        content="website">
@@ -16,6 +17,53 @@
   <meta property="og:image"       content="https://www.skocznarower.pl/uploads/photo-1778431658856.jpeg">
   <meta property="og:locale"      content="pl_PL">
   <meta name="twitter:card"       content="summary_large_image">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "@id": "https://www.skocznarower.pl/#business",
+    "name": "skocznarower.pl – Serwis Rowerowy",
+    "description": "Rezerwacja wizyty w serwisie rowerowym w Grodzisku Mazowieckim: wybór usługi, daty i godziny online, potwierdzenie telefoniczne.",
+    "url": "https://www.skocznarower.pl/umow",
+    "telephone": "+48600370810",
+    "image": "https://www.skocznarower.pl/uploads/photo-1778431658856.jpeg",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Jesionowa 18",
+      "addressLocality": "Grodzisk Mazowiecki",
+      "postalCode": "05-825",
+      "addressCountry": "PL"
+    },
+    "geo": { "@type": "GeoCoordinates", "latitude": 52.1093, "longitude": 20.6241 },
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+        "opens": "16:00",
+        "closes": "19:00"
+      }
+    ],
+    "priceRange": "$$",
+    "hasMap": "https://maps.google.com/?cid=6298905504059882234",
+    "sameAs": [
+      "https://www.instagram.com/xpyszczek_",
+      "https://www.tiktok.com/@xpyszczek.dirt"
+    ],
+    "potentialAction": {
+      "@type": "ReserveAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://www.skocznarower.pl/umow",
+        "actionPlatform": [
+          "https://schema.org/DesktopWebPlatform",
+          "https://schema.org/MobileWebPlatform"
+        ]
+      },
+      "result": { "@type": "Reservation", "name": "Rezerwacja wizyty w serwisie rowerowym" }
+    }
+  }
+  </script>
 
   <link rel="icon" type="image/png" sizes="32x32" href="/uploads/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/uploads/favicon-192.png">

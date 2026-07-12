@@ -7,6 +7,7 @@
   <meta name="description" content="Serwis rowerowy Dirt Jump, BMX, MTB i e-bike w Grodzisku Mazowieckim (Jesionowa 18). Zaplatanie kół, przeglądy, regulacje, budowa rowerów na miarę. Pruszków, Milanówek, Brwinów, Warszawa. Tel: 600 370 810.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://www.skocznarower.pl/">
+  <link rel="alternate" type="text/plain" href="/llms.txt" title="Indeks dla LLM (llms.txt)">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" sizes="32x32" href="/uploads/favicon-32.png">
@@ -2493,6 +2494,8 @@
   (async function loadReviews() {
     const section = document.getElementById('opinie');
     if (!section) return;
+    // Worker wstrzyknął opinie server-side (data-ssr="1"): nie renderuj drugi raz.
+    if (section.dataset.ssr === '1') return;
     try {
       const r = await fetch('/api/reviews', { headers: { 'Accept': 'application/json' } });
       if (!r.ok) return;

@@ -82,3 +82,7 @@ User-agent: PetalBot
 Allow: /
 
 Sitemap: https://www.skocznarower.pl/sitemap.xml
+
+# Indeks dla modeli jezykowych / AI:
+# https://www.skocznarower.pl/llms.txt
+# https://www.skocznarower.pl/llms-full.txt

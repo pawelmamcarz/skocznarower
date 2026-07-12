@@ -66,7 +66,18 @@ export default {
       return json({ error: 'Server error' }, 500);
     }
 
-    return env.ASSETS.fetch(request);
+    // Strona główna: opinie Google wstrzykiwane server-side (SEO/AI widzą treść
+    // bez JS); każdy błąd SSR degraduje do czystego assetu i klientowego renderu.
+    const assetRes = await env.ASSETS.fetch(request);
+    if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
+      try {
+        return await injectReviewsSSR(env, assetRes);
+      } catch (e) {
+        console.error('reviews SSR error', e);
+        return assetRes;
+      }
+    }
+    return assetRes;
   },
   async scheduled(event, env, ctx) {
     ctx.waitUntil((async () => {
@@ -247,7 +258,8 @@ ID: ${row.id}
   });
 }
 
-async function apiReviews(env) {
+// Wspólne źródło danych opinii dla /api/reviews i SSR strony głównej.
+async function getReviewsData(env) {
   const [reviewsRes, profileRow] = await Promise.all([
     env.DB.prepare(
       'SELECT review_id, author_name, author_photo, rating, text, publish_time FROM google_reviews ORDER BY publish_time DESC LIMIT 6'
@@ -256,9 +268,13 @@ async function apiReviews(env) {
       "SELECT rating, review_count, fetched_at FROM google_profile WHERE id = 'profile'"
     ).first(),
   ]);
-
   const reviewLink = env.REVIEW_LINK && !env.REVIEW_LINK.includes('CHANGE_TO_')
     ? env.REVIEW_LINK : null;
+  return { profileRow: profileRow || null, reviewLink, rows: reviewsRes.results || [] };
+}
+
+async function apiReviews(env) {
+  const { profileRow, reviewLink, rows: reviewRows } = await getReviewsData(env);
 
   return new Response(JSON.stringify({
     profile: profileRow ? {
@@ -267,7 +283,7 @@ async function apiReviews(env) {
       fetched_at: profileRow.fetched_at,
     } : null,
     review_link: reviewLink,
-    reviews: (reviewsRes.results || []).map(r => ({
+    reviews: reviewRows.map(r => ({
       id: r.review_id,
       author: r.author_name,
       photo: r.author_photo,
@@ -282,6 +298,108 @@ async function apiReviews(env) {
       'Cache-Control': 'public, max-age=600, s-maxage=3600',
     },
   });
+}
+
+// SSR sekcji #opinie na stronie głównej: HTMLRewriter wstrzykuje opinie z cache D1
+// do statycznego index.html (markup 1:1 z klientowym loadReviews), zdejmuje hidden
+// i dokłada JSON-LD AggregateRating do <head>. Klientowy skrypt widzi data-ssr="1"
+// i nie renderuje drugi raz. Pusty cache = strona wraca bez zmian (sekcja hidden,
+// klientowy fallback dalej działa).
+const SSR_STAR_PATH = 'M12 2.6l2.9 6.05 6.6.72-4.9 4.5 1.34 6.53L12 17.1l-5.94 3.3 1.34-6.53-4.9-4.5 6.6-.72z';
+
+function ssrStarSvg(filled) {
+  return filled
+    ? '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="' + SSR_STAR_PATH + '"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="' + SSR_STAR_PATH + '"/></svg>';
+}
+
+function pluralOpinie(n) {
+  const mod10 = n % 10, mod100 = n % 100;
+  if (n === 1) return 'opinia';
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'opinie';
+  return 'opinii';
+}
+
+async function injectReviewsSSR(env, res) {
+  const contentType = res.headers.get('content-type') || '';
+  if (!res.ok || !contentType.includes('text/html')) return res;
+
+  const { profileRow, reviewLink, rows } = await getReviewsData(env);
+  if (rows.length === 0) return res;
+
+  const avg = typeof profileRow?.rating === 'number' ? profileRow.rating : null;
+  const total = typeof profileRow?.review_count === 'number' ? profileRow.review_count : null;
+  const countN = total && total > 0 ? total : rows.length;
+  const countText = `${countN} ${pluralOpinie(countN)} Google`;
+
+  const fmtDate = (t) => {
+    if (!t) return '';
+    try { return new Date(t).toLocaleDateString('pl-PL', { year: 'numeric', month: 'long' }); }
+    catch { return ''; }
+  };
+
+  const gridHtml = rows.slice(0, 6).map((rv) => {
+    const n = Math.max(1, Math.min(5, rv.rating || 5));
+    const starsHtml = '<span class="review-stars-sm" aria-hidden="true">' + ssrStarSvg(true).repeat(n) + '</span>';
+    const date = fmtDate(rv.publish_time);
+    return `<figure class="review"><blockquote>${esc(rv.text)}</blockquote><figcaption><strong>${esc(rv.author_name)}</strong><span aria-label="${n} z 5">${starsHtml}${date ? ' · ' + esc(date) : ''}</span></figcaption></figure>`;
+  }).join('');
+
+  let ldScript = '';
+  if (avg !== null && total !== null && total > 0) {
+    const ld = {
+      '@context': 'https://schema.org',
+      '@type': 'LocalBusiness',
+      '@id': 'https://www.skocznarower.pl/#business',
+      'name': 'skocznarower.pl – Serwis Rowerowy',
+      'url': 'https://www.skocznarower.pl',
+      'aggregateRating': {
+        '@type': 'AggregateRating',
+        'ratingValue': avg.toFixed(1),
+        'reviewCount': total,
+        'bestRating': '5',
+        'worstRating': '1',
+      },
+      'review': rows.slice(0, 5).map(rv => ({
+        '@type': 'Review',
+        'author': { '@type': 'Person', 'name': rv.author_name },
+        'datePublished': rv.publish_time ? new Date(rv.publish_time).toISOString().slice(0, 10) : undefined,
+        'reviewRating': { '@type': 'Rating', 'ratingValue': String(rv.rating || 5), 'bestRating': '5' },
+        'reviewBody': rv.text,
+      })),
+    };
+    // Znak "<" w JSON-ie zamieniany na sekwencję unicode, żeby tekst opinii nie mógł domknąć tagu script.
+    ldScript = '<script type="application/ld+json">' + JSON.stringify(ld).replace(/</g, '\\u003c') + '</script>';
+  }
+
+  const rewriter = new HTMLRewriter()
+    .on('#opinie', { element(el) { el.removeAttribute('hidden'); el.setAttribute('data-ssr', '1'); } })
+    .on('#reviews-grid', { element(el) { el.setInnerContent(gridHtml, { html: true }); } })
+    .on('#reviews-count', { element(el) { el.setInnerContent(countText); } });
+
+  if (avg !== null) {
+    rewriter
+      .on('#reviews-score', { element(el) { el.setInnerContent(avg.toFixed(1)); } })
+      .on('#reviews-stars', {
+        element(el) {
+          el.setAttribute('role', 'img');
+          el.setAttribute('aria-label', avg.toFixed(1) + ' na 5');
+          el.setInnerContent([0, 1, 2, 3, 4].map(i => ssrStarSvg(i < Math.round(avg))).join(''), { html: true });
+        },
+      });
+  } else {
+    rewriter
+      .on('#reviews-score', { element(el) { el.setAttribute('hidden', ''); } })
+      .on('#reviews-stars', { element(el) { el.setAttribute('hidden', ''); } });
+  }
+  if (reviewLink) {
+    rewriter.on('#reviews-cta', { element(el) { el.setAttribute('href', reviewLink); el.removeAttribute('hidden'); } });
+  }
+  if (ldScript) {
+    rewriter.on('head', { element(el) { el.append(ldScript, { html: true }); } });
+  }
+
+  return rewriter.transform(res);
 }
 
 // Normalizuje i waliduje adres email; zwraca oczyszczony (trim + lowercase) email

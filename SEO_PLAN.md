@@ -2,6 +2,30 @@
 
 Stan na 2026-07-11, na bazie audytu technicznego repo, inwentaryzacji treści i researchu SERP (3 agenty + weryfikacja ręczna). Plik dev-only, poza assetami (`.assetsignore`).
 
+## Decyzje z przeglądu planu (grill, 2026-07-12)
+
+1. **Priorytet: nabór na warsztaty** przez najbliższe 8-10 tygodni (start grup w sierpniu). Sprint wizytówkowo-facebookowy idzie przed treściami serwisowymi.
+2. **Podział pracy**: Paweł + Claude produkują gotowe paczki (teksty postów, kadry, klipy, harmonogram), Mateusz tylko publikuje i odpowiada; jego konto/twarz w grupach FB.
+3. **Opinie SSR przez HTMLRewriter**: zatwierdzone i WDROŻONE (2026-07-12, razem z resztą technikaliów Sprintu 1; szczegóły niżej).
+4. **Kolejność treści**: pumptrack (landing `/pumptrack-grodzisk-mazowiecki`, wzorzec jak bleeding) → centrowanie/zaplatanie → e-bike (jako typ roweru, nie nowa usługa; e-bike nie jest w SERVICES). Budowa na miarę i Brwinów/Warszawa zachodnia od września.
+5. **Zakres kwartału**: darmowe katalogi + Bing Places + Apple Business Connect wchodzą. ZAPARKOWANE: kanał YouTube (wraca, gdy rytm IG/TikTok utrzyma się miesiąc), Oferteo/Fixly (prowizyjne, niepotrzebne). NOWY WĄTEK zamiast samego Shimano SC: **przeglądy gwarancyjne marek** (Trek i inne; przegląd w pierwszym roku jest obowiązkowy dla utrzymania gwarancji). Do zbadania: które marki wymagają dealera, a którym wystarczy "profesjonalny serwis" (wtedy landing "przegląd gwarancyjny roweru" działa bez autoryzacji). Decyzja o ubieganie się o autoryzacje: Mateusz.
+6. **Konta**: GSC/GA4/Bing/Apple na koncie Google Pawła, Mateusz dodany jako użytkownik. Zastrzeżenie: własność do zmigrowania na konto Mateusza przy okazji (GA4 property i GSC ownership).
+7. **Facebook**: strona firmowa + posty Mateusza w grupach rodziców + testowe 200-300 zł boostu posta o zapisach (targeting rodzice 30-45, Grodzisk +10 km). Pixel czeka w kodzie na ID.
+8. **Pumptrack**: osobny landing, nie sekcja na /warsztaty i nie dwa osobne (rozdzielenie na Grodzisk/Turczynek możliwe później).
+
+## Status wdrożenia Sprintu 1 (technikalia): KOD GOTOWY 2026-07-12
+
+Zrobione w kodzie (zweryfikowane na lokalnym dev z seedowanym D1):
+- Opinie SSR: `injectReviewsSSR` w `src/index.js` (HTMLRewriter na GET `/` i `/index.html`), wspólny helper `getReviewsData` z `apiReviews`; sekcja `#opinie` odkrywana, grid + rating + CTA w HTML, JSON-LD AggregateRating+Review dokładany do head; klientowy skrypt widzi `data-ssr="1"` i nie renderuje drugi raz; pusty cache lub błąd = strona bez zmian.
+- JSON-LD LocalBusiness + ReserveAction na /umow (spójny NAP, `@id` #business jak wszędzie).
+- twitter:card + własny og:image (`uploads/og-warsztaty.jpg`, kolaż 1200x630 z klipów) na /warsztaty.
+- `<link rel="alternate" type="text/plain" href="/llms.txt">` na 6 stronach + komentarz z adresami llms w robots.txt.
+- Sitemap lastmod podbity (/, /umow, /warsztaty).
+
+Czeka na Pawła (konta, nie kod): GSC + zgłoszenie sitemap + wymuszenie indeksacji 4 brakujących stron, Bing WMT, IndexNow/Crawler Hints w dashboardzie Cloudflare, GA4 + Pixel (wpisać ID w 3 plikach HTML, `window.GA_ID`/`window.FB_PIXEL_ID`). TODO treściowe: og:image dla bleeding i landingów miast z prawdziwych zdjęć warsztatu (do wyboru z Mateuszem). Deploy całości: Paweł.
+
+Uwaga do testów lokalnych: `wrangler dev` symuluje hosta pierwszej route'y (apex), więc każdy request kończy się 301; do testów używać `npx wrangler dev --host www.skocznarower.pl`.
+
 ## Stan wyjściowy (fakty z audytu)
 
 Co działa:
