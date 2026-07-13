@@ -1,25 +1,25 @@
 <!doctype html>
-<html lang="pl">
+<html lang="uk">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Umów wizytę, skocznarower.pl, serwis rowerowy Grodzisk Mazowiecki</title>
-  <meta name="description" content="Umów wizytę w serwisie rowerowym w Grodzisku Mazowieckim. Wybierz usługę, datę i godzinę, oddzwonię, żeby potwierdzić.">
+  <title>Запис на візит, skocznarower.pl, веломайстерня Ґродзіськ-Мазовецький</title>
+  <meta name="description" content="Запишіться на візит до веломайстерні в Ґродзіську-Мазовецькому. Оберіть послугу, дату й годину, майстер зателефонує, щоб підтвердити.">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://www.skocznarower.pl/umow">
-  <link rel="alternate" type="text/plain" href="/llms.txt" title="Indeks dla LLM (llms.txt)">
+  <link rel="canonical" href="https://www.skocznarower.pl/uk/umow">
   <link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/umow">
   <link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/umow">
   <link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/uk/umow">
   <link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/umow">
+  <link rel="alternate" type="text/plain" href="/llms.txt" title="Індекс для LLM (llms.txt)">
 
   <!-- Open Graph -->
   <meta property="og:type"        content="website">
-  <meta property="og:url"         content="https://www.skocznarower.pl/umow">
-  <meta property="og:title"       content="Umów wizytę | Serwis Rowerowy Grodzisk Mazowiecki">
-  <meta property="og:description" content="Wybierz usługę, datę i godzinę. Oddzwonię, żeby potwierdzić. Tel: 600 370 810.">
+  <meta property="og:url"         content="https://www.skocznarower.pl/uk/umow">
+  <meta property="og:title"       content="Запис на візит | Веломайстерня Ґродзіськ-Мазовецький">
+  <meta property="og:description" content="Оберіть послугу, дату й годину. Майстер зателефонує, щоб підтвердити. Тел.: 600 370 810.">
   <meta property="og:image"       content="https://www.skocznarower.pl/uploads/photo-1778431658856.jpeg">
-  <meta property="og:locale"      content="pl_PL">
+  <meta property="og:locale"      content="uk_UA">
   <meta name="twitter:card"       content="summary_large_image">
 
   <script type="application/ld+json">
@@ -28,8 +28,9 @@
     "@type": "LocalBusiness",
     "@id": "https://www.skocznarower.pl/#business",
     "name": "skocznarower.pl – Serwis Rowerowy",
-    "description": "Rezerwacja wizyty w serwisie rowerowym w Grodzisku Mazowieckim: wybór usługi, daty i godziny online, potwierdzenie telefoniczne.",
-    "url": "https://www.skocznarower.pl/umow",
+    "description": "Онлайн-запис до веломайстерні в Ґродзіську-Мазовецькому: вибір послуги, дати й години онлайн, підтвердження телефоном.",
+    "url": "https://www.skocznarower.pl/uk/umow",
+    "inLanguage": "uk",
     "telephone": "+48600370810",
     "image": "https://www.skocznarower.pl/uploads/photo-1778431658856.jpeg",
     "address": {
@@ -58,13 +59,13 @@
       "@type": "ReserveAction",
       "target": {
         "@type": "EntryPoint",
-        "urlTemplate": "https://www.skocznarower.pl/umow",
+        "urlTemplate": "https://www.skocznarower.pl/uk/umow",
         "actionPlatform": [
           "https://schema.org/DesktopWebPlatform",
           "https://schema.org/MobileWebPlatform"
         ]
       },
-      "result": { "@type": "Reservation", "name": "Rezerwacja wizyty w serwisie rowerowym" }
+      "result": { "@type": "Reservation", "name": "Бронювання візиту до веломайстерні" }
     }
   }
   </script>
@@ -75,7 +76,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
 
   <!-- Analytics: zsynchronizowane z index.html. Bez wpisanych ID skrypty nic nie ładują. -->
   <script>
@@ -116,7 +117,7 @@
       --border: rgba(255,255,255,.07);
       --accent-hi: #b5f040;
       --radius: 2px;
-      --fd: 'Bebas Neue', sans-serif;
+      --fd: 'Oswald', sans-serif;
       --fb: 'DM Sans', sans-serif;
     }
 
@@ -519,29 +520,32 @@
       margin: 0 auto;
     }
     footer a { color: var(--accent); text-decoration: none; }
+  
+    /* Oswald ma cyrylice, ale nie jest krojem samych wersalikow jak Bebas Neue: wymuszamy wersaliki tam, gdzie uzywany jest --fd */
+    .display, .step-title, .success-box h2 { text-transform: uppercase; }
   </style>
 </head>
 <body>
 
 <nav class="nav">
-  <a class="logo" href="/">
+  <a class="logo" href="/uk/">
     <img class="logo-icon" src="/uploads/logo-icon.png" alt="Skocz na Rower" width="44" height="48">
   </a>
-  <button class="nav-toggle" id="nav-toggle" aria-label="Otwórz menu" aria-expanded="false" aria-controls="nav-links"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg></button>
+  <button class="nav-toggle" id="nav-toggle" aria-label="Відкрити меню" aria-expanded="false" aria-controls="nav-links"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg></button>
   <ul class="nav-links" id="nav-links">
-    <li><a href="/#uslugi">Usługi</a></li>
-    <li><a href="/#cennik">Cennik</a></li>
-    <li><a href="/#kontakt">Kontakt</a></li>
-    <li class="lang-sw"><a href="/en/umow" hreflang="en" lang="en">EN</a><span aria-hidden="true"> · </span><a href="/uk/umow" hreflang="uk" lang="uk">УКР</a></li>
+    <li><a href="/uk/#uslugi">Послуги</a></li>
+    <li><a href="/uk/#cennik">Ціни</a></li>
+    <li><a href="/uk/#kontakt">Контакти</a></li>
+    <li class="lang-sw"><a href="/umow" hreflang="pl" lang="pl">PL</a><span aria-hidden="true"> · </span><a href="/en/umow" hreflang="en" lang="en">EN</a></li>
     <li><a class="nav-cta" href="tel:+48600370810">600 370 810</a></li>
   </ul>
 </nav>
 
 
 <header class="header">
-  <p class="eyebrow">Rezerwacja online</p>
-  <h1 class="display">Umów<br><em>wizytę</em></h1>
-  <p class="lead">Wybierz usługę, dzień i godzinę, potwierdzę termin telefonicznie albo SMS-em, zwykle tego samego dnia.</p>
+  <p class="eyebrow">Онлайн-запис</p>
+  <h1 class="display">Запишіться<br><em>на візит</em></h1>
+  <p class="lead">Оберіть послугу, день і годину. Термін підтвердимо телефоном або SMS, зазвичай того ж дня.</p>
 </header>
 
 <main class="form-wrap">
@@ -549,8 +553,8 @@
 <form id="booking-form" autocomplete="on" novalidate>
 
   <section class="step">
-    <div class="step-num"><span class="num">01</span> / Usługa</div>
-    <h2 class="step-title" id="t-service">Co robimy?</h2>
+    <div class="step-num"><span class="num">01</span> / Послуга</div>
+    <h2 class="step-title" id="t-service">Що робимо?</h2>
     <div class="choices" id="services" role="radiogroup" aria-labelledby="t-service">
       <!-- wypełniane JS-em -->
     </div>
@@ -558,8 +562,8 @@
   </section>
 
   <section class="step">
-    <div class="step-num"><span class="num">02</span> / Sprzęt</div>
-    <h2 class="step-title" id="t-bike">Jaki rower?</h2>
+    <div class="step-num"><span class="num">02</span> / Велосипед</div>
+    <h2 class="step-title" id="t-bike">Який велосипед?</h2>
     <div class="choices" id="bike-types" role="radiogroup" aria-labelledby="t-bike">
       <!-- wypełniane JS-em -->
     </div>
@@ -567,58 +571,58 @@
   </section>
 
   <section class="step">
-    <div class="step-num"><span class="num">03</span> / Termin</div>
-    <h2 class="step-title" id="t-termin">Kiedy pasuje Ci termin?</h2>
-    <p class="hours-info">Przyjmuję codziennie, także w weekendy, w godzinach <span class="val-mono">16:00-19:00</span>.</p>
+    <div class="step-num"><span class="num">03</span> / Дата</div>
+    <h2 class="step-title" id="t-termin">Коли вам зручно?</h2>
+    <p class="hours-info">Приймаємо щодня, також у вихідні, у години <span class="val-mono">16:00-19:00</span>.</p>
     <div class="date-row">
       <label class="field">
-        <span>Data wizyty <em>*</em></span>
+        <span>Дата візиту <em>*</em></span>
         <input id="date" class="date-input" type="date" required aria-describedby="err-date">
       </label>
     </div>
     <p class="field-error" id="err-date" hidden></p>
     <div id="slots-area" aria-live="polite">
-      <p class="slots-hint">Wybierz datę, żeby zobaczyć wolne godziny.</p>
+      <p class="slots-hint">Оберіть дату, щоб побачити вільні години.</p>
     </div>
     <p class="field-error" id="err-slot" hidden></p>
   </section>
 
   <section class="step">
-    <div class="step-num"><span class="num">04</span> / Dane</div>
-    <h2 class="step-title">Jak się skontaktować?</h2>
+    <div class="step-num"><span class="num">04</span> / Контакти</div>
+    <h2 class="step-title">Як з вами зв'язатися?</h2>
     <div class="fields">
       <div class="row">
         <label class="field">
-          <span>Imię <em>*</em></span>
+          <span>Ім'я <em>*</em></span>
           <input class="input" type="text" id="name" name="name" required maxlength="80" autocomplete="given-name" aria-describedby="err-name">
           <span class="field-error" id="err-name" hidden></span>
         </label>
         <label class="field">
-          <span>Telefon <em>*</em></span>
-          <input class="input" type="tel" id="phone" name="phone" required maxlength="20" inputmode="tel" autocomplete="tel" placeholder="np. 600 123 456" aria-describedby="err-phone">
+          <span>Телефон <em>*</em></span>
+          <input class="input" type="tel" id="phone" name="phone" required maxlength="20" inputmode="tel" autocomplete="tel" placeholder="напр. 600 123 456" aria-describedby="err-phone">
           <span class="field-error" id="err-phone" hidden></span>
         </label>
       </div>
       <label class="field">
-        <span>Email (opcjonalnie)</span>
+        <span>Email (необов'язково)</span>
         <input class="input" type="email" id="email" name="email" maxlength="120" autocomplete="email" aria-describedby="err-email">
         <span class="field-error" id="err-email" hidden></span>
       </label>
       <label class="consent-check">
         <input type="checkbox" id="consent" name="consent">
-        <span>Chcę dostać jedno przypomnienie mailem przed sezonem, mogę się wypisać w każdej chwili.</span>
+        <span>Хочу отримати один email-лист із нагадуванням перед сезоном, відписатися можна будь-коли.</span>
       </label>
       <label class="field">
-        <span>Opisz krótko co dolega rowerowi</span>
-        <textarea class="textarea" id="notes" name="notes" maxlength="1000" placeholder="np. trzeszczy suport, źle hamuje tył, prosta regulacja przerzutek..."></textarea>
+        <span>Коротко опишіть, що з велосипедом</span>
+        <textarea class="textarea" id="notes" name="notes" maxlength="1000" placeholder="напр. скрипить каретка, погано гальмує заднє колесо, просте налаштування перемикачів..."></textarea>
       </label>
     </div>
 
     <div class="summary" id="summary" hidden></div>
 
     <div class="submit-row">
-      <button class="btn-submit" type="submit" id="submit-btn">Umów wizytę<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-      <span class="submit-note">Po wysłaniu potwierdzę termin telefonicznie albo SMS-em, zwykle tego samego dnia.</span>
+      <button class="btn-submit" type="submit" id="submit-btn">Записатися<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      <span class="submit-note">Після надсилання термін підтвердимо телефоном або SMS, зазвичай того ж дня. SMS та e-mail підтвердження надходять польською.</span>
     </div>
 
     <div id="alert" role="alert" aria-live="assertive" hidden></div>
@@ -637,30 +641,36 @@
 
 <script>
 const SERVICES = [
-  { id: 'odbior',               name: 'Odbiór i odwóz roweru',       price: 'od 50 zł' },
-  { id: 'przeglad-podstawowy',  name: 'Przegląd podstawowy',         price: 'od 150 zł' },
-  { id: 'przeglad-kompleksowy', name: 'Przegląd kompleksowy',        price: 'od 340 zł' },
-  { id: 'regulacja',            name: 'Regulacja (hamulce / przerzutki)', price: 'od 40 zł' },
-  { id: 'bleeding',             name: 'Bleeding hamulców hydraulicznych', price: 'od 100 zł' },
-  { id: 'wymiana-czesci',       name: 'Wymiana części',              price: 'od 35 zł + część' },
-  { id: 'kolo-centrowanie',     name: 'Centrowanie koła',            price: 'od 120 zł' },
-  { id: 'kolo-naprawa',         name: 'Naprawa koła',                price: 'od 35 zł' },
-  { id: 'kolo-zaplatanie',      name: 'Zaplatanie koła',             price: 'od 80 zł' },
-  { id: 'pod-ridera',           name: 'Konfiguracja pod ridera',     price: 'od 20 zł' },
-  { id: 'skladanie',            name: 'Składanie roweru (z pudełka / z części)', price: 'od 120 zł' },
-  { id: 'budowa',               name: 'Budowa roweru na miarę',      price: 'od 500 zł' },
-  { id: 'hulajnoga',            name: 'Serwis hulajnogi',            price: 'od 40 zł' },
-  { id: 'inne',                 name: 'Inne (opisz niżej)',          price: 'wycena indywidualna' },
+  { id: 'odbior',               name: 'Забір і доставка велосипеда', price: 'від 50 zł' },
+  { id: 'przeglad-podstawowy',  name: 'Базовий техогляд',            price: 'від 150 zł' },
+  { id: 'przeglad-kompleksowy', name: 'Комплексний техогляд',        price: 'від 340 zł' },
+  { id: 'regulacja',            name: 'Регулювання (гальма / перемикачі)', price: 'від 40 zł' },
+  { id: 'bleeding',             name: 'Прокачування гідравлічних гальм', price: 'від 100 zł' },
+  { id: 'wymiana-czesci',       name: 'Заміна деталей',              price: 'від 35 zł + деталь' },
+  { id: 'kolo-centrowanie',     name: 'Центрування колеса',          price: 'від 120 zł' },
+  { id: 'kolo-naprawa',         name: 'Ремонт колеса',               price: 'від 35 zł' },
+  { id: 'kolo-zaplatanie',      name: 'Спицювання колеса',           price: 'від 80 zł' },
+  { id: 'pod-ridera',           name: 'Налаштування під райдера',    price: 'від 20 zł' },
+  { id: 'skladanie',            name: 'Складання велосипеда (з коробки / з деталей)', price: 'від 120 zł' },
+  { id: 'budowa',               name: 'Кастомна збірка велосипеда',  price: 'від 500 zł' },
+  { id: 'hulajnoga',            name: 'Сервіс самоката',             price: 'від 40 zł' },
+  { id: 'inne',                 name: 'Інше (опишіть нижче)',        price: 'індивідуальна оцінка' },
 ];
 
+// Uwaga: `id` to wartość wysyłana do API (whitelist w Workerze), `name` to tylko etykieta.
 const BIKE_TYPES = [
-  'Dirt Jump / BMX',
-  'MTB',
-  'Rower miejski / trekking',
-  'E-bike',
-  'Hulajnoga',
-  'Inny',
+  { id: 'Dirt Jump / BMX',          name: 'Dirt Jump / BMX' },
+  { id: 'MTB',                      name: 'MTB' },
+  { id: 'Rower miejski / trekking', name: 'Міський / трекінговий велосипед' },
+  { id: 'E-bike',                   name: 'Електровелосипед' },
+  { id: 'Hulajnoga',                name: 'Самокат' },
+  { id: 'Inny',                     name: 'Інший' },
 ];
+
+function bikeLabel(value) {
+  const b = BIKE_TYPES.find(b => b.id === value);
+  return b ? b.name : value;
+}
 
 const $ = sel => document.querySelector(sel);
 
@@ -703,7 +713,7 @@ function addDaysISO(iso, n) {
 }
 function formatDatePl(iso) {
   try {
-    return new Date(iso + 'T12:00:00Z').toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+    return new Date(iso + 'T12:00:00Z').toLocaleDateString('uk-UA', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   } catch (_) { return iso; }
 }
 
@@ -747,10 +757,10 @@ async function loadSlots() {
   if (!date) return;
   const seq = ++slotsReq;
   const todayW = warsawToday();
-  if (!DATE_RE.test(date)) { slotsMsg('Nieprawidłowa data.'); return; }
-  if (date < todayW) { slotsMsg('Ta data już minęła. Wybierz dzisiejszą albo późniejszą.'); return; }
-  if (date > addDaysISO(todayW, MAX_DAYS_AHEAD)) { slotsMsg('Rezerwacja online obejmuje najbliższe 60 dni. Wybierz wcześniejszą datę.'); return; }
-  slotsArea.innerHTML = '<p class="slots-hint">Ładuję wolne godziny...</p>';
+  if (!DATE_RE.test(date)) { slotsMsg('Недійсна дата.'); return; }
+  if (date < todayW) { slotsMsg('Ця дата вже минула. Оберіть сьогоднішню або пізнішу.'); return; }
+  if (date > addDaysISO(todayW, MAX_DAYS_AHEAD)) { slotsMsg('Онлайн-запис охоплює найближчі 60 днів. Оберіть ранішу дату.'); return; }
+  slotsArea.innerHTML = '<p class="slots-hint">Завантажуємо вільні години...</p>';
   try {
     const r = await fetch('/api/availability?date=' + encodeURIComponent(date));
     if (seq !== slotsReq) return;
@@ -773,22 +783,22 @@ function hidePastToday(date, slots, todayW) {
 
 function renderSlotsError() {
   slotsArea.innerHTML =
-    '<p class="slots-empty">Nie udało się pobrać terminów. Sprawdź połączenie i spróbuj ponownie.</p>' +
-    '<button type="button" class="btn-retry" id="slots-retry">Spróbuj ponownie</button>';
+    '<p class="slots-empty">Не вдалося завантажити вільні години. Перевірте з\'єднання і спробуйте ще раз.</p>' +
+    '<button type="button" class="btn-retry" id="slots-retry">Спробувати ще раз</button>';
   document.getElementById('slots-retry').addEventListener('click', loadSlots);
   updateSummary();
 }
 
 function renderSlots(date, slots) {
   if (slots.length === 0) {
-    slotsMsg('Ten dzień jest niedostępny. Przyjmuję zwykle codziennie w godzinach 16:00-19:00, wybierz inną datę.');
+    slotsMsg('Цей день недоступний. Зазвичай приймаємо щодня з 16:00 до 19:00, оберіть іншу дату.');
     pendingSlot = null;
     return;
   }
   const anyAvailable = slots.some(s => s.available);
   const emptyMsg = date === warsawToday()
-    ? 'Na dziś nie ma już wolnych godzin. Wybierz inny dzień.'
-    : 'Wszystkie terminy zajęte. Wybierz inny dzień.';
+    ? 'На сьогодні вільних годин уже немає. Оберіть інший день.'
+    : 'Усі години зайняті. Оберіть інший день.';
   slotsArea.innerHTML = `
     <div class="slots" role="radiogroup" aria-labelledby="t-termin">
       ${slots.map(s => `
@@ -819,9 +829,9 @@ function updateSummary() {
   const svc = SERVICES.find(s => s.id === serviceId);
   const parts = [];
   if (svc) parts.push(`${svc.name} (${svc.price})`);
-  if (bike) parts.push(bike);
+  if (bike) parts.push(bikeLabel(bike));
   if (date && DATE_RE.test(date)) parts.push(formatDatePl(date) + (slot ? ', ' + slot : ''));
-  else if (slot) parts.push('godz. ' + slot);
+  else if (slot) parts.push('о ' + slot);
   if (parts.length === 0) { summaryEl.hidden = true; summaryEl.textContent = ''; return; }
   summaryEl.textContent = parts.join(' · ');
   summaryEl.hidden = false;
@@ -849,8 +859,8 @@ function showAlertHTML(html, kind = 'error') {
 }
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-const PHONE_MSG = 'Wpisz prawidłowy telefon: 9-15 cyfr, może być z +48.';
-const CONSENT_MSG = 'Podaj email albo odznacz zgodę na przypomnienie.';
+const PHONE_MSG = 'Введіть коректний номер телефону: 9-15 цифр, можна з +48.';
+const CONSENT_MSG = 'Вкажіть email або зніміть згоду на нагадування.';
 
 function phoneOk(v) {
   return /^\+?[0-9]{9,15}$/.test(v.replace(/[\s\-()]/g, ''));
@@ -881,16 +891,16 @@ function validateForm(v) {
   const errors = [];
   const todayW = warsawToday();
   const maxW = addDaysISO(todayW, MAX_DAYS_AHEAD);
-  if (!v.service) errors.push({ id: 'err-service', msg: 'Wybierz usługę.', focus: form.querySelector('input[name="service"]') });
-  if (!v.bike) errors.push({ id: 'err-bike', msg: 'Wybierz typ roweru.', focus: form.querySelector('input[name="bike"]') });
-  if (!v.date) errors.push({ id: 'err-date', msg: 'Wybierz datę.', focus: dateInput });
-  else if (!DATE_RE.test(v.date)) errors.push({ id: 'err-date', msg: 'Nieprawidłowa data.', focus: dateInput });
-  else if (v.date < todayW) errors.push({ id: 'err-date', msg: 'Ta data już minęła. Wybierz dzisiejszą albo późniejszą.', focus: dateInput });
-  else if (v.date > maxW) errors.push({ id: 'err-date', msg: 'Rezerwacja online obejmuje najbliższe 60 dni. Wybierz wcześniejszą datę.', focus: dateInput });
-  if (!v.slot) errors.push({ id: 'err-slot', msg: 'Wybierz godzinę.', focus: form.querySelector('input[name="slot"]:not([disabled])') || dateInput });
-  if (v.name.length < 2) errors.push({ id: 'err-name', msg: 'Wpisz imię.', focus: nameEl, invalid: nameEl });
+  if (!v.service) errors.push({ id: 'err-service', msg: 'Оберіть послугу.', focus: form.querySelector('input[name="service"]') });
+  if (!v.bike) errors.push({ id: 'err-bike', msg: 'Оберіть тип велосипеда.', focus: form.querySelector('input[name="bike"]') });
+  if (!v.date) errors.push({ id: 'err-date', msg: 'Оберіть дату.', focus: dateInput });
+  else if (!DATE_RE.test(v.date)) errors.push({ id: 'err-date', msg: 'Недійсна дата.', focus: dateInput });
+  else if (v.date < todayW) errors.push({ id: 'err-date', msg: 'Ця дата вже минула. Оберіть сьогоднішню або пізнішу.', focus: dateInput });
+  else if (v.date > maxW) errors.push({ id: 'err-date', msg: 'Онлайн-запис охоплює найближчі 60 днів. Оберіть ранішу дату.', focus: dateInput });
+  if (!v.slot) errors.push({ id: 'err-slot', msg: 'Оберіть годину.', focus: form.querySelector('input[name="slot"]:not([disabled])') || dateInput });
+  if (v.name.length < 2) errors.push({ id: 'err-name', msg: 'Вкажіть ім\'я.', focus: nameEl, invalid: nameEl });
   if (!phoneOk(v.phone)) errors.push({ id: 'err-phone', msg: PHONE_MSG, focus: phoneEl, invalid: phoneEl });
-  if (v.email && !EMAIL_RE.test(v.email)) errors.push({ id: 'err-email', msg: 'Wpisz prawidłowy email.', focus: emailEl, invalid: emailEl });
+  if (v.email && !EMAIL_RE.test(v.email)) errors.push({ id: 'err-email', msg: 'Введіть коректний email.', focus: emailEl, invalid: emailEl });
   else if (!v.email && v.consent) errors.push({ id: 'err-email', msg: CONSENT_MSG, focus: emailEl, invalid: emailEl });
   return errors;
 }
@@ -898,7 +908,7 @@ function validateForm(v) {
 // Walidacja inline przy opuszczeniu pola (tylko gdy coś wpisano; puste łapie submit).
 nameEl.addEventListener('blur', () => {
   const val = nameEl.value.trim();
-  if (val && val.length < 2) showErr('err-name', 'Wpisz imię.', nameEl);
+  if (val && val.length < 2) showErr('err-name', 'Вкажіть ім\'я.', nameEl);
 });
 phoneEl.addEventListener('blur', () => {
   const val = phoneEl.value.trim();
@@ -906,7 +916,7 @@ phoneEl.addEventListener('blur', () => {
 });
 emailEl.addEventListener('blur', () => {
   const val = emailEl.value.trim();
-  if (val && !EMAIL_RE.test(val)) showErr('err-email', 'Wpisz prawidłowy email.', emailEl);
+  if (val && !EMAIL_RE.test(val)) showErr('err-email', 'Введіть коректний email.', emailEl);
 });
 nameEl.addEventListener('input', () => clearErr('err-name', nameEl));
 phoneEl.addEventListener('input', () => clearErr('err-phone', phoneEl));
@@ -946,7 +956,7 @@ form.addEventListener('submit', async (e) => {
 
   submitting = true;
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Wysyłanie...';
+  submitBtn.textContent = 'Надсилання...';
   let done = false;
 
   try {
@@ -966,15 +976,15 @@ form.addEventListener('submit', async (e) => {
     try { data = await r.json(); } catch (_) {}
 
     if (r.status === 409) {
-      showAlert((data && data.error) || 'Ta godzina właśnie się zajęła. Wybierz inną.');
+      showAlert((data && data.error) || 'Цю годину щойно зайняли. Оберіть іншу.');
       await loadSlots();
       slotsArea.insertAdjacentHTML('afterbegin',
-        '<p class="slots-empty" role="status">Ta godzina właśnie się zajęła. Wybierz inną z odświeżonej listy.</p>');
+        '<p class="slots-empty" role="status">Цю годину щойно зайняли. Оберіть іншу з оновленого списку.</p>');
       document.getElementById('t-termin').scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
     if (!r.ok) {
-      showAlert((data && data.error) || 'Nie udało się umówić, spróbuj ponownie.');
+      showAlert((data && data.error) || 'Не вдалося записатися, спробуйте ще раз.');
       return;
     }
     done = true;
@@ -982,9 +992,9 @@ form.addEventListener('submit', async (e) => {
     trackBookingSuccess({ service: v.service, bike: v.bike });
   } catch (err) {
     showAlertHTML(
-      'Błąd połączenia. Rezerwacja mogła mimo to dojść, więc nie wysyłaj jej od razu drugi raz. ' +
-      'Napisz na <a href="' + WA_LINK + '" target="_blank" rel="noopener">WhatsApp</a> ' +
-      'albo zadzwoń: <a href="tel:+48600370810">600 370 810</a>, żeby sprawdzić, czy zgłoszenie doszło.'
+      'Помилка з\'єднання. Заявка могла все ж дійти, тому не надсилайте її одразу вдруге. ' +
+      'Напишіть у <a href="' + WA_LINK + '" target="_blank" rel="noopener">WhatsApp</a> ' +
+      'або зателефонуйте: <a href="tel:+48600370810">600 370 810</a>, щоб перевірити, чи дійшла заявка.'
     );
   } finally {
     submitting = false;
@@ -1019,17 +1029,17 @@ function showSuccess({ id, date, slot, service, bike, name, phone }) {
       <div class="check" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.5 5.5L20 6.5"/></svg>
       </div>
-      <h2>Zgłoszenie przyjęte</h2>
-      <p>Dzięki, ${escapeHtml(name)}. Potwierdzę termin telefonicznie albo SMS-em na <strong>${escapeHtml(phone)}</strong>, zwykle tego samego dnia.</p>
+      <h2>Заявку прийнято</h2>
+      <p>Дякуємо, ${escapeHtml(name)}. Термін підтвердимо телефоном або SMS на <strong>${escapeHtml(phone)}</strong>, зазвичай того ж дня.</p>
       <div class="success-meta">
-        <div><strong>Termin:</strong> <span class="val-mono">${escapeHtml(formatDatePl(date))}, godz. ${escapeHtml(slot)}</span></div>
-        <div><strong>Usługa:</strong> ${escapeHtml(serviceName + servicePrice)}</div>
-        <div><strong>Rower:</strong> ${escapeHtml(bike)}</div>
-        <div><strong>${service === 'odbior' ? 'Odbiór roweru' : 'Adres'}:</strong> ${service === 'odbior' ? 'pod adresem podanym w notatce' : 'Jesionowa 18, Grodzisk Mazowiecki'}</div>
-        ${idShort ? `<div><strong>Zgłoszenie:</strong> <span class="val-mono">${escapeHtml(idShort)}</span></div>` : ''}
+        <div><strong>Термін:</strong> <span class="val-mono">${escapeHtml(formatDatePl(date))}, ${escapeHtml(slot)}</span></div>
+        <div><strong>Послуга:</strong> ${escapeHtml(serviceName + servicePrice)}</div>
+        <div><strong>Велосипед:</strong> ${escapeHtml(bikeLabel(bike))}</div>
+        <div><strong>${service === 'odbior' ? 'Забір велосипеда' : 'Адреса'}:</strong> ${service === 'odbior' ? 'за адресою, вказаною в нотатці' : 'Jesionowa 18, Grodzisk Mazowiecki'}</div>
+        ${idShort ? `<div><strong>Заявка:</strong> <span class="val-mono">${escapeHtml(idShort)}</span></div>` : ''}
       </div>
-      <p>Brak potwierdzenia do jutra? Napisz na <a href="${WA_LINK}" target="_blank" rel="noopener">WhatsApp</a> albo zadzwoń: <a href="tel:+48600370810">600 370 810</a>.</p>
-      <p><a class="back-link" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Wróć na stronę</a></p>
+      <p>Немає підтвердження до завтра? Напишіть у <a href="${WA_LINK}" target="_blank" rel="noopener">WhatsApp</a> або зателефонуйте: <a href="tel:+48600370810">600 370 810</a>.</p>
+      <p><a class="back-link" href="/uk/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Повернутися на головну</a></p>
     </div>
   `;
   window.scrollTo({ top: 0, behavior: 'smooth' });
