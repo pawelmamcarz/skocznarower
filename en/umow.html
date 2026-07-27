@@ -521,6 +521,7 @@
     }
     footer a { color: var(--accent); text-decoration: none; }
   </style>
+  <script src="/turnstile.js" defer></script>
 </head>
 <body>
 
@@ -670,6 +671,27 @@ function bikeLabel(value) {
 }
 
 const $ = sel => document.querySelector(sel);
+
+function captureAttribution(language) {
+  const params = new URLSearchParams(window.location.search);
+  const bounded = (value, max) => {
+    const cleaned = String(value || '').trim().replace(/[\u0000-\u001f\u007f]/g, '').slice(0, max);
+    return cleaned || null;
+  };
+  let referrerHost = null;
+  try { referrerHost = document.referrer ? new URL(document.referrer).hostname : null; } catch (_) {}
+  return {
+    landing_path: bounded(window.location.pathname, 200),
+    landing_language: language,
+    utm_source: bounded(params.get('utm_source'), 100),
+    utm_medium: bounded(params.get('utm_medium'), 100),
+    utm_campaign: bounded(params.get('utm_campaign'), 100),
+    utm_content: bounded(params.get('utm_content'), 100),
+    utm_term: bounded(params.get('utm_term'), 100),
+    referrer_host: bounded(referrerHost, 253),
+  };
+}
+const ATTRIBUTION = captureAttribution('en');
 
 // ─── Render checklist ───────────────────────────────────────
 function renderChoices(containerId, options, fieldName) {
@@ -967,6 +989,8 @@ form.addEventListener('submit', async (e) => {
         customer_email: v.email || null,
         notes: v.notes || null,
         consent: v.consent,
+        turnstile_token: form.querySelector('[name="cf-turnstile-response"]')?.value || undefined,
+        ...ATTRIBUTION,
       }),
     });
     let data = null;

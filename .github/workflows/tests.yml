@@ -1,0 +1,29 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  worker-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install test dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run Worker integration tests
+        run: npm test

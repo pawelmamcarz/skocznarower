@@ -46,6 +46,16 @@ const SCHEDULE = {
 // To NIE jest OWNER_PHONE: SMS o nowej rezerwacji do właściciela idzie osobno (patrz sendNotifications), mimo że oba stałe dziś mają tę samą wartość domyślną.
 const PUBLIC_PHONE_DISPLAY = '600 370 810';
 
+function bookingConfirmedSms(b) {
+  const firstName = (b.customer_name || '').split(' ')[0];
+  return `Cześć ${firstName}! Potwierdzamy wizytę w skocznarower.pl: ${b.date} o ${b.time_slot}, Jesionowa 18 w Grodzisku Maz. Jeśli termin przestanie pasować, zadzwoń pod ${PUBLIC_PHONE_DISPLAY}.`;
+}
+
+function bookingCancelledSms(b) {
+  const firstName = (b.customer_name || '').split(' ')[0];
+  return `Cześć ${firstName}. Termin ${b.date} o ${b.time_slot} w skocznarower.pl został anulowany. Nowy termin wybierzesz na skocznarower.pl/umow albo telefonicznie: ${PUBLIC_PHONE_DISPLAY}.`;
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -61,6 +71,9 @@ export default {
         return await handleAdmin(request, env, url);
       }
       if (url.pathname === '/r') return await handleQuickAction(request, env, url);
+      if (url.pathname === '/warsztaty/potwierdz') {
+        return await handleWorkshopTrialResponse(request, env, url);
+      }
     } catch (e) {
       console.error('Worker error', e);
       return json({ error: 'Server error' }, 500);
@@ -81,6 +94,9 @@ export default {
   },
   async scheduled(event, env, ctx) {
     ctx.waitUntil((async () => {
+      try { await processNotificationOutbox(env); }
+      catch (e) { console.error('notification outbox error', e); }
+      if (event.cron !== '0 8 * * *') return;
       try { await sendDailyReminders(env); }
       catch (e) { console.error('reminders error', e); }
       try { await sendFollowUps(env); }
@@ -91,11 +107,151 @@ export default {
       catch (e) { console.error('seasonal reminders error', e); }
       try { await fetchGoogleReviews(env); }
       catch (e) { console.error('google reviews error', e); }
+      try {
+        await env.DB.prepare('DELETE FROM request_rate_limits WHERE updated_at < ?1')
+          .bind(Date.now() - 2 * 24 * 3600_000).run();
+      } catch (e) { console.error('rate-limit cleanup error', e); }
     })());
   },
 };
 
 // ─── API ────────────────────────────────────────────────────────────────────
+
+const MAX_PUBLIC_JSON_BYTES = 16 * 1024;
+const CONSENT_VERSION = '2026-07-26';
+const PUBLIC_POST_LIMITS = {
+  '/api/bookings': { limit: 8, windowMs: 10 * 60_000 },
+  '/api/warsztaty': { limit: 8, windowMs: 10 * 60_000 },
+  '/api/reminders': { limit: 5, windowMs: 60 * 60_000 },
+};
+
+async function consumeRateLimit(request, env, endpoint, limit, windowMs) {
+  const ip = request.headers.get('CF-Connecting-IP');
+  const secret = env.RATE_LIMIT_SECRET || env.SESSION_SECRET || env.ADMIN_PASSWORD;
+  if (!secret) {
+    console.error('Rate limit unavailable: configure RATE_LIMIT_SECRET, SESSION_SECRET or ADMIN_PASSWORD');
+    return false;
+  }
+  if (!ip) return true;
+  const now = Date.now();
+  const windowStart = Math.floor(now / windowMs) * windowMs;
+  const keyHash = await hmacHex(secret, endpoint + ':' + ip);
+  const row = await env.DB.prepare(
+    `INSERT INTO request_rate_limits (key_hash, endpoint, window_start, count, updated_at)
+     VALUES (?1, ?2, ?3, 1, ?4)
+     ON CONFLICT(key_hash, endpoint, window_start) DO UPDATE SET
+       count = request_rate_limits.count + 1,
+       updated_at = excluded.updated_at
+     RETURNING count`
+  ).bind(keyHash, endpoint, windowStart, now).first();
+  return Number(row?.count || 0) <= limit;
+}
+
+async function readJsonRequest(request, maxBytes = MAX_PUBLIC_JSON_BYTES) {
+  const declared = Number(request.headers.get('Content-Length'));
+  if (Number.isFinite(declared) && declared > maxBytes) {
+    return { error: 'Request too large', status: 413 };
+  }
+
+  const reader = request.body?.getReader();
+  if (!reader) return { error: 'Bad JSON', status: 400 };
+  const chunks = [];
+  let size = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > maxBytes) {
+      await reader.cancel();
+      return { error: 'Request too large', status: 413 };
+    }
+    chunks.push(value);
+  }
+
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  try {
+    return { body: JSON.parse(new TextDecoder().decode(bytes)) };
+  } catch {
+    return { error: 'Bad JSON', status: 400 };
+  }
+}
+
+function turnstileSettings(env) {
+  const siteKey = String(env.TURNSTILE_SITE_KEY || '').trim();
+  const secretKey = String(env.TURNSTILE_SECRET_KEY || '').trim();
+  return {
+    enabled: Boolean(siteKey && secretKey),
+    siteKey,
+    secretKey,
+  };
+}
+
+async function verifyTurnstile(request, env, rawToken, expectedAction) {
+  const settings = turnstileSettings(env);
+  if (!settings.enabled) {
+    if (settings.siteKey || settings.secretKey) {
+      console.warn('Turnstile rejected: both site and secret keys are required');
+      return false;
+    }
+    return true;
+  }
+
+  const token = String(rawToken || '').trim();
+  if (!token || token.length > 2048) return false;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+  try {
+    const remoteIp = request.headers.get('CF-Connecting-IP');
+    const payload = {
+      secret: settings.secretKey,
+      response: token,
+      idempotency_key: crypto.randomUUID(),
+    };
+    if (remoteIp) payload.remoteip = remoteIp;
+
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      console.warn('Turnstile siteverify HTTP error', response.status);
+      return false;
+    }
+
+    const result = await response.json();
+    const expectedHostname = new URL(request.url).hostname.toLowerCase();
+    const verified = result?.success === true
+      && result.action === expectedAction
+      && String(result.hostname || '').toLowerCase() === expectedHostname;
+    if (!verified) {
+      console.warn('Turnstile verification rejected', {
+        action: result?.action || null,
+        hostname: result?.hostname || null,
+        errorCodes: Array.isArray(result?.['error-codes']) ? result['error-codes'] : [],
+      });
+    }
+    return verified;
+  } catch (error) {
+    console.warn('Turnstile verification unavailable', error?.name || 'unknown');
+    return false;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+function turnstileRejected() {
+  return json({
+    error: 'Nie udało się potwierdzić kontroli bezpieczeństwa. Odśwież stronę i spróbuj ponownie.',
+  }, 400);
+}
 
 async function handleApi(request, env, url, ctx) {
   // Kanał głosowy (agent AI dzwoniący na numer wirtualny) woła Worker server-to-server.
@@ -142,17 +298,34 @@ async function handleApi(request, env, url, ctx) {
     return json({ error: 'Not found' }, 404);
   }
 
+  const publicLimit = request.method === 'POST' ? PUBLIC_POST_LIMITS[url.pathname] : null;
+  if (publicLimit && !await consumeRateLimit(
+    request, env, url.pathname, publicLimit.limit, publicLimit.windowMs,
+  )) {
+    return json({ error: 'Za dużo prób. Spróbuj ponownie później.' }, 429);
+  }
+
   if (url.pathname === '/api/availability' && request.method === 'GET') {
     return await apiAvailability(env, url.searchParams.get('date'));
   }
   if (url.pathname === '/api/next-slot' && request.method === 'GET') {
     return await apiNextSlot(env);
   }
+  if (url.pathname === '/api/security-config' && request.method === 'GET') {
+    const settings = turnstileSettings(env);
+    return json({ turnstile_site_key: settings.enabled ? settings.siteKey : null });
+  }
   if (url.pathname === '/api/bookings' && request.method === 'POST') {
     return await apiCreateBooking(request, env, ctx);
   }
   if (url.pathname === '/api/reminders' && request.method === 'POST') {
     return await apiSeasonalReminder(request, env);
+  }
+  if (url.pathname === '/api/reminders/unsubscribe' && request.method === 'GET') {
+    return seasonalUnsubscribePage(url.searchParams.get('t'));
+  }
+  if (url.pathname === '/api/reminders/unsubscribe' && request.method === 'POST') {
+    return await apiSeasonalUnsubscribe(request, env);
   }
   if (url.pathname === '/api/warsztaty' && request.method === 'POST') {
     return await apiWorkshopSignup(request, env);
@@ -171,6 +344,29 @@ async function handleApi(request, env, url, ctx) {
 
 const WORKSHOP_LEVELS = ['start', 'progress', 'air', 'nie-wiem'];
 const WORKSHOP_LOCATIONS = ['grodzisk', 'milanowek', 'obojetnie'];
+const WORKSHOP_SOURCES = ['fb', 'szkola', 'serwis', 'instagram', 'google', 'znajomy', 'voucher', 'inne'];
+const LANDING_LANGUAGES = ['pl', 'en', 'ua'];
+
+function cleanAttributionText(value, maxLength) {
+  const text = String(value || '').replace(/[\u0000-\u001f\u007f]/g, '').trim();
+  return text ? text.slice(0, maxLength) : null;
+}
+
+function normalizeAttribution(body, source = null) {
+  const path = cleanAttributionText(body?.landing_path, 200);
+  const referrer = cleanAttributionText(body?.referrer_host, 253)?.toLowerCase() || null;
+  return {
+    source,
+    landing_path: path?.startsWith('/') && !/[?#]/.test(path) ? path : null,
+    landing_language: LANDING_LANGUAGES.includes(body?.landing_language) ? body.landing_language : null,
+    utm_source: cleanAttributionText(body?.utm_source, 100),
+    utm_medium: cleanAttributionText(body?.utm_medium, 100),
+    utm_campaign: cleanAttributionText(body?.utm_campaign, 100),
+    utm_content: cleanAttributionText(body?.utm_content, 100),
+    utm_term: cleanAttributionText(body?.utm_term, 100),
+    referrer_host: referrer && /^[a-z0-9.-]+$/i.test(referrer) ? referrer : null,
+  };
+}
 
 function validateWorkshopSignup(b) {
   const e = [];
@@ -182,23 +378,33 @@ function validateWorkshopSignup(b) {
   if (!Number.isInteger(age) || age < 7 || age > 17) e.push('Wiek dziecka: 7-17 lat');
   if (!WORKSHOP_LEVELS.includes(b?.level)) e.push('Wybierz poziom');
   if (!WORKSHOP_LOCATIONS.includes(b?.location)) e.push('Wybierz lokalizację');
+  if (b?.source && !WORKSHOP_SOURCES.includes(b.source)) e.push('Nieprawidłowe źródło');
   if (b?.notes && b.notes.length > 500) e.push('Uwagi za długie');
   if (b?.consent !== true) e.push('Potrzebna zgoda na kontakt');
   return e;
 }
 
 async function apiWorkshopSignup(request, env) {
-  let body;
-  try { body = await request.json(); }
-  catch { return json({ error: 'Bad JSON' }, 400); }
+  const parsed = await readJsonRequest(request);
+  if (parsed.error) return json({ error: parsed.error }, parsed.status);
+  const body = parsed.body;
 
   // Honeypot: pole "website" jest ukryte w formularzu, wypełniają je tylko boty.
   // Odpowiadamy sukcesem bez zapisu, żeby bot nie uczył się na odpowiedziach.
   if (body?.website) return json({ ok: true, message: 'Zgłoszenie przyjęte.' });
 
+  if (!await verifyTurnstile(request, env, body?.turnstile_token, 'workshop')) {
+    return turnstileRejected();
+  }
+
   const errors = validateWorkshopSignup(body);
   if (errors.length) return json({ error: errors[0] }, 400);
 
+  const now = Date.now();
+  const attribution = normalizeAttribution(
+    body,
+    WORKSHOP_SOURCES.includes(body.source) ? body.source : null,
+  );
   const row = {
     id: crypto.randomUUID(),
     parent_name: body.parent_name.trim(),
@@ -208,13 +414,25 @@ async function apiWorkshopSignup(request, env) {
     level: body.level,
     location: body.location,
     notes: (body.notes || '').trim() || null,
+    ...attribution,
   };
 
   try {
     await env.DB.prepare(
-      `INSERT INTO workshop_signups (id, parent_name, phone, email, child_age, level, location, notes, created_at)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`
-    ).bind(row.id, row.parent_name, row.phone, row.email, row.child_age, row.level, row.location, row.notes, Date.now()).run();
+      `INSERT INTO workshop_signups (
+         id, parent_name, phone, email, child_age, level, location, notes, created_at,
+         source, landing_path, landing_language, utm_source, utm_medium, utm_campaign,
+         utm_content, utm_term, referrer_host, updated_at, consent_at, consent_version
+       ) VALUES (
+         ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9,
+         ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21
+       )`
+    ).bind(
+      row.id, row.parent_name, row.phone, row.email, row.child_age, row.level,
+      row.location, row.notes, now, row.source, row.landing_path, row.landing_language,
+      row.utm_source, row.utm_medium, row.utm_campaign, row.utm_content, row.utm_term,
+      row.referrer_host, now, now, CONSENT_VERSION,
+    ).run();
   } catch (e) {
     console.error('workshop signup insert error', e);
     return json({ error: 'Błąd zapisu, spróbuj ponownie albo napisz na WhatsApp' }, 500);
@@ -223,20 +441,25 @@ async function apiWorkshopSignup(request, env) {
   // Powiadomienia właściciela: oba fail-soft, zgłoszenie jest już zapisane w D1.
   // SMS bez polskich znaków, żeby liczyć się jako tańszy GSM-7.
   try {
-    await sendSms(
-      env,
-      env.OWNER_PHONE || '600370810',
-      `Nowy zapis na warsztaty: ${row.parent_name}, tel ${row.phone}, dziecko ${row.child_age} lat, poziom ${row.level}, ${row.location}.`,
-    );
+    await queueSmsNotification(env, {
+      entityType: 'workshop_signup',
+      entityId: row.id,
+      eventKey: 'owner_new_signup',
+      recipient: env.OWNER_PHONE || '600370810',
+      body: `Nowy zapis na warsztaty: ${row.parent_name}, tel ${row.phone}, dziecko ${row.child_age} lat, poziom ${row.level}, ${row.location}.`,
+    });
   } catch (e) { console.error('SMS o zapisie na warsztaty error', e); }
 
   if (env.RESEND_API_KEY && env.NOTIFY_EMAIL) {
     try {
-      await resendSend(env.RESEND_API_KEY, {
-        from: env.FROM_EMAIL || 'rezerwacje@skocznarower.pl',
-        to: env.NOTIFY_EMAIL,
-        subject: `Nowy zapis na warsztaty: ${row.parent_name}, dziecko ${row.child_age} lat`,
-        text:
+      await queueEmailNotification(env, {
+        entityType: 'workshop_signup', entityId: row.id, eventKey: 'owner_new_signup',
+        recipient: env.NOTIFY_EMAIL,
+        body: {
+          from: env.FROM_EMAIL || 'rezerwacje@skocznarower.pl',
+          to: env.NOTIFY_EMAIL,
+          subject: `Nowy zapis na warsztaty: ${row.parent_name}, dziecko ${row.child_age} lat`,
+          text:
 `Nowe zgłoszenie na warsztaty dirt/slopestyle (formularz /warsztaty)
 
 Rodzic:      ${row.parent_name}
@@ -244,17 +467,19 @@ Telefon:     ${row.phone}
 ${row.email ? 'Email:       ' + row.email + '\n' : ''}Wiek dziecka: ${row.child_age} lat
 Poziom:      ${row.level}
 Lokalizacja: ${row.location}
+Źródło:       ${row.source || row.utm_source || row.referrer_host || 'brak'}
 Uwagi:       ${row.notes || 'brak'}
 
 ID: ${row.id}
 `,
+        },
       });
     } catch (e) { console.error('Mail o zapisie na warsztaty error', e); }
   }
 
   return json({
     ok: true,
-    message: 'Zgłoszenie przyjęte. Odezwiemy się, żeby dobrać grupę i potwierdzić termin zajęć próbnych.',
+    message: 'Dziękujemy za zainteresowanie. Odezwiemy się, gdy będziemy mogli zaproponować grupę i termin zajęć próbnych.',
   });
 }
 
@@ -413,16 +638,31 @@ function normalizeEmail(raw) {
 // Dopisuje email do listy przypomnień sezonowych (idempotentnie, INSERT OR IGNORE,
 // bo email jest unikalny). Zwraca true gdy dodano nowy wiersz, false gdy już był.
 async function addSeasonalReminder(env, email) {
-  const res = await env.DB.prepare(
-    'INSERT OR IGNORE INTO seasonal_reminders (id, email, signed_up_at) VALUES (?1, ?2, ?3)'
-  ).bind(crypto.randomUUID(), email, Date.now()).run();
-  return (res.meta?.changes || 0) > 0;
+  const existing = await env.DB.prepare(
+    'SELECT id FROM seasonal_reminders WHERE email = ?1'
+  ).bind(email).first();
+  const now = Date.now();
+  await env.DB.prepare(
+    `INSERT INTO seasonal_reminders (
+       id, email, signed_up_at, consent_at, consent_version, unsubscribe_token
+     ) VALUES (?1, ?2, ?3, ?3, ?4, ?5)
+     ON CONFLICT(email) DO UPDATE SET
+       consent_at = excluded.consent_at,
+       consent_version = excluded.consent_version,
+       unsubscribe_token = COALESCE(seasonal_reminders.unsubscribe_token, excluded.unsubscribe_token),
+       unsubscribed_at = NULL`
+  ).bind(crypto.randomUUID(), email, now, CONSENT_VERSION, crypto.randomUUID()).run();
+  return !existing;
 }
 
 async function apiSeasonalReminder(request, env) {
-  let body;
-  try { body = await request.json(); }
-  catch { return json({ error: 'Bad JSON' }, 400); }
+  const parsed = await readJsonRequest(request);
+  if (parsed.error) return json({ error: parsed.error }, parsed.status);
+  const body = parsed.body;
+
+  if (!await verifyTurnstile(request, env, body?.turnstile_token, 'reminder')) {
+    return turnstileRejected();
+  }
 
   const email = normalizeEmail(body?.email);
   if (!email) return json({ error: 'Nieprawidłowy email' }, 400);
@@ -439,6 +679,77 @@ async function apiSeasonalReminder(request, env) {
     console.error('seasonal insert error', e);
     return json({ error: 'Błąd zapisu' }, 500);
   }
+}
+
+function validUnsubscribeToken(raw) {
+  const token = String(raw || '').trim();
+  return /^[a-z0-9-]{20,100}$/i.test(token) ? token : null;
+}
+
+function seasonalUnsubscribePage(rawToken, result = '') {
+  const token = validUnsubscribeToken(rawToken);
+  const title = result === 'done' ? 'Wypisano z przypomnień' : 'Wypisz się z przypomnień';
+  const content = result === 'done'
+    ? '<p>Adres został wypisany. Nie wyślemy kolejnego sezonowego przypomnienia.</p>'
+    : token
+      ? `<p>Potwierdź rezygnację z sezonowych przypomnień e-mail.</p>
+         <form method="post" action="/api/reminders/unsubscribe">
+           <input type="hidden" name="token" value="${esc(token)}">
+           <button type="submit">Wypisz mnie</button>
+         </form>`
+      : '<p>Link jest nieprawidłowy albo niekompletny.</p>';
+  return new Response(`<!doctype html><html lang="pl"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+    <title>${esc(title)} · skocznarower.pl</title><style>
+    body{font-family:system-ui,-apple-system,sans-serif;max-width:34rem;margin:3rem auto;padding:0 1rem;line-height:1.6;color:#171717}
+    button{border:0;border-radius:.4rem;background:#171717;color:#fff;padding:.8rem 1.2rem;font:inherit;cursor:pointer}
+    a{color:#355f00}</style></head><body><h1>${esc(title)}</h1>${content}
+    <p><a href="/">Wróć na stronę główną</a></p></body></html>`, {
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'Referrer-Policy': 'no-referrer',
+      'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+    },
+  });
+}
+
+async function apiSeasonalUnsubscribe(request, env) {
+  const declared = Number(request.headers.get('Content-Length'));
+  if (Number.isFinite(declared) && declared > 2048) return new Response('Too large', { status: 413 });
+  const form = await request.formData();
+  const token = validUnsubscribeToken(form.get('token'));
+  if (!token) return seasonalUnsubscribePage(null);
+  const now = Date.now();
+  await env.DB.batch([
+    env.DB.prepare(
+      `UPDATE seasonal_reminders
+       SET unsubscribed_at = ?1
+       WHERE unsubscribe_token = ?2 AND unsubscribed_at IS NULL`
+    ).bind(now, token),
+    env.DB.prepare(
+      `UPDATE notification_outbox SET status='cancelled', updated_at=?1,
+         last_error='Recipient unsubscribed from seasonal reminders'
+       WHERE entity_type='seasonal_reminder'
+         AND entity_id IN (
+           SELECT id FROM seasonal_reminders WHERE unsubscribe_token=?2
+         )
+         AND status IN ('pending','failed')`
+    ).bind(now, token),
+    env.DB.prepare(
+      `UPDATE notification_outbox SET status='uncertain', updated_at=?1,
+         last_error='Recipient unsubscribed while delivery was in progress; provider outcome unknown'
+       WHERE entity_type='seasonal_reminder'
+         AND entity_id IN (
+           SELECT id FROM seasonal_reminders WHERE unsubscribe_token=?2
+         )
+         AND status='sending'`
+    ).bind(now, token),
+  ]);
+  // Idempotentna odpowiedź nie ujawnia, czy token istniał w bazie.
+  return seasonalUnsubscribePage(token, 'done');
 }
 
 // Wczytuje zajęte i zablokowane sloty z zakresu dat do Setów (klucze "YYYY-MM-DD HH:MM").
@@ -504,11 +815,16 @@ async function apiNextSlot(env) {
 }
 
 async function apiCreateBooking(request, env, ctx) {
-  let body;
-  try { body = await request.json(); }
-  catch { return json({ error: 'Bad JSON' }, 400); }
+  const parsed = await readJsonRequest(request);
+  if (parsed.error) return json({ error: parsed.error }, parsed.status);
+  const body = parsed.body;
 
-  const res = await createBookingCore(env, ctx, body);
+  if (!await verifyTurnstile(request, env, body?.turnstile_token, 'booking')) {
+    return turnstileRejected();
+  }
+
+  // Źródło jest nadawane po stronie serwera, więc klient nie może go podszyć.
+  const res = await createBookingCore(env, ctx, { ...body, source: 'web' });
   if (!res.ok) return json({ error: res.error }, res.status);
   return json({
     ok: true,
@@ -552,18 +868,30 @@ async function createBookingCore(env, ctx, body) {
 
   const id = crypto.randomUUID();
   const now = Date.now();
+  const attribution = normalizeAttribution(
+    body,
+    body.source === 'voice' ? 'voice' : 'web',
+  );
 
   try {
     await env.DB.prepare(
       `INSERT INTO bookings (id, created_at, date, time_slot, service_type, bike_type,
-         customer_name, customer_phone, customer_email, notes, status)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'pending')`
+         customer_name, customer_phone, customer_email, notes, status,
+         source, landing_path, landing_language, utm_source, utm_medium, utm_campaign,
+         utm_content, utm_term, referrer_host)
+       VALUES (
+         ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'pending',
+         ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19
+       )`
     ).bind(
       id, now, body.date, body.time_slot,
       body.service_type, body.bike_type,
       body.customer_name.trim(), normalizePhone(body.customer_phone),
       body.customer_email?.trim() || null,
       body.notes?.trim() || null,
+      attribution.source, attribution.landing_path, attribution.landing_language,
+      attribution.utm_source, attribution.utm_medium, attribution.utm_campaign,
+      attribution.utm_content, attribution.utm_term, attribution.referrer_host,
     ).run();
   } catch (e) {
     // Unikalny indeks idx_bookings_active_slot łapie wyścig dwóch równoległych rezerwacji.
@@ -626,15 +954,20 @@ function apiVoiceConfig() {
 // identyczna walidacja, kontrola kolizji (+ unikalny indeks) i powiadomienia (SMS + mail
 // do właściciela). Rezerwacja zostaje 'pending', kalendarz dopiero po potwierdzeniu w /admin.
 async function apiVoiceCreateBooking(request, env, ctx) {
-  let body;
-  try { body = await request.json(); }
-  catch { return json({ error: 'Bad JSON' }, 400); }
+  const parsed = await readJsonRequest(request);
+  if (parsed.error) return json({ error: parsed.error }, parsed.status);
+  const body = parsed.body;
 
   // Oznacz źródło telefoniczne w notatce, żeby rezerwacje z agenta były rozpoznawalne w /admin.
   const baseNote = (body.notes && String(body.notes).trim()) || '';
   const notes = baseNote ? `[tel] ${baseNote}` : '[tel] rezerwacja telefoniczna (agent)';
 
-  const res = await createBookingCore(env, ctx, { ...body, notes });
+  const res = await createBookingCore(env, ctx, {
+    ...body,
+    notes,
+    source: 'voice',
+    landing_language: 'pl',
+  });
   if (!res.ok) return json({ error: res.error }, res.status);
 
   const service = SERVICES.find(s => s.id === body.service_type)?.name || body.service_type;
@@ -676,11 +1009,13 @@ async function sendNotifications(env, b) {
   try {
     const link = await bookingActionLink(env, b.id);
     const tail = link ? `Potwierdz/odrzuc: ${link}` : 'Panel: skocznarower.pl/admin';
-    await sendSms(
-      env,
-      env.OWNER_PHONE || '600370810',
-      `Nowa rezerwacja: ${b.date} ${b.time_slot}, ${b.customer_name}, tel ${b.customer_phone}. ${tail}`,
-    );
+    await queueSmsNotification(env, {
+      entityType: 'booking',
+      entityId: b.id,
+      eventKey: 'owner_new_booking',
+      recipient: env.OWNER_PHONE || '600370810',
+      body: `Nowa rezerwacja: ${b.date} ${b.time_slot}, ${b.customer_name}, tel ${b.customer_phone}. ${tail}`,
+    });
   } catch (e) { console.error('SMS do właściciela error', e); }
 
   // Potwierdzenie do klienta przez WhatsApp (szablon utility), fail-soft.
@@ -688,7 +1023,12 @@ async function sendNotifications(env, b) {
   if (env.WHATSAPP_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID) {
     try {
       const firstName = (b.customer_name || '').split(' ')[0] || b.customer_name;
-      await sendWhatsApp(env, b.customer_phone, {
+      await queueWhatsAppNotification(env, {
+        entityType: 'booking',
+        entityId: b.id,
+        eventKey: 'customer_new_booking',
+        recipient: b.customer_phone,
+        body: {
         type: 'template',
         template: {
           name: env.WHATSAPP_TPL_CONFIRM || 'potwierdzenie_rezerwacji',
@@ -702,6 +1042,7 @@ async function sendNotifications(env, b) {
               { type: 'text', text: service },
             ],
           }],
+        },
         },
       });
     } catch (e) { console.error('WA potwierdzenie error', e); }
@@ -718,11 +1059,14 @@ async function sendNotifications(env, b) {
   // do właściciela, w osobnym try/catch żeby błąd nie zablokował maila do klienta
   if (env.NOTIFY_EMAIL) {
     try {
-    await resendSend(env.RESEND_API_KEY, {
-      from,
-      to: env.NOTIFY_EMAIL,
-      subject: `Nowa rezerwacja: ${b.date} ${b.time_slot}, ${b.customer_name}`,
-      text:
+    await queueEmailNotification(env, {
+      entityType: 'booking', entityId: b.id, eventKey: 'owner_new_booking',
+      recipient: env.NOTIFY_EMAIL,
+      body: {
+        from,
+        to: env.NOTIFY_EMAIL,
+        subject: `Nowa rezerwacja: ${b.date} ${b.time_slot}, ${b.customer_name}`,
+        text:
 `Nowa rezerwacja w skocznarower.pl
 
 Data:    ${b.date} ${b.time_slot}
@@ -737,6 +1081,7 @@ Notatka: ${b.notes || 'brak'}
 Panel: https://www.skocznarower.pl/admin
 ID:    ${b.id}
 `,
+      },
     });
     } catch (e) { console.error('Mail do właściciela error', e); }
   }
@@ -764,24 +1109,31 @@ Jesionowa 18, Grodzisk Mazowiecki
 `,
       };
       if (replyTo) payload.reply_to = replyTo;
-      await resendSend(env.RESEND_API_KEY, payload);
+      await queueEmailNotification(env, {
+        entityType: 'booking', entityId: b.id, eventKey: 'customer_new_booking',
+        recipient: b.customer_email, body: payload,
+      });
     } catch (e) { console.error('Mail do klienta error', e); }
   }
 }
 
-async function resendSend(apiKey, payload) {
+async function resendSend(apiKey, payload, idempotencyKey = '') {
+  const headers = {
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
+  };
+  if (idempotencyKey) headers['Idempotency-Key'] = String(idempotencyKey).slice(0, 256);
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(payload),
   });
+  const responseText = await r.text();
   if (!r.ok) {
-    const t = await r.text();
-    throw new Error(`Resend ${r.status}: ${t}`);
+    throw new Error(`Resend ${r.status}: ${responseText}`);
   }
+  try { return JSON.parse(responseText)?.id || null; }
+  catch { return null; }
 }
 
 // ─── GOOGLE CALENDAR ─────────────────────────────────────────────────────────
@@ -961,6 +1313,8 @@ async function handleQuickAction(request, env, url) {
     if (b.status === 'confirmed') return htmlPage('Już potwierdzona', summary + '<p>Ta rezerwacja jest już potwierdzona.</p>');
     if (b.status === 'cancelled') return htmlPage('Anulowana', summary + '<p>Ta rezerwacja jest już anulowana.</p>');
     if (b.status === 'done') return htmlPage('Zrealizowana', summary + '<p>Ta rezerwacja jest oznaczona jako zrealizowana.</p>');
+    if (b.status === 'in_progress') return htmlPage('W naprawie', summary + '<p>Rower jest już w naprawie. Stan zlecenia można zmienić wyłącznie w panelu.</p>');
+    if (b.status !== 'pending') return htmlPage('Stan zmieniony', summary + '<p>Ten link nie jest już aktywny. Sprawdź aktualny stan w panelu.</p>');
     return null;
   };
 
@@ -970,14 +1324,20 @@ async function handleQuickAction(request, env, url) {
     const form = await request.formData();
     const action = String(form.get('action') || '');
     if (action === 'confirm') {
-      const res = await confirmBooking(env, id);
+      const res = await confirmBooking(env, id, 'pending');
       if (res.error === 'slot') {
         return htmlPage('Slot zajęty', summary + '<p>Ten termin zajęła już inna rezerwacja.</p>');
+      }
+      if (res.error === 'state') {
+        return htmlPage('Stan zmieniony', summary + '<p>Rezerwacja została już zmieniona. Sprawdź aktualny stan w panelu.</p>');
       }
       return htmlPage('Potwierdzono ✓', summary + '<p>Rezerwacja potwierdzona, trafiła do kalendarza.</p>');
     }
     if (action === 'cancel') {
-      await cancelBooking(env, id);
+      const res = await cancelBooking(env, id, 'pending');
+      if (res.error === 'state') {
+        return htmlPage('Stan zmieniony', summary + '<p>Rezerwacja została już zmieniona. Sprawdź aktualny stan w panelu.</p>');
+      }
       return htmlPage('Odrzucono', summary + '<p>Rezerwacja odrzucona i anulowana.</p>');
     }
     return htmlPage('Błąd', '<p>Nieznana akcja.</p>');
@@ -1015,16 +1375,42 @@ function htmlPage(title, bodyHtml) {
     `<h1>${esc(title)}</h1>${bodyHtml}` +
     `<p style="margin-top:2rem"><a href="https://www.skocznarower.pl/admin">Panel /admin</a></p>` +
     `</body></html>`,
-    { headers: { 'Content-Type': 'text/html; charset=utf-8' } },
+    { headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'Referrer-Policy': 'no-referrer',
+      'Content-Security-Policy': "frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+    } },
   );
 }
 
 // ─── ADMIN ──────────────────────────────────────────────────────────────────
 
+function isSafeBrowserMutation(request) {
+  const origin = request.headers.get('Origin');
+  if (origin) {
+    try { return new URL(origin).origin === new URL(request.url).origin; }
+    catch { return false; }
+  }
+  const fetchSite = request.headers.get('Sec-Fetch-Site');
+  return !fetchSite || fetchSite === 'same-origin' || fetchSite === 'none';
+}
+
 async function handleAdmin(request, env, url) {
   const path = url.pathname;
 
+  if (request.method === 'POST' && !isSafeBrowserMutation(request)) {
+    return new Response('Forbidden', { status: 403 });
+  }
+
   if (path === '/admin/login' && request.method === 'POST') {
+    const allowed = await consumeRateLimit(request, env, 'admin_login', 10, 15 * 60_000);
+    if (!allowed) {
+      const page = loginPage('Za dużo prób logowania. Spróbuj ponownie później.');
+      return new Response(page.body, { status: 429, headers: page.headers });
+    }
     return await adminLogin(request, env);
   }
   if (path === '/admin/logout') {
@@ -1032,7 +1418,7 @@ async function handleAdmin(request, env, url) {
       status: 302,
       headers: {
         'Location': '/admin',
-        'Set-Cookie': 'admin=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0',
+        'Set-Cookie': '__Host-admin=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0',
       },
     });
   }
@@ -1045,6 +1431,18 @@ async function handleAdmin(request, env, url) {
   }
 
   if (path === '/admin' || path === '/admin/') return await adminDashboard(env, url);
+  if (path === '/admin/warsztaty' && request.method === 'GET') {
+    return await adminWorkshopSignups(env, url);
+  }
+  if (path === '/admin/warsztaty' && request.method === 'POST') {
+    return await adminUpdateWorkshopSignup(request, env);
+  }
+  if (path === '/admin/warsztaty/grupy' && request.method === 'GET') {
+    return await adminWorkshopOperations(env, url);
+  }
+  if (path === '/admin/warsztaty/grupy' && request.method === 'POST') {
+    return await adminWorkshopOperationsPost(request, env);
+  }
   if (path === '/admin/booking' && request.method === 'POST') {
     return await adminUpdateBooking(request, env);
   }
@@ -1072,7 +1470,1357 @@ async function handleAdmin(request, env, url) {
   if (path === '/admin/outreach' && request.method === 'POST') {
     return await adminUpdateOutreach(request, env);
   }
+  if (path === '/admin/outbox-retry' && request.method === 'POST') {
+    return await adminRetryOutbox(env);
+  }
+  if (path === '/admin/outbox-resolve' && request.method === 'POST') {
+    return await adminResolveOutbox(request, env);
+  }
   return new Response('Not found', { status: 404 });
+}
+
+async function adminRetryOutbox(env) {
+  const now = Date.now();
+  await env.DB.prepare(
+    `UPDATE notification_outbox SET status='pending', next_attempt_at=?1,
+       attempt_count=0, last_error=NULL, updated_at=?1 WHERE status='failed'`
+  ).bind(now).run();
+  await auditEvent(env, 'notification_outbox', 'all', 'failed_requeued');
+  return redirect('/admin?msg=outbox-retry');
+}
+
+async function adminResolveOutbox(request, env) {
+  const form = await request.formData();
+  const id = String(form.get('id') || '').trim();
+  const action = String(form.get('action') || '').trim();
+  if (!id || id.length > 100 || !['retry', 'mark_sent', 'cancel'].includes(action)) {
+    return new Response('Bad action', { status: 400 });
+  }
+  const job = await env.DB.prepare(
+    "SELECT * FROM notification_outbox WHERE id=?1 AND status='uncertain'"
+  ).bind(id).first();
+  if (!job) return redirect('/admin?err=outbox-state');
+
+  const now = Date.now();
+  let changed = 0;
+  if (action === 'retry') {
+    const result = await env.DB.prepare(
+      `UPDATE notification_outbox SET status='pending', next_attempt_at=?2, updated_at=?2,
+         last_error='Operator approved retry after uncertain outcome'
+       WHERE id=?1 AND status='uncertain'`
+    ).bind(id, now).run();
+    changed = Number(result.meta?.changes || 0);
+  } else if (action === 'mark_sent') {
+    changed = await finalizeOutboxSent(env, job, {
+      expectedStatus: 'uncertain',
+      sentAt: now,
+      attempt: Number(job.attempt_count || 0),
+      lastError: 'Operator marked uncertain outcome as sent',
+    });
+  } else {
+    const result = await env.DB.prepare(
+      `UPDATE notification_outbox SET status='cancelled', updated_at=?2,
+         last_error='Operator cancelled uncertain outcome'
+       WHERE id=?1 AND status='uncertain'`
+    ).bind(id, now).run();
+    changed = Number(result.meta?.changes || 0);
+  }
+  if (!changed) return redirect('/admin?err=outbox-state');
+  await auditEvent(env, 'notification_outbox', id, `uncertain_${action}`, {
+    entity_type: job.entity_type,
+    entity_id: job.entity_id,
+    channel: job.channel,
+  });
+  return redirect('/admin?msg=outbox-resolved');
+}
+
+const WORKSHOP_CRM_STATUSES = ['new', 'contacted', 'trial_booked', 'enrolled', 'lost'];
+const WORKSHOP_CRM_LABELS = {
+  new: 'nowe',
+  contacted: 'kontakt',
+  trial_booked: 'próbne umówione',
+  enrolled: 'zapisany',
+  lost: 'utracony',
+};
+
+const WORKSHOP_TRIAL_RESPONSES = ['accepted', 'declined', 'contact'];
+
+function workshopTrialResponseLabel(response) {
+  return {
+    accepted: 'termin pasuje',
+    declined: 'termin nie pasuje',
+    contact: 'prośba o kontakt',
+  }[response] || response;
+}
+
+async function workshopTrialToken(env, id, trialAt) {
+  const secret = sessionSecret(env);
+  if (!secret || !id || !Number.isSafeInteger(Number(trialAt))) return null;
+  return (await hmac(secret, `workshop-trial:${id}:${Number(trialAt)}`)).slice(0, 32);
+}
+
+async function workshopTrialResponseLink(request, env, signup) {
+  const token = await workshopTrialToken(env, signup?.id, signup?.trial_at);
+  if (!token) return null;
+  const url = new URL('/warsztaty/potwierdz', new URL(request.url).origin);
+  url.searchParams.set('id', signup.id);
+  url.searchParams.set('t', String(signup.trial_at));
+  url.searchParams.set('s', token);
+  return url.toString();
+}
+
+function workshopTrialLocale(language) {
+  return language === 'en' ? 'en' : language === 'ua' ? 'ua' : 'pl';
+}
+
+function workshopTrialCopy(language) {
+  const locale = workshopTrialLocale(language);
+  if (locale === 'en') return {
+    htmlLang: 'en', locale: 'en-GB', title: 'Confirm the trial session', intro: 'Proposed trial session:',
+    date: 'Date', group: 'Group', location: 'Location', unknown: 'to be confirmed',
+    accepted: 'This time works', declined: 'This time does not work', contact: 'Please contact me',
+    current: 'Your response', saved: 'Thank you. Your response has been saved.',
+    invalid: 'This link is invalid or has expired.', home: 'Back to the website',
+  };
+  if (locale === 'ua') return {
+    htmlLang: 'uk', locale: 'uk-UA', title: 'Підтвердіть пробне заняття', intro: 'Запропоноване пробне заняття:',
+    date: 'Дата', group: 'Група', location: 'Місце', unknown: 'буде підтверджено',
+    accepted: 'Час підходить', declined: 'Час не підходить', contact: 'Зв’яжіться зі мною',
+    current: 'Ваша відповідь', saved: 'Дякуємо. Вашу відповідь збережено.',
+    invalid: 'Посилання недійсне або застаріло.', home: 'Повернутися на сайт',
+  };
+  return {
+    htmlLang: 'pl', locale: 'pl-PL', title: 'Potwierdź zajęcia próbne', intro: 'Proponowane zajęcia próbne:',
+    date: 'Termin', group: 'Grupa', location: 'Miejsce', unknown: 'do potwierdzenia',
+    accepted: 'Termin pasuje', declined: 'Termin nie pasuje', contact: 'Proszę o kontakt',
+    current: 'Twoja odpowiedź', saved: 'Dziękujemy. Odpowiedź została zapisana.',
+    invalid: 'Ten link jest nieprawidłowy albo wygasł.', home: 'Wróć na stronę',
+  };
+}
+
+function workshopTrialLocation(location, copy) {
+  return {
+    grodzisk: 'Grodzisk Mazowiecki',
+    milanowek: 'Milanówek',
+  }[location] || copy.unknown;
+}
+
+function workshopTrialPage(signup, credentials = {}, result = '', status = 200) {
+  const copy = workshopTrialCopy(signup?.landing_language);
+  const responseLabels = {
+    accepted: copy.accepted,
+    declined: copy.declined,
+    contact: copy.contact,
+  };
+  const content = signup
+    ? `<p>${escapeHtml(copy.intro)}</p>
+       <dl>
+         <div><dt>${escapeHtml(copy.date)}</dt><dd>${escapeHtml(new Date(Number(signup.trial_at)).toLocaleString(copy.locale, {
+           timeZone: 'Europe/Warsaw', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
+         }))}</dd></div>
+         <div><dt>${escapeHtml(copy.group)}</dt><dd>${escapeHtml(signup.group_name || copy.unknown)}</dd></div>
+         <div><dt>${escapeHtml(copy.location)}</dt><dd>${escapeHtml(workshopTrialLocation(signup.location, copy))}</dd></div>
+       </dl>
+       ${result ? `<p class="notice">${escapeHtml(copy.saved)}</p>` : ''}
+       ${signup.trial_response ? `<p><strong>${escapeHtml(copy.current)}:</strong> ${escapeHtml(responseLabels[signup.trial_response] || signup.trial_response)}</p>` : ''}
+       <form method="post">
+         <input type="hidden" name="id" value="${escapeHtml(credentials.id || '')}">
+         <input type="hidden" name="t" value="${escapeHtml(credentials.t || '')}">
+         <input type="hidden" name="s" value="${escapeHtml(credentials.s || '')}">
+         <button name="action" value="accepted" class="ok">${escapeHtml(copy.accepted)}</button>
+         <button name="action" value="declined" class="no">${escapeHtml(copy.declined)}</button>
+         <button name="action" value="contact" class="contact">${escapeHtml(copy.contact)}</button>
+       </form>`
+    : `<p>${escapeHtml(copy.invalid)}</p>`;
+
+  return new Response(`<!doctype html><html lang="${copy.htmlLang}"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+    <title>${escapeHtml(copy.title)} · skocznarower.pl</title><style>
+    body{font-family:system-ui,-apple-system,sans-serif;max-width:36rem;margin:2.5rem auto;padding:0 1rem;line-height:1.55;color:#171717}
+    dl{border:1px solid #ddd;border-radius:.7rem;padding:.4rem 1rem}dl div{display:grid;grid-template-columns:7rem 1fr;gap:1rem;padding:.65rem 0;border-bottom:1px solid #eee}dl div:last-child{border:0}dt{color:#555}dd{margin:0;font-weight:650}
+    form{display:flex;flex-wrap:wrap;gap:.65rem;margin-top:1.4rem}button{border:0;border-radius:.55rem;padding:.8rem 1rem;color:#fff;font:inherit;font-weight:650;cursor:pointer}.ok{background:#16794a}.no{background:#b3261e}.contact{background:#4a4a4a}.notice{padding:.8rem;background:#eaf7ef;border-radius:.5rem}a{color:#355f00}
+    </style></head><body><h1>${escapeHtml(copy.title)}</h1>${content}<p><a href="/">${escapeHtml(copy.home)}</a></p></body></html>`, {
+    status,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'Referrer-Policy': 'no-referrer',
+      'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+    },
+  });
+}
+
+async function validWorkshopTrialSignup(env, rawId, rawTrialAt, rawSignature) {
+  const id = String(rawId || '').trim();
+  const trialText = String(rawTrialAt || '').trim();
+  const signature = String(rawSignature || '').trim();
+  if (!id || id.length > 100 || !/^\d{10,16}$/.test(trialText)
+    || !/^[A-Za-z0-9_-]{32}$/.test(signature)) return null;
+  const trialAt = Number(trialText);
+  if (!Number.isSafeInteger(trialAt)) return null;
+  if (Date.now() > trialAt + 48 * 60 * 60 * 1000) return null;
+  const signup = await env.DB.prepare(
+    `SELECT id, parent_name, phone, email, landing_language, trial_at, group_name,
+            location, trial_response, trial_response_at
+     FROM workshop_signups WHERE id=?1 AND trial_at=?2 AND status='trial_booked'`
+  ).bind(id, trialAt).first();
+  if (!signup) return null;
+  const expected = await workshopTrialToken(env, id, trialAt);
+  if (!expected || !timingSafeEqual(signature, expected)) return null;
+  return signup;
+}
+
+async function handleWorkshopTrialResponse(request, env, url) {
+  if (!['GET', 'POST'].includes(request.method)) {
+    return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, POST' } });
+  }
+
+  let id = url.searchParams.get('id');
+  let t = url.searchParams.get('t');
+  let s = url.searchParams.get('s');
+  let action = '';
+  if (request.method === 'POST') {
+    if (!isSafeBrowserMutation(request)) return new Response('Forbidden', { status: 403 });
+    const declared = Number(request.headers.get('Content-Length'));
+    if (Number.isFinite(declared) && declared > 2048) return new Response('Too large', { status: 413 });
+    const form = await request.formData();
+    id = form.get('id') || id;
+    t = form.get('t') || t;
+    s = form.get('s') || s;
+    action = String(form.get('action') || '').trim();
+  }
+
+  const credentials = { id: String(id || ''), t: String(t || ''), s: String(s || '') };
+  const signup = await validWorkshopTrialSignup(env, credentials.id, credentials.t, credentials.s);
+  if (!signup) return workshopTrialPage(null, {}, '', 400);
+  if (request.method === 'GET') return workshopTrialPage(signup, credentials);
+  if (!WORKSHOP_TRIAL_RESPONSES.includes(action)) return workshopTrialPage(null, {}, '', 400);
+
+  const previous = signup.trial_response;
+  const now = Date.now();
+  await env.DB.prepare(
+    `UPDATE workshop_signups SET trial_response=?2,
+       trial_response_at=CASE WHEN trial_response=?2 AND trial_response_at IS NOT NULL
+                              THEN trial_response_at ELSE ?3 END,
+       updated_at=?3 WHERE id=?1 AND trial_at=?4`
+  ).bind(signup.id, action, now, Number(signup.trial_at)).run();
+  if (previous !== action) {
+    await auditEvent(env, 'workshop_signup', signup.id, 'trial_response_recorded', {
+      response: action,
+      trial_at: Number(signup.trial_at),
+    });
+  }
+
+  const ownerText = `Odpowiedz na termin probny: ${signup.parent_name}, ${signup.phone}: ${workshopTrialResponseLabel(action)} (${warsawDateTime(signup.trial_at)}).`;
+  try {
+    await queueSmsNotification(env, {
+      entityType: 'workshop_signup', entityId: signup.id,
+      eventKey: `owner_trial_response_${signup.trial_at}_${action}`,
+      recipient: env.OWNER_PHONE || '600370810', body: ownerText,
+    });
+  } catch (error) { console.error('trial response owner notification error', error); }
+
+  return workshopTrialPage({ ...signup, trial_response: action, trial_response_at: now }, credentials, action);
+}
+
+function workshopTrialInviteContent(signup, link) {
+  const copy = workshopTrialCopy(signup.landing_language);
+  const when = new Date(Number(signup.trial_at)).toLocaleString(copy.locale, {
+    timeZone: 'Europe/Warsaw', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  });
+  if (workshopTrialLocale(signup.landing_language) === 'en') return {
+    sms: `Skocznarower.pl: proposed trial session ${when}. Confirm or ask us to contact you: ${link}`,
+    subject: 'Proposed trial session, skocznarower.pl',
+    email: `Proposed trial session: ${when}\nGroup: ${signup.group_name || copy.unknown}\nLocation: ${workshopTrialLocation(signup.location, copy)}\n\nConfirm or ask us to contact you: ${link}`,
+  };
+  if (workshopTrialLocale(signup.landing_language) === 'ua') return {
+    sms: `Skocznarower.pl: пробне заняття ${when}. Підтвердьте або попросіть зв'язатися: ${link}`,
+    subject: 'Запропоноване пробне заняття, skocznarower.pl',
+    email: `Пробне заняття: ${when}\nГрупа: ${signup.group_name || copy.unknown}\nМісце: ${workshopTrialLocation(signup.location, copy)}\n\nПідтвердьте або попросіть зв'язатися: ${link}`,
+  };
+  return {
+    sms: `Skocznarower.pl: proponowany termin zajec probnych ${when}. Potwierdz lub popros o kontakt: ${link}`,
+    subject: 'Proponowany termin zajęć próbnych, skocznarower.pl',
+    email: `Proponowane zajęcia próbne: ${when}\nGrupa: ${signup.group_name || copy.unknown}\nMiejsce: ${workshopTrialLocation(signup.location, copy)}\n\nPotwierdź termin albo poproś o kontakt: ${link}`,
+  };
+}
+
+const WORKSHOP_GROUP_STATUSES = ['active', 'paused', 'completed'];
+const WORKSHOP_GROUP_LEVELS = ['start', 'progress', 'air', 'mixed'];
+const WORKSHOP_GROUP_LOCATIONS = ['grodzisk', 'milanowek', 'inne'];
+const WORKSHOP_MEMBERSHIP_STATUSES = ['trial', 'active', 'paused', 'ended'];
+const WORKSHOP_SESSION_STATUSES = ['scheduled', 'completed', 'cancelled'];
+const WORKSHOP_ATTENDANCE_STATUSES = ['unmarked', 'present', 'absent', 'excused'];
+const WORKSHOP_PAYMENT_METHODS = ['cash', 'transfer', 'card', 'voucher', 'other'];
+const WORKSHOP_WEEKDAYS = ['niedziela', 'poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota'];
+
+function workshopGroupCapacityLimit(level) {
+  return { start: 6, progress: 5, air: 4, mixed: 6 }[level] || 0;
+}
+
+const WARSAW_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Europe/Warsaw',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+});
+
+function warsawDateTimeParts(ms) {
+  const values = {};
+  for (const part of WARSAW_DATE_TIME_FORMATTER.formatToParts(new Date(ms))) {
+    if (part.type !== 'literal') values[part.type] = part.value;
+  }
+  return values;
+}
+
+// datetime-local nie niesie strefy czasowej. Formularz panelu zawsze interpretuje je
+// jako czas Warszawy, także po zmianie czasu letniego/zimowego.
+function parseWarsawDateTimeInput(raw) {
+  const value = String(raw || '').trim();
+  if (!value) return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
+  if (!match) return undefined;
+  const [, y, mo, d, h, mi] = match;
+  const numbers = [y, mo, d, h, mi].map(Number);
+  const target = Date.UTC(numbers[0], numbers[1] - 1, numbers[2], numbers[3], numbers[4]);
+  const check = new Date(target);
+  if (check.getUTCFullYear() !== numbers[0] || check.getUTCMonth() !== numbers[1] - 1
+    || check.getUTCDate() !== numbers[2] || numbers[3] > 23 || numbers[4] > 59) {
+    return undefined;
+  }
+
+  let guess = target;
+  for (let i = 0; i < 3; i++) {
+    const parts = warsawDateTimeParts(guess);
+    const represented = Date.UTC(
+      Number(parts.year), Number(parts.month) - 1, Number(parts.day),
+      Number(parts.hour), Number(parts.minute),
+    );
+    guess += target - represented;
+  }
+  const finalParts = warsawDateTimeParts(guess);
+  const normalized = `${finalParts.year}-${finalParts.month}-${finalParts.day}T${finalParts.hour}:${finalParts.minute}`;
+  return normalized === value ? guess : undefined;
+}
+
+function workshopDateTimeInput(ms) {
+  if (ms == null || !Number.isFinite(Number(ms))) return '';
+  const p = warsawDateTimeParts(Number(ms));
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+}
+
+function workshopStatusLabel(status) {
+  return WORKSHOP_CRM_LABELS[status] || status;
+}
+
+function workshopSourceLabel(source) {
+  return {
+    fb: 'Facebook',
+    szkola: 'szkoła',
+    serwis: 'serwis',
+    instagram: 'Instagram',
+    google: 'Google',
+    znajomy: 'polecenie',
+    voucher: 'voucher',
+    inne: 'inne',
+  }[source] || source || 'brak';
+}
+
+function renderWorkshopAttribution(signup) {
+  const campaign = [signup.utm_source, signup.utm_medium, signup.utm_campaign]
+    .filter(Boolean).map(escapeHtml).join(' / ');
+  const detail = [
+    signup.utm_content ? `treść: ${escapeHtml(signup.utm_content)}` : '',
+    signup.utm_term ? `fraza: ${escapeHtml(signup.utm_term)}` : '',
+  ].filter(Boolean).join(' · ');
+  const landing = [signup.landing_language, signup.landing_path].filter(Boolean).map(escapeHtml).join(' · ');
+  return `<strong>${escapeHtml(workshopSourceLabel(signup.source))}</strong>
+    ${campaign ? `<div class="muted">UTM: ${campaign}</div>` : ''}
+    ${detail ? `<div class="muted">${detail}</div>` : ''}
+    ${signup.referrer_host ? `<div class="muted">Referrer: ${escapeHtml(signup.referrer_host)}</div>` : ''}
+    ${landing ? `<div class="muted">Landing: ${landing}</div>` : ''}`;
+}
+
+async function adminWorkshopSignups(env, url) {
+  const requestedFilter = url.searchParams.get('filter') || 'all';
+  const allowedFilters = ['all', 'due', ...WORKSHOP_CRM_STATUSES];
+  const filter = allowedFilters.includes(requestedFilter) ? requestedFilter : 'all';
+  const now = Date.now();
+
+  let where = '';
+  const params = [];
+  if (WORKSHOP_CRM_STATUSES.includes(filter)) {
+    where = 'WHERE status = ?1';
+    params.push(filter);
+  } else if (filter === 'due') {
+    where = "WHERE next_action_at IS NOT NULL AND next_action_at <= ?1 AND status NOT IN ('enrolled','lost')";
+    params.push(now);
+  }
+
+  const listQuery = env.DB.prepare(
+    `SELECT * FROM workshop_signups ${where}
+     ORDER BY CASE WHEN next_action_at IS NULL THEN 1 ELSE 0 END,
+       next_action_at ASC, created_at DESC LIMIT 500`
+  );
+  const [listResult, countsResult, dueResult, dueCountResult] = await Promise.all([
+    (params.length ? listQuery.bind(...params) : listQuery).all(),
+    env.DB.prepare(
+      'SELECT status, COUNT(*) AS count FROM workshop_signups GROUP BY status'
+    ).all(),
+    env.DB.prepare(
+      `SELECT id, parent_name, phone, next_action_at FROM workshop_signups
+       WHERE next_action_at IS NOT NULL AND next_action_at <= ?1
+         AND status NOT IN ('enrolled','lost')
+       ORDER BY next_action_at ASC LIMIT 50`
+    ).bind(now).all(),
+    env.DB.prepare(
+      `SELECT COUNT(*) AS count FROM workshop_signups
+       WHERE next_action_at IS NOT NULL AND next_action_at <= ?1
+         AND status NOT IN ('enrolled','lost')`
+    ).bind(now).first(),
+  ]);
+
+  const counts = Object.fromEntries(WORKSHOP_CRM_STATUSES.map(status => [status, 0]));
+  for (const row of countsResult.results || []) {
+    if (WORKSHOP_CRM_STATUSES.includes(row.status)) counts[row.status] = Number(row.count) || 0;
+  }
+  return adminShell('Warsztaty', renderWorkshopSignups({
+    signups: listResult.results || [],
+    due: dueResult.results || [],
+    dueCount: Number(dueCountResult?.count) || 0,
+    counts,
+    filter,
+    saved: url.searchParams.get('saved') === '1',
+    invalid: url.searchParams.get('error') === 'invalid',
+    membershipConflict: url.searchParams.get('error') === 'membership',
+  }));
+}
+
+async function adminUpdateWorkshopSignup(request, env) {
+  const form = await request.formData();
+  const id = String(form.get('id') || '').trim();
+  const status = String(form.get('status') || '').trim();
+  const requestedFilter = String(form.get('filter') || 'all');
+  const allowedFilters = ['all', 'due', ...WORKSHOP_CRM_STATUSES];
+  const filter = allowedFilters.includes(requestedFilter) ? requestedFilter : 'all';
+  const back = `/admin/warsztaty?filter=${encodeURIComponent(filter)}`;
+  if (!id || id.length > 100 || !WORKSHOP_CRM_STATUSES.includes(status)) {
+    return redirect(back + '&error=invalid');
+  }
+
+  const nextActionAt = parseWarsawDateTimeInput(form.get('next_action_at'));
+  const trialAt = parseWarsawDateTimeInput(form.get('trial_at'));
+  const groupName = String(form.get('group_name') || '').trim();
+  const assignedTo = String(form.get('assigned_to') || '').trim();
+  const ownerNotes = String(form.get('owner_notes') || '').trim();
+  if (nextActionAt === undefined || trialAt === undefined
+    || groupName.length > 120 || assignedTo.length > 120 || ownerNotes.length > 2000) {
+    return redirect(back + '&error=invalid#signup-' + encodeURIComponent(id));
+  }
+
+  const current = await env.DB.prepare(
+    `SELECT status, lost_at, enrolled_at, trial_at
+     FROM workshop_signups WHERE id = ?1`
+  ).bind(id).first();
+  if (!current) return new Response('Nie ma takiego zgłoszenia', { status: 404 });
+  if (status === 'lost') {
+    const openMembership = await env.DB.prepare(
+      `SELECT id FROM workshop_memberships
+       WHERE signup_id=?1 AND status IN ('trial','active','paused') LIMIT 1`
+    ).bind(id).first();
+    if (openMembership) {
+      return redirect(back + '&error=membership#signup-' + encodeURIComponent(id));
+    }
+  }
+
+  const now = Date.now();
+  const lostAt = status === 'lost' && current.status !== 'lost' ? now : current.lost_at;
+  const enrolledAt = status === 'enrolled' && current.status !== 'enrolled' ? now : current.enrolled_at;
+  const normalizedCurrentTrialAt = current.trial_at == null ? null : Number(current.trial_at);
+  const trialChanged = normalizedCurrentTrialAt !== trialAt;
+  const crmStatements = [env.DB.prepare(
+    `UPDATE workshop_signups SET
+       status = ?2, next_action_at = ?3, trial_at = ?4, group_name = ?5,
+       assigned_to = ?6, owner_notes = ?7, lost_at = ?8, enrolled_at = ?9,
+       updated_at = ?10,
+       trial_response = CASE WHEN ?11=1 THEN NULL ELSE trial_response END,
+       trial_response_at = CASE WHEN ?11=1 THEN NULL ELSE trial_response_at END
+     WHERE id = ?1`
+  ).bind(
+    id, status, nextActionAt, trialAt, groupName || null, assignedTo || null,
+    ownerNotes || null, lostAt, enrolledAt, now, trialChanged ? 1 : 0,
+  )];
+  if (normalizedCurrentTrialAt != null && (trialChanged || status !== 'trial_booked')) {
+    crmStatements.push(env.DB.prepare(
+      `UPDATE notification_outbox SET status='cancelled', updated_at=?3,
+         last_error='Trial date changed or invitation withdrawn'
+       WHERE entity_type='workshop_signup' AND entity_id=?1 AND event_key=?2
+         AND status IN ('pending','failed')`
+    ).bind(id, `trial_invite_${normalizedCurrentTrialAt}`, now));
+    crmStatements.push(env.DB.prepare(
+      `UPDATE notification_outbox SET status='uncertain', updated_at=?3,
+         last_error='Trial date changed while delivery was in progress; provider outcome unknown'
+       WHERE entity_type='workshop_signup' AND entity_id=?1 AND event_key=?2
+         AND status='sending'`
+    ).bind(id, `trial_invite_${normalizedCurrentTrialAt}`, now));
+  }
+  await env.DB.batch(crmStatements);
+  await auditEvent(env, 'workshop_signup', id, 'crm_updated', {
+    from_status: current.status,
+    to_status: status,
+    trial_changed: trialChanged,
+  });
+
+  if (status === 'trial_booked' && trialAt != null) {
+    const signup = await env.DB.prepare(
+      `SELECT id, parent_name, phone, email, landing_language, trial_at, group_name, location
+       FROM workshop_signups WHERE id=?1`
+    ).bind(id).first();
+    const link = await workshopTrialResponseLink(request, env, signup);
+    if (!link) {
+      console.warn('Trial invite not queued: SESSION_SECRET or ADMIN_PASSWORD is missing');
+    } else {
+      const content = workshopTrialInviteContent(signup, link);
+      try {
+        await queueSmsNotification(env, {
+          entityType: 'workshop_signup', entityId: id,
+          eventKey: `trial_invite_${trialAt}`,
+          recipient: signup.phone, body: content.sms, reactivateCancelled: true,
+        });
+      } catch (error) { console.error('trial invite SMS error', error); }
+
+      if (signup.email && env.RESEND_API_KEY) {
+        const emailBody = {
+          from: env.FROM_EMAIL || 'rezerwacje@skocznarower.pl',
+          to: signup.email,
+          subject: content.subject,
+          text: content.email,
+        };
+        if (env.REPLY_TO_EMAIL || env.NOTIFY_EMAIL) {
+          emailBody.reply_to = env.REPLY_TO_EMAIL || env.NOTIFY_EMAIL;
+        }
+        try {
+          await queueEmailNotification(env, {
+            entityType: 'workshop_signup', entityId: id,
+            eventKey: `trial_invite_${trialAt}`,
+            recipient: signup.email, body: emailBody, reactivateCancelled: true,
+          });
+        } catch (error) { console.error('trial invite email error', error); }
+      }
+    }
+  }
+
+  return redirect(back + '&saved=1#signup-' + encodeURIComponent(id));
+}
+
+function renderWorkshopSignups({
+  signups, due, dueCount, counts, filter, saved, invalid, membershipConflict,
+}) {
+  const statusOption = (value, current) =>
+    `<option value="${value}"${value === current ? ' selected' : ''}>${escapeHtml(workshopStatusLabel(value))}</option>`;
+  const filterTab = (value, label, count = null) =>
+    `<a href="?filter=${value}" class="${filter === value ? 'active' : ''}">${label}${count == null ? '' : ` (${count})`}</a>`;
+  const levelLabel = level => ({
+    start: 'start', progress: 'jeżdżę i chcę progresu', air: 'loty / triki', 'nie-wiem': 'do ustalenia',
+  }[level] || level);
+  const locationLabel = location => ({
+    grodzisk: 'Grodzisk Maz.', milanowek: 'Milanówek', obojetnie: 'obojętnie',
+  }[location] || location);
+
+  const row = signup => {
+    const isDue = signup.next_action_at != null && Number(signup.next_action_at) <= Date.now()
+      && !['enrolled', 'lost'].includes(signup.status);
+    return `<tr id="signup-${escapeHtml(signup.id)}" class="status-${escapeHtml(signup.status)}${isDue ? ' workshop-due' : ''}">
+      <td data-label="Zgłoszenie">
+        <div class="name">${escapeHtml(signup.parent_name)}</div>
+        <span class="badge badge-${escapeHtml(signup.status)}">${escapeHtml(workshopStatusLabel(signup.status))}</span>
+        <a href="tel:${escapeHtml(signup.phone)}">${escapeHtml(signup.phone)}</a>
+        ${signup.email ? `<div><a href="mailto:${escapeHtml(signup.email)}">${escapeHtml(signup.email)}</a></div>` : ''}
+        <div class="muted">${warsawDateTime(signup.created_at)}</div>
+      </td>
+      <td data-label="Dziecko">
+        <strong>${escapeHtml(signup.child_age)} lat</strong>
+        <div class="muted">${escapeHtml(levelLabel(signup.level))}</div>
+        <div class="muted">${escapeHtml(locationLabel(signup.location))}</div>
+        ${signup.notes ? `<div class="notes">${escapeHtml(signup.notes)}</div>` : ''}
+      </td>
+      <td data-label="Pozyskanie">${renderWorkshopAttribution(signup)}</td>
+      <td data-label="CRM">
+        <form method="post" action="/admin/warsztaty" class="workshop-form">
+          <input type="hidden" name="id" value="${escapeHtml(signup.id)}">
+          <input type="hidden" name="filter" value="${escapeHtml(filter)}">
+          <label>Status
+            <select name="status">${WORKSHOP_CRM_STATUSES.map(value => statusOption(value, signup.status)).join('')}</select>
+          </label>
+          <label>Następny kontakt
+            <input type="datetime-local" name="next_action_at" value="${workshopDateTimeInput(signup.next_action_at)}">
+          </label>
+          <label>Zajęcia próbne
+            <input type="datetime-local" name="trial_at" value="${workshopDateTimeInput(signup.trial_at)}">
+          </label>
+          ${signup.trial_response ? `<div class="muted"><strong>Odpowiedź rodzica:</strong> ${escapeHtml(workshopTrialResponseLabel(signup.trial_response))}${signup.trial_response_at ? ` · ${escapeHtml(warsawDateTime(signup.trial_response_at))}` : ''}</div>` : ''}
+          <label>Grupa
+            <input type="text" name="group_name" value="${escapeHtml(signup.group_name || '')}" maxlength="120" placeholder="np. wtorek 17:00">
+          </label>
+          <label>Opiekun zgłoszenia
+            <input type="text" name="assigned_to" value="${escapeHtml(signup.assigned_to || '')}" maxlength="120" placeholder="kto oddzwania">
+          </label>
+          <label class="workshop-notes">Notatka właściciela
+            <textarea name="owner_notes" maxlength="2000" rows="2">${escapeHtml(signup.owner_notes || '')}</textarea>
+          </label>
+          <button type="submit">Zapisz</button>
+        </form>
+      </td>
+    </tr>`;
+  };
+
+  return `${saved ? '<div class="toast toast-ok">Zgłoszenie warsztatowe zapisane.</div>' : ''}
+${invalid ? '<div class="toast toast-err">Nie zapisano. Sprawdź status, terminy i długość pól.</div>' : ''}
+${membershipConflict ? '<div class="toast toast-err">Nie można oznaczyć zgłoszenia jako utraconego, dopóki ma otwarte członkostwo w grupie.</div>' : ''}
+
+<nav class="tabs workshop-tabs">
+  <a href="/admin/warsztaty" class="active">Lejek zgłoszeń</a>
+  <a href="/admin/warsztaty/grupy">Grupy i zajęcia</a>
+</nav>
+
+<section class="workshop-stats" aria-label="Lejek zapisów">
+  ${WORKSHOP_CRM_STATUSES.map(status => `<a href="?filter=${status}" class="workshop-stat">
+    <strong>${counts[status] || 0}</strong><span>${escapeHtml(workshopStatusLabel(status))}</span>
+  </a>`).join('')}
+</section>
+
+<section class="card">
+  <h2>Kontakty do wykonania · ${dueCount}</h2>
+  ${due.length === 0 ? '<p class="muted">Brak zaległych kontaktów.</p>' : `<ul class="workshop-due-list">
+    ${due.map(item => `<li>
+      <a href="/admin/warsztaty?filter=all#signup-${escapeHtml(item.id)}">${escapeHtml(item.parent_name)}</a>
+      <span class="muted">${warsawDateTime(item.next_action_at)}</span>
+      <a href="tel:${escapeHtml(item.phone)}">${escapeHtml(item.phone)}</a>
+    </li>`).join('')}
+  </ul>${dueCount > due.length ? `<p class="muted">Pokazano 50 najstarszych z ${dueCount} zaległych kontaktów.</p>` : ''}`}
+</section>
+
+<nav class="tabs workshop-tabs">
+  ${filterTab('all', 'Wszystkie')}
+  ${filterTab('due', 'Zaległe', dueCount)}
+  ${WORKSHOP_CRM_STATUSES.map(status => filterTab(status, workshopStatusLabel(status), counts[status] || 0)).join('')}
+</nav>
+
+<section class="card">
+  <h2>Zgłoszenia · ${signups.length}</h2>
+  ${signups.length === 0 ? '<p class="muted">Brak zgłoszeń w tym widoku.</p>' : `<table class="cards workshop-table">
+    <thead><tr><th>Zgłoszenie</th><th>Dziecko</th><th>Pozyskanie</th><th>CRM</th></tr></thead>
+    <tbody>${signups.map(row).join('')}</tbody>
+  </table>`}
+</section>`;
+}
+
+function workshopGroupStatusLabel(status) {
+  return { active: 'aktywna', paused: 'wstrzymana', completed: 'zakończona' }[status] || status;
+}
+
+function workshopMembershipStatusLabel(status) {
+  return { trial: 'próbne', active: 'aktywny', paused: 'wstrzymany', ended: 'zakończony' }[status] || status;
+}
+
+function workshopSessionStatusLabel(status) {
+  return { scheduled: 'zaplanowane', completed: 'zrealizowane', cancelled: 'odwołane' }[status] || status;
+}
+
+function workshopAttendanceStatusLabel(status) {
+  return { unmarked: 'nieoznaczona', present: 'obecny', absent: 'nieobecny', excused: 'usprawiedliwiony' }[status] || status;
+}
+
+function workshopPaymentMethodLabel(method) {
+  return { cash: 'gotówka', transfer: 'przelew', card: 'karta', voucher: 'voucher', other: 'inne' }[method] || method;
+}
+
+function parseWorkshopAmountGrosze(raw) {
+  const value = String(raw || '').trim().replace(',', '.');
+  if (!/^\d{1,6}(\.\d{1,2})?$/.test(value)) return undefined;
+  const [whole, fraction = ''] = value.split('.');
+  const amount = Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
+  return amount >= 1 && amount <= 10000000 ? amount : undefined;
+}
+
+function workshopAmount(amountGrosze) {
+  return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' })
+    .format((Number(amountGrosze) || 0) / 100);
+}
+
+function workshopOperationsRedirect(type, value, anchor = '') {
+  return redirect(`/admin/warsztaty/grupy?${type}=${encodeURIComponent(value)}${anchor ? `#${anchor}` : ''}`);
+}
+
+async function adminWorkshopOperations(env, url) {
+  const now = Date.now();
+  const historyFrom = now - 120 * 24 * 60 * 60 * 1000;
+  const [groupsResult, signupsResult, membershipsResult, sessionsResult, attendanceResult, paymentsResult] = await Promise.all([
+    env.DB.prepare(
+      `SELECT g.*,
+         (SELECT COUNT(*) FROM workshop_memberships m
+          WHERE m.group_id=g.id AND m.status IN ('trial','active','paused')) AS member_count,
+         COALESCE((SELECT SUM(p.amount_grosze) FROM workshop_payments p
+          JOIN workshop_memberships pm ON pm.id=p.membership_id
+          WHERE pm.group_id=g.id), 0) AS paid_grosze
+       FROM workshop_groups g
+       ORDER BY CASE g.status WHEN 'active' THEN 0 WHEN 'paused' THEN 1 ELSE 2 END,
+         g.weekday, g.start_time, g.name`
+    ).all(),
+    env.DB.prepare(
+      `SELECT s.id, s.parent_name, s.phone, s.child_age, s.level, s.status,
+         m.id AS membership_id, m.group_id AS membership_group_id, g.name AS membership_group_name
+       FROM workshop_signups s
+       LEFT JOIN workshop_memberships m ON m.signup_id=s.id
+         AND m.status IN ('trial','active','paused')
+       LEFT JOIN workshop_groups g ON g.id=m.group_id
+       WHERE s.status IN ('trial_booked','enrolled')
+       ORDER BY s.parent_name LIMIT 500`
+    ).all(),
+    env.DB.prepare(
+      `SELECT m.*, s.parent_name, s.phone, s.child_age, s.level,
+         g.name AS group_name,
+         COALESCE((SELECT SUM(p.amount_grosze) FROM workshop_payments p
+                   WHERE p.membership_id=m.id), 0) AS paid_grosze
+       FROM workshop_memberships m
+       JOIN workshop_signups s ON s.id=m.signup_id
+       JOIN workshop_groups g ON g.id=m.group_id
+       ORDER BY g.name, m.started_at, s.parent_name LIMIT 1000`
+    ).all(),
+    env.DB.prepare(
+      `SELECT s.*, g.name AS group_name
+       FROM workshop_sessions s JOIN workshop_groups g ON g.id=s.group_id
+       WHERE s.starts_at>=?1 OR s.status='scheduled'
+       ORDER BY CASE WHEN s.starts_at>=?2 THEN 0 ELSE 1 END,
+         CASE WHEN s.starts_at>=?2 THEN s.starts_at END ASC, s.starts_at DESC
+       LIMIT 100`
+    ).bind(historyFrom, now).all(),
+    env.DB.prepare(
+      `SELECT a.* FROM workshop_attendance a
+       JOIN workshop_sessions s ON s.id=a.session_id
+       WHERE s.starts_at>=?1 OR s.status='scheduled'`
+    ).bind(historyFrom).all(),
+    env.DB.prepare(
+      `SELECT p.*, s.parent_name, g.name AS group_name
+       FROM workshop_payments p
+       JOIN workshop_memberships m ON m.id=p.membership_id
+       JOIN workshop_signups s ON s.id=m.signup_id
+       JOIN workshop_groups g ON g.id=m.group_id
+       ORDER BY p.paid_at DESC, p.created_at DESC LIMIT 100`
+    ).all(),
+  ]);
+  return adminShell('Grupy warsztatowe', renderWorkshopOperations({
+    groups: groupsResult.results || [],
+    signups: signupsResult.results || [],
+    memberships: membershipsResult.results || [],
+    sessions: sessionsResult.results || [],
+    attendance: attendanceResult.results || [],
+    payments: paymentsResult.results || [],
+    saved: url.searchParams.get('saved') || '',
+    error: url.searchParams.get('error') || '',
+  }));
+}
+
+function renderWorkshopOperations({ groups, signups, memberships, sessions, attendance, payments, saved, error }) {
+  const option = (value, current, label) =>
+    `<option value="${escapeHtml(value)}"${value === current ? ' selected' : ''}>${escapeHtml(label)}</option>`;
+  const byGroup = (rows, groupId) => rows.filter(row => row.group_id === groupId);
+  const openMemberships = rows => rows.filter(row => ['trial', 'active', 'paused'].includes(row.status));
+  const attendanceByPair = new Map(
+    attendance.map(row => [`${row.session_id}:${row.membership_id}`, row]),
+  );
+  const locationLabel = value => ({
+    grodzisk: 'Grodzisk Maz.', milanowek: 'Milanówek', inne: 'inne',
+  }[value] || value);
+  const levelLabel = value => ({
+    start: 'start', progress: 'progress', air: 'loty / triki', mixed: 'mieszany',
+  }[value] || value);
+
+  const groupForm = group => `<form method="post" action="/admin/warsztaty/grupy" class="workshop-ops-form">
+    <input type="hidden" name="action" value="group_save">
+    ${group ? `<input type="hidden" name="id" value="${escapeHtml(group.id)}">` : ''}
+    <label>Nazwa
+      <input name="name" value="${escapeHtml(group?.name || '')}" maxlength="100" required placeholder="np. Wtorek start 17:00">
+    </label>
+    <label>Status
+      <select name="status">${WORKSHOP_GROUP_STATUSES.map(value => option(value, group?.status || 'active', workshopGroupStatusLabel(value))).join('')}</select>
+    </label>
+    <label>Lokalizacja
+      <select name="location">${WORKSHOP_GROUP_LOCATIONS.map(value => option(value, group?.location || 'grodzisk', locationLabel(value))).join('')}</select>
+    </label>
+    <label>Poziom
+      <select name="level">${WORKSHOP_GROUP_LEVELS.map(value => option(value, group?.level || 'mixed', levelLabel(value))).join('')}</select>
+    </label>
+    <label>Dzień
+      <select name="weekday">${WORKSHOP_WEEKDAYS.map((label, value) => option(String(value), String(group?.weekday ?? 2), label)).join('')}</select>
+    </label>
+    <label>Godzina
+      <input type="time" name="start_time" value="${escapeHtml(group?.start_time || '17:00')}" required>
+    </label>
+    <label>Czas (min)
+      <input type="number" name="duration_minutes" value="${escapeHtml(group?.duration_minutes || 90)}" min="30" max="300" step="5" required>
+    </label>
+    <label>Limit miejsc
+      <input type="number" name="capacity" value="${escapeHtml(group?.capacity || 6)}" min="1" max="6" required>
+      <span class="muted">START/mieszany: 6, PROGRESS: 5, AIR: 4</span>
+    </label>
+    <label class="ops-wide">Notatka
+      <textarea name="notes" maxlength="1000" rows="2">${escapeHtml(group?.notes || '')}</textarea>
+    </label>
+    <button type="submit">${group ? 'Zapisz grupę' : 'Utwórz grupę'}</button>
+  </form>`;
+
+  const memberRow = member => `<tr>
+    <td data-label="Uczestnik">
+      <strong>${escapeHtml(member.parent_name)}</strong>
+      <div class="muted">${escapeHtml(member.child_age)} lat · ${escapeHtml(levelLabel(member.level))}</div>
+      <a href="tel:${escapeHtml(member.phone)}">${escapeHtml(member.phone)}</a>
+    </td>
+    <td data-label="Członkostwo">
+      <form method="post" action="/admin/warsztaty/grupy" class="ops-inline-form">
+        <input type="hidden" name="action" value="membership_status">
+        <input type="hidden" name="membership_id" value="${escapeHtml(member.id)}">
+        <select name="status">${WORKSHOP_MEMBERSHIP_STATUSES.map(value => option(value, member.status, workshopMembershipStatusLabel(value))).join('')}</select>
+        <button type="submit">Zapisz</button>
+      </form>
+    </td>
+    <td data-label="Wpłaty"><strong>${escapeHtml(workshopAmount(member.paid_grosze))}</strong></td>
+    <td data-label="Dodaj wpłatę">
+      <form method="post" action="/admin/warsztaty/grupy" class="workshop-payment-form">
+        <input type="hidden" name="action" value="payment_add">
+        <input type="hidden" name="payment_id" value="${crypto.randomUUID()}">
+        <input type="hidden" name="membership_id" value="${escapeHtml(member.id)}">
+        <label>Kwota zł<input name="amount" inputmode="decimal" maxlength="9" required placeholder="200,00"></label>
+        <label>Data<input type="date" name="paid_date" value="${todayInWarsaw()}" required></label>
+        <label>Metoda<select name="method">${WORKSHOP_PAYMENT_METHODS.map(value => option(value, 'transfer', workshopPaymentMethodLabel(value))).join('')}</select></label>
+        <label>Za okres<input name="period_label" maxlength="80" placeholder="np. sierpień"></label>
+        <label>Notatka<input name="notes" maxlength="500"></label>
+        <button type="submit">Dodaj</button>
+      </form>
+    </td>
+  </tr>`;
+
+  const groupCard = group => {
+    const groupMembers = openMemberships(byGroup(memberships, group.id));
+    const assignOptions = signups.map(signup => {
+      const current = signup.membership_group_name ? ` · teraz: ${signup.membership_group_name}` : '';
+      return `<option value="${escapeHtml(signup.id)}">${escapeHtml(signup.parent_name)} · ${escapeHtml(signup.child_age)} lat · ${escapeHtml(workshopStatusLabel(signup.status))}${escapeHtml(current)}</option>`;
+    }).join('');
+    return `<section class="card workshop-group-card" id="group-${escapeHtml(group.id)}">
+      <div class="ops-heading">
+        <div><h2>${escapeHtml(group.name)}</h2>
+          <p class="muted">${escapeHtml(WORKSHOP_WEEKDAYS[group.weekday])}, ${escapeHtml(group.start_time)} · ${escapeHtml(locationLabel(group.location))} · ${escapeHtml(levelLabel(group.level))}</p>
+        </div>
+        <div><span class="badge badge-${escapeHtml(group.status)}">${escapeHtml(workshopGroupStatusLabel(group.status))}</span>
+          <div class="muted">${escapeHtml(group.member_count)} / ${escapeHtml(group.capacity)} osób · ${escapeHtml(workshopAmount(group.paid_grosze))}</div>
+        </div>
+      </div>
+      <details><summary>Edytuj ustawienia grupy</summary>${groupForm(group)}</details>
+      ${group.status !== 'completed' ? `<div class="ops-actions-grid">
+        <form method="post" action="/admin/warsztaty/grupy" class="workshop-ops-form ops-compact">
+          <input type="hidden" name="action" value="membership_assign">
+          <input type="hidden" name="group_id" value="${escapeHtml(group.id)}">
+          <label class="ops-wide">Przypisz zgłoszenie
+            <select name="signup_id" required><option value="">Wybierz osobę</option>${assignOptions}</select>
+          </label>
+          <label>Rodzaj
+            <select name="status">${option('trial', 'trial', 'próbne')}${option('active', 'trial', 'stały uczestnik')}</select>
+          </label>
+          <button type="submit"${signups.length ? '' : ' disabled'}>Przypisz</button>
+        </form>
+        <form method="post" action="/admin/warsztaty/grupy" class="workshop-ops-form ops-compact">
+          <input type="hidden" name="action" value="session_create">
+          <input type="hidden" name="group_id" value="${escapeHtml(group.id)}">
+          <label>Termin
+            <input type="datetime-local" name="starts_at" required>
+          </label>
+          <label>Czas (min)
+            <input type="number" name="duration_minutes" value="${escapeHtml(group.duration_minutes)}" min="30" max="300" step="5" required>
+          </label>
+          <label>Lokalizacja
+            <select name="location">${WORKSHOP_GROUP_LOCATIONS.map(value => option(value, group.location, locationLabel(value))).join('')}</select>
+          </label>
+          <label>Notatka
+            <input name="notes" maxlength="1000" placeholder="opcjonalnie">
+          </label>
+          <button type="submit">Dodaj zajęcia</button>
+        </form>
+      </div>` : ''}
+      <h3>Uczestnicy</h3>
+      ${groupMembers.length ? `<table class="cards workshop-members-table"><thead><tr><th>Uczestnik</th><th>Członkostwo</th><th>Wpłaty</th><th>Dodaj wpłatę</th></tr></thead><tbody>${groupMembers.map(memberRow).join('')}</tbody></table>` : '<p class="muted">Brak przypisanych uczestników.</p>'}
+    </section>`;
+  };
+
+  const sessionCard = session => {
+    const groupMembers = byGroup(memberships, session.group_id).filter(member =>
+      Number(member.started_at) <= Number(session.starts_at)
+      && (member.ended_at == null || Number(member.ended_at) >= Number(session.starts_at))
+    );
+    const attendanceRow = member => {
+      const current = attendanceByPair.get(`${session.id}:${member.id}`);
+      return `<tr>
+        <td data-label="Uczestnik"><strong>${escapeHtml(member.parent_name)}</strong><div class="muted">${escapeHtml(workshopMembershipStatusLabel(member.status))}</div></td>
+        <td data-label="Obecność">
+          <form method="post" action="/admin/warsztaty/grupy" class="workshop-attendance-form">
+            <input type="hidden" name="action" value="attendance_save">
+            <input type="hidden" name="session_id" value="${escapeHtml(session.id)}">
+            <input type="hidden" name="membership_id" value="${escapeHtml(member.id)}">
+            <select name="status">${WORKSHOP_ATTENDANCE_STATUSES.map(value => option(value, current?.status || 'unmarked', workshopAttendanceStatusLabel(value))).join('')}</select>
+            <input name="notes" value="${escapeHtml(current?.notes || '')}" maxlength="500" placeholder="notatka">
+            <button type="submit">Zapisz</button>
+          </form>
+        </td>
+      </tr>`;
+    };
+    return `<section class="card workshop-session-card status-${escapeHtml(session.status)}" id="session-${escapeHtml(session.id)}">
+      <div class="ops-heading"><div><h2>${escapeHtml(session.group_name)}</h2>
+        <p>${escapeHtml(warsawDateTime(session.starts_at))} do ${escapeHtml(warsawDateTime(session.ends_at))}</p>
+        <p class="muted">${escapeHtml(locationLabel(session.location))}${session.notes ? ` · ${escapeHtml(session.notes)}` : ''}</p></div>
+        <form method="post" action="/admin/warsztaty/grupy" class="ops-inline-form">
+          <input type="hidden" name="action" value="session_status">
+          <input type="hidden" name="session_id" value="${escapeHtml(session.id)}">
+          <select name="status">${WORKSHOP_SESSION_STATUSES.map(value => option(value, session.status, workshopSessionStatusLabel(value))).join('')}</select>
+          <button type="submit">Zapisz</button>
+        </form>
+      </div>
+      ${groupMembers.length ? `<table class="cards"><thead><tr><th>Uczestnik</th><th>Obecność</th></tr></thead><tbody>${groupMembers.map(attendanceRow).join('')}</tbody></table>` : '<p class="muted">Brak uczestników do oznaczenia.</p>'}
+    </section>`;
+  };
+
+  const paymentRow = payment => `<tr>
+    <td data-label="Data">${escapeHtml(warsawDate(payment.paid_at))}</td>
+    <td data-label="Uczestnik"><strong>${escapeHtml(payment.parent_name)}</strong><div class="muted">${escapeHtml(payment.group_name)}</div></td>
+    <td data-label="Kwota"><strong>${escapeHtml(workshopAmount(payment.amount_grosze))}</strong></td>
+    <td data-label="Metoda">${escapeHtml(workshopPaymentMethodLabel(payment.method))}</td>
+    <td data-label="Opis">${escapeHtml(payment.period_label || '')}${payment.notes ? `<div class="muted">${escapeHtml(payment.notes)}</div>` : ''}</td>
+  </tr>`;
+
+  const savedLabels = {
+    group: 'Grupa została zapisana.',
+    membership: 'Przypisanie uczestnika zostało zapisane.',
+    session: 'Termin zajęć został zapisany.',
+    attendance: 'Obecność została zapisana.',
+    payment: 'Wpłata została zapisana.',
+  };
+  return `${savedLabels[saved] ? `<div class="toast toast-ok">${savedLabels[saved]}</div>` : ''}
+${error === 'invalid' ? '<div class="toast toast-err">Nie zapisano. Sprawdź pola, daty i dozwolone wartości.</div>' : ''}
+${error === 'conflict' ? '<div class="toast toast-err">Nie zapisano. Dane zmieniły się lub kolidują z innym przypisaniem.</div>' : ''}
+${error === 'full' ? '<div class="toast toast-err">Nie przypisano uczestnika. Grupa ma już komplet miejsc.</div>' : ''}
+${error === 'capacity' ? '<div class="toast toast-err">Nie zmniejszono limitu poniżej aktualnej liczby uczestników.</div>' : ''}
+${error === 'history' ? '<div class="toast toast-err">Zakończone członkostwo jest częścią historii i nie może zostać ponownie otwarte. Utwórz przypisanie do innej grupy.</div>' : ''}
+
+<nav class="tabs workshop-tabs">
+  <a href="/admin/warsztaty">Lejek zgłoszeń</a>
+  <a href="/admin/warsztaty/grupy" class="active">Grupy i zajęcia</a>
+</nav>
+
+<section class="card" id="new-group"><h2>Nowa grupa</h2>${groupForm(null)}</section>
+
+${groups.length ? groups.map(groupCard).join('') : '<section class="card"><p class="muted">Brak grup. Utwórz pierwszą grupę powyżej.</p></section>'}
+
+<h2 class="ops-section-title">Terminy i obecności · ${sessions.length}</h2>
+${sessions.length ? sessions.map(sessionCard).join('') : '<section class="card"><p class="muted">Brak zaplanowanych lub ostatnich zajęć.</p></section>'}
+
+<section class="card"><h2>Ostatnie wpłaty</h2>
+  ${payments.length ? `<table class="cards"><thead><tr><th>Data</th><th>Uczestnik</th><th>Kwota</th><th>Metoda</th><th>Opis</th></tr></thead><tbody>${payments.map(paymentRow).join('')}</tbody></table>` : '<p class="muted">Brak zarejestrowanych wpłat.</p>'}
+</section>`;
+}
+
+async function adminWorkshopOperationsPost(request, env) {
+  const form = await request.formData();
+  const action = String(form.get('action') || '').trim();
+  try {
+    if (action === 'group_save') return await adminWorkshopGroupSave(form, env);
+    if (action === 'membership_assign') return await adminWorkshopMembershipAssign(form, env);
+    if (action === 'membership_status') return await adminWorkshopMembershipStatus(form, env);
+    if (action === 'session_create') return await adminWorkshopSessionCreate(form, env);
+    if (action === 'session_status') return await adminWorkshopSessionStatus(form, env);
+    if (action === 'attendance_save') return await adminWorkshopAttendanceSave(form, env);
+    if (action === 'payment_add') return await adminWorkshopPaymentAdd(form, env);
+  } catch (e) {
+    console.error('workshop operations action error', action, e);
+    const message = String(e?.message || e);
+    const error = message.includes('workshop_group_full') ? 'full' : 'conflict';
+    return workshopOperationsRedirect('error', error);
+  }
+  return workshopOperationsRedirect('error', 'invalid');
+}
+
+async function adminWorkshopGroupSave(form, env) {
+  const id = String(form.get('id') || '').trim();
+  const name = String(form.get('name') || '').trim();
+  const status = String(form.get('status') || '').trim();
+  const location = String(form.get('location') || '').trim();
+  const level = String(form.get('level') || '').trim();
+  const startTime = String(form.get('start_time') || '').trim();
+  const notes = String(form.get('notes') || '').trim();
+  const weekday = Number(form.get('weekday'));
+  const durationMinutes = Number(form.get('duration_minutes'));
+  const capacity = Number(form.get('capacity'));
+  if ((id && id.length > 100) || !name || name.length > 100
+    || !WORKSHOP_GROUP_STATUSES.includes(status)
+    || !WORKSHOP_GROUP_LOCATIONS.includes(location)
+    || !WORKSHOP_GROUP_LEVELS.includes(level)
+    || !Number.isInteger(weekday) || weekday < 0 || weekday > 6
+    || !/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime)
+    || !Number.isInteger(durationMinutes) || durationMinutes < 30 || durationMinutes > 300
+    || !Number.isInteger(capacity) || capacity < 1
+    || capacity > workshopGroupCapacityLimit(level)
+    || notes.length > 1000) {
+    return workshopOperationsRedirect('error', 'invalid', id ? `group-${encodeURIComponent(id)}` : 'new-group');
+  }
+
+  const now = Date.now();
+  if (id) {
+    const current = await env.DB.prepare(
+      `SELECT g.id, g.status,
+         (SELECT COUNT(*) FROM workshop_memberships m WHERE m.group_id=g.id
+          AND m.status IN ('trial','active','paused')) AS member_count
+       FROM workshop_groups g WHERE g.id = ?1`
+    ).bind(id).first();
+    if (!current) return new Response('Nie ma takiej grupy', { status: 404 });
+    if (capacity < Number(current.member_count)) {
+      return workshopOperationsRedirect('error', 'capacity', `group-${encodeURIComponent(id)}`);
+    }
+    await env.DB.batch([
+      env.DB.prepare(
+        `UPDATE workshop_groups SET name=?2, status=?3, location=?4, level=?5,
+           weekday=?6, start_time=?7, duration_minutes=?8, capacity=?9,
+           notes=?10, updated_at=?11 WHERE id=?1`
+      ).bind(
+        id, name, status, location, level, weekday, startTime, durationMinutes,
+        capacity, notes || null, now,
+      ),
+      env.DB.prepare(
+        `UPDATE workshop_signups SET group_name=?2, updated_at=?3
+         WHERE id IN (SELECT signup_id FROM workshop_memberships
+           WHERE group_id=?1 AND status IN ('trial','active','paused'))`
+      ).bind(id, name, now),
+    ]);
+    await auditEvent(env, 'workshop_group', id, 'updated', {
+      from_status: current.status,
+      to_status: status,
+    });
+    return workshopOperationsRedirect('saved', 'group', `group-${encodeURIComponent(id)}`);
+  }
+
+  const groupId = crypto.randomUUID();
+  await env.DB.prepare(
+    `INSERT INTO workshop_groups (
+       id, name, status, location, level, weekday, start_time,
+       duration_minutes, capacity, notes, created_at, updated_at
+     ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?11)`
+  ).bind(
+    groupId, name, status, location, level, weekday, startTime,
+    durationMinutes, capacity, notes || null, now,
+  ).run();
+  await auditEvent(env, 'workshop_group', groupId, 'created', { status });
+  return workshopOperationsRedirect('saved', 'group', `group-${encodeURIComponent(groupId)}`);
+}
+
+async function adminWorkshopMembershipAssign(form, env) {
+  const groupId = String(form.get('group_id') || '').trim();
+  const signupId = String(form.get('signup_id') || '').trim();
+  const status = String(form.get('status') || '').trim();
+  if (!groupId || groupId.length > 100 || !signupId || signupId.length > 100
+    || !['trial', 'active'].includes(status)) {
+    return workshopOperationsRedirect('error', 'invalid');
+  }
+  const [group, signup, currentOpen, existingPair] = await Promise.all([
+    env.DB.prepare(
+      `SELECT g.id, g.name, g.status, g.capacity,
+         (SELECT COUNT(*) FROM workshop_memberships m WHERE m.group_id=g.id
+          AND m.status IN ('trial','active','paused')) AS member_count
+       FROM workshop_groups g WHERE g.id=?1 AND g.status IN ('active','paused')`
+    ).bind(groupId).first(),
+    env.DB.prepare(
+      "SELECT id, status FROM workshop_signups WHERE id=?1 AND status IN ('trial_booked','enrolled')"
+    ).bind(signupId).first(),
+    env.DB.prepare(
+      "SELECT id, group_id, status FROM workshop_memberships WHERE signup_id=?1 AND status IN ('trial','active','paused')"
+    ).bind(signupId).first(),
+    env.DB.prepare(
+      'SELECT id, status FROM workshop_memberships WHERE group_id=?1 AND signup_id=?2'
+    ).bind(groupId, signupId).first(),
+  ]);
+  if (!group || !signup) return workshopOperationsRedirect('error', 'invalid');
+  if (existingPair?.status === 'ended') {
+    return workshopOperationsRedirect('error', 'history', `group-${encodeURIComponent(groupId)}`);
+  }
+  if (currentOpen?.group_id !== groupId && Number(group.member_count) >= Number(group.capacity)) {
+    return workshopOperationsRedirect('error', 'full', `group-${encodeURIComponent(groupId)}`);
+  }
+
+  const now = Date.now();
+  const membershipId = existingPair?.id || crypto.randomUUID();
+  await env.DB.batch([
+    env.DB.prepare(
+      `UPDATE workshop_memberships SET status='ended', ended_at=?2, updated_at=?2
+       WHERE signup_id=?1 AND group_id<>?3 AND status IN ('trial','active','paused')`
+    ).bind(signupId, now, groupId),
+    env.DB.prepare(
+      `INSERT INTO workshop_memberships (
+         id, group_id, signup_id, status, started_at, ended_at, notes, created_at, updated_at
+       ) VALUES (?1, ?2, ?3, ?4, ?5, NULL, NULL, ?5, ?5)
+       ON CONFLICT(group_id, signup_id) DO UPDATE SET
+         status=excluded.status,
+         started_at=CASE WHEN workshop_memberships.status='ended' THEN excluded.started_at
+                         ELSE workshop_memberships.started_at END,
+         ended_at=NULL, updated_at=excluded.updated_at`
+    ).bind(membershipId, groupId, signupId, status, now),
+    env.DB.prepare(
+      `UPDATE workshop_signups SET group_name=?2,
+         status=CASE WHEN ?3='active' THEN 'enrolled' ELSE status END,
+         enrolled_at=CASE WHEN ?3='active' THEN COALESCE(enrolled_at, ?4) ELSE enrolled_at END,
+         updated_at=?4 WHERE id=?1`
+    ).bind(signupId, group.name, status, now),
+  ]);
+  await auditEvent(env, 'workshop_membership', membershipId, 'assigned', {
+    signup_id: signupId,
+    group_id: groupId,
+    status,
+    from_group_id: currentOpen?.group_id || null,
+  });
+  return workshopOperationsRedirect('saved', 'membership', `group-${encodeURIComponent(groupId)}`);
+}
+
+async function adminWorkshopMembershipStatus(form, env) {
+  const id = String(form.get('membership_id') || '').trim();
+  const status = String(form.get('status') || '').trim();
+  if (!id || id.length > 100 || !WORKSHOP_MEMBERSHIP_STATUSES.includes(status)) {
+    return workshopOperationsRedirect('error', 'invalid');
+  }
+  const current = await env.DB.prepare(
+    `SELECT m.id, m.group_id, m.signup_id, m.status, g.name AS group_name,
+       g.status AS group_status, g.capacity,
+       (SELECT COUNT(*) FROM workshop_memberships counted
+        WHERE counted.group_id=m.group_id
+          AND counted.status IN ('trial','active','paused')) AS member_count
+     FROM workshop_memberships m JOIN workshop_groups g ON g.id=m.group_id
+     WHERE m.id=?1`
+  ).bind(id).first();
+  if (!current) return new Response('Nie ma takiego członkostwa', { status: 404 });
+  if (current.status === 'ended') {
+    if (status !== 'ended') {
+      return workshopOperationsRedirect('error', 'history', `group-${encodeURIComponent(current.group_id)}`);
+    }
+    return workshopOperationsRedirect('saved', 'membership', `group-${encodeURIComponent(current.group_id)}`);
+  }
+  const now = Date.now();
+  await env.DB.batch([
+    env.DB.prepare(
+      `UPDATE workshop_memberships SET status=?2,
+         ended_at=CASE WHEN ?2='ended' THEN COALESCE(ended_at, ?3) ELSE NULL END,
+         updated_at=?3 WHERE id=?1`
+    ).bind(id, status, now),
+    env.DB.prepare(
+      `UPDATE workshop_signups SET
+         group_name=CASE
+           WHEN ?2<>'ended' THEN ?4
+           WHEN NOT EXISTS (SELECT 1 FROM workshop_memberships
+             WHERE signup_id=?1 AND status IN ('trial','active','paused')) THEN NULL
+           ELSE group_name END,
+         status=CASE WHEN ?2='active' THEN 'enrolled' ELSE status END,
+         enrolled_at=CASE WHEN ?2='active' THEN COALESCE(enrolled_at, ?3) ELSE enrolled_at END,
+         updated_at=?3 WHERE id=?1`
+    ).bind(current.signup_id, status, now, current.group_name),
+  ]);
+  await auditEvent(env, 'workshop_membership', id, 'status_changed', {
+    from_status: current.status,
+    to_status: status,
+    signup_id: current.signup_id,
+  });
+  return workshopOperationsRedirect('saved', 'membership', `group-${encodeURIComponent(current.group_id)}`);
+}
+
+async function adminWorkshopSessionCreate(form, env) {
+  const groupId = String(form.get('group_id') || '').trim();
+  const location = String(form.get('location') || '').trim();
+  const notes = String(form.get('notes') || '').trim();
+  const startsAt = parseWarsawDateTimeInput(form.get('starts_at'));
+  const durationMinutes = Number(form.get('duration_minutes'));
+  const now = Date.now();
+  const oldest = now - 366 * 24 * 60 * 60 * 1000;
+  const furthest = now + 2 * 366 * 24 * 60 * 60 * 1000;
+  if (!groupId || groupId.length > 100 || !WORKSHOP_GROUP_LOCATIONS.includes(location)
+    || startsAt == null || startsAt === undefined || startsAt < oldest || startsAt > furthest
+    || !Number.isInteger(durationMinutes) || durationMinutes < 30 || durationMinutes > 300
+    || notes.length > 1000) {
+    return workshopOperationsRedirect('error', 'invalid', `group-${encodeURIComponent(groupId)}`);
+  }
+  const group = await env.DB.prepare(
+    "SELECT id FROM workshop_groups WHERE id=?1 AND status IN ('active','paused')"
+  ).bind(groupId).first();
+  if (!group) return workshopOperationsRedirect('error', 'invalid');
+
+  const id = crypto.randomUUID();
+  const endsAt = startsAt + durationMinutes * 60 * 1000;
+  const overlap = await env.DB.prepare(
+    `SELECT id FROM workshop_sessions
+     WHERE group_id=?1 AND status<>'cancelled' AND starts_at<?2 AND ends_at>?3
+     LIMIT 1`
+  ).bind(groupId, endsAt, startsAt).first();
+  if (overlap) {
+    return workshopOperationsRedirect('error', 'conflict', `session-${encodeURIComponent(overlap.id)}`);
+  }
+  await env.DB.prepare(
+    `INSERT INTO workshop_sessions (
+       id, group_id, starts_at, ends_at, status, location, notes, created_at, updated_at
+     ) VALUES (?1, ?2, ?3, ?4, 'scheduled', ?5, ?6, ?7, ?7)`
+  ).bind(id, groupId, startsAt, endsAt, location, notes || null, now).run();
+  await auditEvent(env, 'workshop_session', id, 'created', { group_id: groupId, starts_at: startsAt });
+  return workshopOperationsRedirect('saved', 'session', `session-${encodeURIComponent(id)}`);
+}
+
+async function adminWorkshopSessionStatus(form, env) {
+  const id = String(form.get('session_id') || '').trim();
+  const status = String(form.get('status') || '').trim();
+  if (!id || id.length > 100 || !WORKSHOP_SESSION_STATUSES.includes(status)) {
+    return workshopOperationsRedirect('error', 'invalid');
+  }
+  const current = await env.DB.prepare(
+    'SELECT id, group_id, starts_at, ends_at, status FROM workshop_sessions WHERE id=?1'
+  ).bind(id).first();
+  if (!current) return new Response('Nie ma takich zajęć', { status: 404 });
+  if (status !== 'cancelled' && current.status === 'cancelled') {
+    const overlap = await env.DB.prepare(
+      `SELECT id FROM workshop_sessions
+       WHERE group_id=?1 AND id<>?2 AND status<>'cancelled'
+         AND starts_at<?3 AND ends_at>?4 LIMIT 1`
+    ).bind(current.group_id, id, current.ends_at, current.starts_at).first();
+    if (overlap) {
+      return workshopOperationsRedirect('error', 'conflict', `session-${encodeURIComponent(overlap.id)}`);
+    }
+  }
+  await env.DB.prepare(
+    'UPDATE workshop_sessions SET status=?2, updated_at=?3 WHERE id=?1'
+  ).bind(id, status, Date.now()).run();
+  await auditEvent(env, 'workshop_session', id, 'status_changed', {
+    from_status: current.status,
+    to_status: status,
+  });
+  return workshopOperationsRedirect('saved', 'session', `session-${encodeURIComponent(id)}`);
+}
+
+async function adminWorkshopAttendanceSave(form, env) {
+  const sessionId = String(form.get('session_id') || '').trim();
+  const membershipId = String(form.get('membership_id') || '').trim();
+  const status = String(form.get('status') || '').trim();
+  const notes = String(form.get('notes') || '').trim();
+  if (!sessionId || sessionId.length > 100 || !membershipId || membershipId.length > 100
+    || !WORKSHOP_ATTENDANCE_STATUSES.includes(status) || notes.length > 500) {
+    return workshopOperationsRedirect('error', 'invalid');
+  }
+  const relation = await env.DB.prepare(
+    `SELECT s.id FROM workshop_sessions s
+     JOIN workshop_memberships m ON m.group_id=s.group_id
+     WHERE s.id=?1 AND m.id=?2
+       AND m.started_at<=s.starts_at
+       AND (m.ended_at IS NULL OR m.ended_at>=s.starts_at)`
+  ).bind(sessionId, membershipId).first();
+  if (!relation) return workshopOperationsRedirect('error', 'invalid');
+
+  const existing = await env.DB.prepare(
+    'SELECT id FROM workshop_attendance WHERE session_id=?1 AND membership_id=?2'
+  ).bind(sessionId, membershipId).first();
+  const id = existing?.id || crypto.randomUUID();
+  const now = Date.now();
+  await env.DB.prepare(
+    `INSERT INTO workshop_attendance (
+       id, session_id, membership_id, status, notes, created_at, updated_at
+     ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6)
+     ON CONFLICT(session_id, membership_id) DO UPDATE SET
+       status=excluded.status, notes=excluded.notes, updated_at=excluded.updated_at`
+  ).bind(id, sessionId, membershipId, status, notes || null, now).run();
+  await auditEvent(env, 'workshop_attendance', id, 'recorded', {
+    session_id: sessionId,
+    membership_id: membershipId,
+    status,
+  });
+  return workshopOperationsRedirect('saved', 'attendance', `session-${encodeURIComponent(sessionId)}`);
+}
+
+async function adminWorkshopPaymentAdd(form, env) {
+  const paymentId = String(form.get('payment_id') || '').trim().toLowerCase();
+  const membershipId = String(form.get('membership_id') || '').trim();
+  const method = String(form.get('method') || '').trim();
+  const paidDate = String(form.get('paid_date') || '').trim();
+  const periodLabel = String(form.get('period_label') || '').trim();
+  const notes = String(form.get('notes') || '').trim();
+  const amountGrosze = parseWorkshopAmountGrosze(form.get('amount'));
+  const paidAt = isValidDate(paidDate) ? parseWarsawDateTimeInput(`${paidDate}T12:00`) : undefined;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(paymentId)
+    || !membershipId || membershipId.length > 100 || amountGrosze === undefined
+    || !WORKSHOP_PAYMENT_METHODS.includes(method) || paidAt == null || paidAt === undefined
+    || paidAt < Date.parse('2020-01-01T00:00:00Z')
+    || paidAt > Date.now() + 24 * 60 * 60 * 1000
+    || periodLabel.length > 80 || notes.length > 500) {
+    return workshopOperationsRedirect('error', 'invalid');
+  }
+  const membership = await env.DB.prepare(
+    'SELECT id, group_id, signup_id FROM workshop_memberships WHERE id=?1'
+  ).bind(membershipId).first();
+  if (!membership) return workshopOperationsRedirect('error', 'invalid');
+
+  const samePayment = existing => existing
+    && existing.membership_id === membershipId
+    && Number(existing.amount_grosze) === amountGrosze
+    && Number(existing.paid_at) === paidAt
+    && existing.method === method
+    && (existing.period_label || '') === periodLabel
+    && (existing.notes || '') === notes;
+  const readPayment = () => env.DB.prepare(
+    `SELECT membership_id, amount_grosze, paid_at, method, period_label, notes
+     FROM workshop_payments WHERE id=?1`
+  ).bind(paymentId).first();
+  const existingBefore = await readPayment();
+  if (existingBefore) {
+    return workshopOperationsRedirect(
+      samePayment(existingBefore) ? 'saved' : 'error',
+      samePayment(existingBefore) ? 'payment' : 'conflict',
+      samePayment(existingBefore) ? `group-${encodeURIComponent(membership.group_id)}` : '',
+    );
+  }
+
+  const now = Date.now();
+  const auditMetadata = JSON.stringify({
+    membership_id: membershipId,
+    signup_id: membership.signup_id,
+    amount_grosze: amountGrosze,
+    method,
+  });
+  await env.DB.batch([
+    env.DB.prepare(
+      `INSERT OR IGNORE INTO workshop_payments (
+         id, membership_id, amount_grosze, paid_at, method, period_label, notes, created_at
+       ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`
+    ).bind(
+      paymentId, membershipId, amountGrosze, paidAt, method,
+      periodLabel || null, notes || null, now,
+    ),
+    env.DB.prepare(
+      `INSERT OR IGNORE INTO audit_events (
+         id, entity_type, entity_id, action, metadata_json, created_at
+       )
+       SELECT ?8, 'workshop_payment', ?1, 'recorded', ?9, ?10
+       WHERE EXISTS (
+         SELECT 1 FROM workshop_payments
+         WHERE id=?1 AND membership_id=?2 AND amount_grosze=?3 AND paid_at=?4
+           AND method=?5 AND COALESCE(period_label, '')=?6 AND COALESCE(notes, '')=?7
+       )`
+    ).bind(
+      paymentId, membershipId, amountGrosze, paidAt, method,
+      periodLabel, notes, `workshop-payment:${paymentId}:recorded`, auditMetadata, now,
+    ),
+  ]);
+  const stored = await readPayment();
+  if (!samePayment(stored)) return workshopOperationsRedirect('error', 'conflict');
+  return workshopOperationsRedirect('saved', 'payment', `group-${encodeURIComponent(membership.group_id)}`);
 }
 
 async function adminUpdateOutreach(request, env) {
@@ -1154,7 +2902,7 @@ async function adminLogin(request, env) {
     status: 302,
     headers: {
       'Location': '/admin',
-      'Set-Cookie': `admin=${cookie}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${7 * 24 * 3600}`,
+      'Set-Cookie': `__Host-admin=${cookie}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 3600}`,
     },
   });
 }
@@ -1174,19 +2922,24 @@ function withParam(back, key, value) {
 // Białe listy komunikatów toastów. Kod z URL-a mapuje się na stały tekst,
 // więc surowa wartość parametru msg/err nigdy nie trafia do HTML.
 const ADMIN_MSGS = {
-  'potwierdzono': 'Rezerwacja potwierdzona, wydarzenie dodane do kalendarza.',
+  'potwierdzono-1': 'Rezerwacja potwierdzona. SMS do klienta wysłany.',
+  'potwierdzono-0': 'Rezerwacja potwierdzona. SMS czeka w kolejce ponowień.',
   'przyjeto-1': 'Przyjęto do serwisu. SMS do klienta wysłany.',
-  'przyjeto-0': 'Przyjęto do serwisu, ale SMS nie wyszedł. Sprawdź logi Workera.',
+  'przyjeto-0': 'Przyjęto do serwisu. SMS czeka w kolejce ponowień.',
   'przyjeto': 'Przyjęto do serwisu (bez SMS, rezerwacja nie ma telefonu).',
   'zrobione-1': 'Oznaczono jako zrobione. SMS z podsumowaniem wysłany do klienta.',
-  'zrobione-0': 'Oznaczono jako zrobione, ale SMS nie wyszedł. Sprawdź logi Workera.',
+  'zrobione-0': 'Oznaczono jako zrobione. SMS czeka w kolejce ponowień.',
   'zrobione': 'Oznaczono jako zrobione.',
-  'anulowano': 'Rezerwacja anulowana, slot zwolniony.',
-  'usunieto': 'Rezerwacja usunięta.',
+  'anulowano-1': 'Rezerwacja anulowana, slot zwolniony. SMS do klienta wysłany.',
+  'anulowano-0': 'Rezerwacja anulowana. SMS czeka w kolejce ponowień.',
+  'usunieto': 'Rezerwacja przeniesiona do archiwum.',
+  'przywrocono-z-archiwum': 'Rezerwacja przywrócona z archiwum bez zmiany statusu.',
   'cena': 'Cena zapisana.',
   'dodano': 'Rezerwacja dodana.',
   'zablokowano': 'Termin zablokowany.',
   'odblokowano': 'Blokada usunięta.',
+  'outbox-retry': 'Nieudane wiadomości wróciły do kolejki ponowień.',
+  'outbox-resolved': 'Niepewny wynik wiadomości został rozstrzygnięty.',
 };
 const ADMIN_ERRS = {
   'slot-zajety': 'Ten slot ma już aktywną rezerwację (data + godzina). Zmień godzinę.',
@@ -1197,6 +2950,8 @@ const ADMIN_ERRS = {
   'zakres-za-dlugi': 'Zakres blokady może objąć najwyżej 60 dni.',
   'zle-dane': 'Uzupełnij poprawnie wszystkie pola.',
   'brak-telefonu': 'Ta rezerwacja nie ma numeru telefonu.',
+  'archive-status': 'Archiwizować można tylko rezerwacje zrobione albo anulowane.',
+  'outbox-state': 'Ta wiadomość nie ma już statusu wymagającego ręcznego rozstrzygnięcia.',
 };
 
 // Zielony/czerwony pasek u góry strony. Tekst wyłącznie z białych list powyżej
@@ -1230,7 +2985,7 @@ async function adminUpdateBooking(request, env) {
   if (action === 'confirm') {
     const res = await confirmBooking(env, id);
     if (res.error === 'slot') return backWith('err', 'slot-zajety');
-    return backWith('msg', 'potwierdzono');
+    return backWith('msg', res.notified ? 'potwierdzono-1' : 'potwierdzono-0');
   } else if (action === 'start') {
     // Przyjęcie roweru do serwisu: status 'in_progress' + SMS do klienta.
     // 'cancelled' jest wykluczone (wskrzeszenie anulowanej mogłoby kolidować ze slotem innej
@@ -1239,16 +2994,21 @@ async function adminUpdateBooking(request, env) {
     const b = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
     if (b && b.status === 'cancelled') return backWith('err', 'rez-anulowana');
     if (b && b.status !== 'in_progress' && b.status !== 'done') {
+      const transitionAt = Date.now();
       try {
         // accepted_at stempluje się tu (raz), ręczna korekta daty idzie przez adminSaveFinance.
-        await env.DB.prepare("UPDATE bookings SET status='in_progress', accepted_at=COALESCE(accepted_at, ?2) WHERE id=?1").bind(id, Date.now()).run();
+        await env.DB.prepare("UPDATE bookings SET status='in_progress', accepted_at=COALESCE(accepted_at, ?2) WHERE id=?1").bind(id, transitionAt).run();
       } catch (e) {
         if (/UNIQUE constraint/i.test(String(e?.message || e))) return backWith('err', 'slot-zajety');
         throw e;
       }
+      await cancelStaleOutboxJobs(env, 'booking', id);
+      await auditEvent(env, 'booking', id, 'status_changed', { from: b.status, to: 'in_progress' });
       if (b.customer_phone) {
-        const ok = await sendSms(env, b.customer_phone, repairAcceptedSms(b))
-          .catch(e => { console.error('SMS przyjęcie error', e); return false; });
+        const ok = await queueSmsNotification(env, {
+          entityType: 'booking', entityId: b.id, eventKey: `accepted_${transitionAt}`,
+          recipient: b.customer_phone, body: repairAcceptedSms(b),
+        });
         return backWith('msg', ok ? 'przyjeto-1' : 'przyjeto-0');
       }
       return backWith('msg', 'przyjeto');
@@ -1262,6 +3022,7 @@ async function adminUpdateBooking(request, env) {
     // żeby kwota wpisana przed kliknięciem nie ginęła (SMS „Koszt" czyta final_price).
     let price = null;
     let writePrice = 0;
+    const transitionAt = Date.now();
     if (form.has('final_price')) {
       const raw = String(form.get('final_price') || '').replace(',', '.').trim();
       // Zapis tylko przy niepustej kwocie: pusty submit (np. z nieświeżej karty drugiego
@@ -1280,29 +3041,53 @@ async function adminUpdateBooking(request, env) {
            repair_summary=COALESCE(?2, repair_summary),
            final_price=CASE WHEN ?4=1 THEN ?5 ELSE final_price END
          WHERE id=?1`
-      ).bind(id, summary, Date.now(), writePrice, price).run();
+      ).bind(id, summary, transitionAt, writePrice, price).run();
     } catch (e) {
       if (/UNIQUE constraint/i.test(String(e?.message || e))) return backWith('err', 'slot-zajety');
       throw e;
     }
+    if (before) await cancelStaleOutboxJobs(env, 'booking', id);
+    if (before && before.status !== 'done') {
+      await auditEvent(env, 'booking', id, 'status_changed', { from: before.status, to: 'done' });
+    }
     // SMS z podsumowaniem naprawy tylko przy realnym przejściu do 'done' (nie przy ponownym kliknięciu).
     if (before && before.status !== 'done' && before.customer_phone) {
       const fresh = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
-      const ok = await sendSms(env, fresh.customer_phone, repairDoneSms(fresh))
-        .catch(e => { console.error('SMS podsumowanie error', e); return false; });
+      const ok = await queueSmsNotification(env, {
+        entityType: 'booking', entityId: fresh.id, eventKey: `done_${transitionAt}`,
+        recipient: fresh.customer_phone, body: repairDoneSms(fresh),
+      });
       return backWith('msg', ok ? 'zrobione-1' : 'zrobione-0');
     }
     return backWith('msg', 'zrobione');
   } else if (action === 'cancel') {
-    await cancelBooking(env, id);
-    return backWith('msg', 'anulowano');
-  } else if (action === 'delete') {
-    const b = await env.DB.prepare('SELECT gcal_event_id FROM bookings WHERE id=?1').bind(id).first();
-    await env.DB.prepare('DELETE FROM bookings WHERE id=?1').bind(id).run();
-    if (b?.gcal_event_id) {
-      try { await deleteCalendarEvent(env, b.gcal_event_id); } catch (e) { console.error('Kalendarz delete error', e); }
+    const res = await cancelBooking(env, id);
+    return backWith('msg', res.notified ? 'anulowano-1' : 'anulowano-0');
+  } else if (action === 'delete' || action === 'archive') {
+    const b = await env.DB.prepare(
+      'SELECT status, archived_at FROM bookings WHERE id=?1'
+    ).bind(id).first();
+    if (!b) return new Response('Nie ma takiej rezerwacji', { status: 404 });
+    if (!['done', 'cancelled'].includes(b.status)) return backWith('err', 'archive-status');
+    if (b.archived_at == null) {
+      await env.DB.prepare(
+        'UPDATE bookings SET archived_at=?2 WHERE id=?1 AND archived_at IS NULL'
+      ).bind(id, Date.now()).run();
+      await auditEvent(env, 'booking', id, 'archived', { status: b.status });
     }
     return backWith('msg', 'usunieto');
+  } else if (action === 'unarchive') {
+    const b = await env.DB.prepare(
+      'SELECT status, archived_at FROM bookings WHERE id=?1'
+    ).bind(id).first();
+    if (!b) return new Response('Nie ma takiej rezerwacji', { status: 404 });
+    if (b.archived_at != null) {
+      await env.DB.prepare(
+        'UPDATE bookings SET archived_at=NULL WHERE id=?1 AND archived_at IS NOT NULL'
+      ).bind(id).run();
+      await auditEvent(env, 'booking', id, 'unarchived', { status: b.status });
+    }
+    return backWith('msg', 'przywrocono-z-archiwum');
   } else if (action === 'price') {
     const raw = String(form.get('final_price') || '').replace(',', '.').trim();
     let price = null;
@@ -1322,16 +3107,432 @@ async function adminUpdateBooking(request, env) {
 
 // Wspólna logika dla panelu admina i linku z SMS-a.
 
-/** Potwierdza rezerwację i dodaje wpis do kalendarza (raz). Zwraca {ok} albo {error:'slot'}. */
-async function confirmBooking(env, id) {
+async function auditEvent(env, entityType, entityId, action, metadata = null) {
+  try {
+    await env.DB.prepare(
+      `INSERT INTO audit_events (id, entity_type, entity_id, action, metadata_json, created_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6)`
+    ).bind(
+      crypto.randomUUID(), entityType, entityId, action,
+      metadata ? JSON.stringify(metadata).slice(0, 2000) : null, Date.now(),
+    ).run();
+  } catch (e) {
+    console.error('audit event error', e);
+  }
+}
+
+const OUTBOX_MAX_ATTEMPTS = 8;
+
+function bookingOutboxEventKind(eventKey) {
+  const key = String(eventKey || '');
+  for (const kind of ['confirmed', 'cancelled', 'accepted', 'done']) {
+    if (key === kind || key.startsWith(kind + '_')) return kind;
+  }
+  if (key.startsWith('reminder_')) return 'reminder';
+  if (key.startsWith('followup_')) return 'followup';
+  if (key.startsWith('winback_')) return 'winback';
+  if (key === 'customer_new_booking') return 'customer_new_booking';
+  return null;
+}
+
+async function isOutboxJobCurrent(env, job) {
+  if (job.entity_type === 'booking') {
+    const kind = bookingOutboxEventKind(job.event_key);
+    if (!kind) return true;
+    const booking = await env.DB.prepare(
+      `SELECT id, status, date, time_slot, customer_phone, reminder_sent_at,
+              feedback_sent_at, winback_sent_at
+       FROM bookings WHERE id=?1`
+    ).bind(job.entity_id).first();
+    if (!booking) return false;
+    if (kind === 'confirmed') return booking.status === 'confirmed';
+    if (kind === 'cancelled') return booking.status === 'cancelled';
+    if (kind === 'accepted') return booking.status === 'in_progress';
+    if (kind === 'done') return booking.status === 'done';
+    if (kind === 'customer_new_booking') return booking.status === 'pending';
+    if (kind === 'reminder') {
+      const snapshot = /^reminder_24h_(\d{4}-\d{2}-\d{2})_(\d{2}:\d{2})$/.exec(
+        String(job.event_key || ''),
+      );
+      return booking.status === 'confirmed' && booking.reminder_sent_at == null
+        && booking.date === addDaysWarsaw(1)
+        && snapshot?.[1] === booking.date && snapshot?.[2] === booking.time_slot;
+    }
+    if (kind === 'followup') {
+      const snapshot = /^followup_(\d{4}-\d{2}-\d{2})$/.exec(String(job.event_key || ''));
+      return booking.status === 'done' && booking.feedback_sent_at == null
+        && snapshot?.[1] === booking.date
+        && booking.date <= addDaysWarsaw(-3) && booking.date >= addDaysWarsaw(-30);
+    }
+    if (kind === 'winback') {
+      const snapshot = /^winback_(\d{4}-\d{2}-\d{2})$/.exec(String(job.event_key || ''));
+      if (env.WINBACK_ENABLED !== '1' || booking.status === 'cancelled'
+        || booking.winback_sent_at != null || !booking.customer_phone
+        || snapshot?.[1] !== booking.date
+        || booking.date > addDaysWarsaw(-180) || booking.date < addDaysWarsaw(-540)) return false;
+      const latest = await env.DB.prepare(
+        `SELECT id,
+           EXISTS (
+             SELECT 1 FROM bookings history
+             WHERE history.customer_phone=?1 AND history.status='done'
+           ) AS has_done
+         FROM bookings
+         WHERE customer_phone=?1 AND status!='cancelled'
+         ORDER BY date DESC, id DESC LIMIT 1`
+      ).bind(booking.customer_phone).first();
+      return latest?.id === booking.id && Number(latest.has_done) === 1;
+    }
+  }
+
+  if (job.entity_type === 'workshop_signup') {
+    const match = /^trial_invite_(\d{10,16})$/.exec(String(job.event_key || ''));
+    if (!match) return true;
+    const trialAt = Number(match[1]);
+    const signup = await env.DB.prepare(
+      'SELECT status, trial_at FROM workshop_signups WHERE id=?1'
+    ).bind(job.entity_id).first();
+    return signup?.status === 'trial_booked' && Number(signup.trial_at) === trialAt
+      && Date.now() <= trialAt;
+  }
+
+  if (job.entity_type === 'seasonal_reminder') {
+    const match = /^seasonal_(\d{4})$/.exec(String(job.event_key || ''));
+    if (!match) return false;
+    const year = Number(match[1]);
+    const reminder = await env.DB.prepare(
+      'SELECT unsubscribed_at, last_sent_year FROM seasonal_reminders WHERE id=?1'
+    ).bind(job.entity_id).first();
+    return Boolean(reminder) && reminder.unsubscribed_at == null
+      && Number(reminder.last_sent_year || 0) < year;
+  }
+
+  return true;
+}
+
+async function cancelStaleOutboxJobs(env, entityType, entityId) {
+  const rows = await env.DB.prepare(
+    `SELECT * FROM notification_outbox
+     WHERE entity_type=?1 AND entity_id=?2
+       AND status IN ('pending','failed','sending')`
+  ).bind(entityType, entityId).all();
+  const stale = [];
+  for (const job of rows.results || []) {
+    if (!await isOutboxJobCurrent(env, job)) stale.push(job);
+  }
+  if (!stale.length) return 0;
+  const now = Date.now();
+  await env.DB.batch(stale.map(job => job.status === 'sending'
+    ? env.DB.prepare(
+      `UPDATE notification_outbox SET status='uncertain', updated_at=?2,
+         last_error='Entity changed while delivery was in progress; provider outcome unknown'
+       WHERE id=?1 AND status='sending'`
+    ).bind(job.id, now)
+    : env.DB.prepare(
+      `UPDATE notification_outbox SET status='cancelled', updated_at=?2,
+         last_error='Notification no longer matches current entity state'
+       WHERE id=?1 AND status IN ('pending','failed')`
+    ).bind(job.id, now)));
+  return stale.length;
+}
+
+async function stampSentNotification(env, job, sentAt) {
+  if (job.entity_type === 'booking') {
+    const kind = bookingOutboxEventKind(job.event_key);
+    if (kind === 'reminder') {
+      await env.DB.prepare(
+        `UPDATE bookings SET reminder_sent_at=COALESCE(reminder_sent_at, ?1)
+         WHERE id=?2 AND status='confirmed'`
+      ).bind(sentAt, job.entity_id).run();
+    } else if (kind === 'followup') {
+      await env.DB.prepare(
+        `UPDATE bookings SET feedback_sent_at=COALESCE(feedback_sent_at, ?1)
+         WHERE id=?2 AND status='done'`
+      ).bind(sentAt, job.entity_id).run();
+    } else if (kind === 'winback') {
+      await env.DB.prepare(
+        `UPDATE bookings SET winback_sent_at=COALESCE(winback_sent_at, ?1)
+         WHERE id=?2 AND status!='cancelled'`
+      ).bind(sentAt, job.entity_id).run();
+    }
+  } else if (job.entity_type === 'seasonal_reminder' && job.channel === 'email') {
+    const sentYear = Number(String(job.event_key).replace(/^seasonal_/, ''));
+    if (Number.isInteger(sentYear)) {
+      await env.DB.prepare(
+        `UPDATE seasonal_reminders SET sent_at=?1,
+           last_sent_year=CASE WHEN COALESCE(last_sent_year, 0) < ?2 THEN ?2 ELSE last_sent_year END
+         WHERE id=?3 AND unsubscribed_at IS NULL`
+      ).bind(sentAt, sentYear, job.entity_id).run();
+    }
+  }
+}
+
+async function finalizeOutboxSent(env, job, options = {}) {
+  const sentAt = Number(options.sentAt) || Date.now();
+  const expectedStatus = options.expectedStatus || 'sending';
+  const attempt = Number(options.attempt ?? job.attempt_count ?? 0);
+  const statements = [env.DB.prepare(
+    `UPDATE notification_outbox SET status='sent', attempt_count=?2,
+       sent_at=COALESCE(sent_at, ?3), provider_message_id=COALESCE(?4, provider_message_id),
+       updated_at=?3, last_error=?5 WHERE id=?1 AND status=?6`
+  ).bind(
+    job.id, attempt, sentAt, options.providerMessageId || null,
+    options.lastError || null, expectedStatus,
+  )];
+  const deliveredChannel = options.deliveredChannel || '';
+  if (job.entity_type === 'booking' && deliveredChannel === 'sms') {
+    statements.push(env.DB.prepare(
+      `INSERT OR IGNORE INTO messages (id, booking_id, direction, channel, body, created_at)
+       SELECT ?1, ?2, 'out', 'sms', ?3, ?4
+       WHERE EXISTS (SELECT 1 FROM notification_outbox WHERE id=?5 AND status='sent')`
+    ).bind(
+      'outbox:' + job.id, job.entity_id, options.deliveredBody || job.body, sentAt, job.id,
+    ));
+  }
+  const kind = job.entity_type === 'booking' ? bookingOutboxEventKind(job.event_key) : null;
+  if (kind === 'reminder') {
+    statements.push(env.DB.prepare(
+      `UPDATE bookings SET reminder_sent_at=COALESCE(reminder_sent_at, ?1)
+       WHERE id=?2 AND status='confirmed'
+         AND EXISTS (SELECT 1 FROM notification_outbox WHERE id=?3 AND status='sent')`
+    ).bind(sentAt, job.entity_id, job.id));
+  } else if (kind === 'followup') {
+    statements.push(env.DB.prepare(
+      `UPDATE bookings SET feedback_sent_at=COALESCE(feedback_sent_at, ?1)
+       WHERE id=?2 AND status='done'
+         AND EXISTS (SELECT 1 FROM notification_outbox WHERE id=?3 AND status='sent')`
+    ).bind(sentAt, job.entity_id, job.id));
+  } else if (kind === 'winback') {
+    statements.push(env.DB.prepare(
+      `UPDATE bookings SET winback_sent_at=COALESCE(winback_sent_at, ?1)
+       WHERE id=?2 AND status!='cancelled'
+         AND EXISTS (SELECT 1 FROM notification_outbox WHERE id=?3 AND status='sent')`
+    ).bind(sentAt, job.entity_id, job.id));
+  } else if (job.entity_type === 'seasonal_reminder' && job.channel === 'email') {
+    const sentYear = Number(String(job.event_key).replace(/^seasonal_/, ''));
+    if (Number.isInteger(sentYear)) {
+      statements.push(env.DB.prepare(
+        `UPDATE seasonal_reminders SET sent_at=?1,
+           last_sent_year=CASE WHEN COALESCE(last_sent_year, 0) < ?2 THEN ?2 ELSE last_sent_year END
+         WHERE id=?3 AND unsubscribed_at IS NULL
+           AND EXISTS (SELECT 1 FROM notification_outbox WHERE id=?4 AND status='sent')`
+      ).bind(sentAt, sentYear, job.entity_id, job.id));
+    }
+  }
+  const results = await env.DB.batch(statements);
+  return Number(results[0]?.meta?.changes || 0);
+}
+
+async function deliverOutboxJob(env, job) {
+  if (!job || job.status !== 'pending' || Number(job.next_attempt_at) > Date.now()) return false;
+  const claimTime = Date.now();
+  const claim = await env.DB.prepare(
+    `UPDATE notification_outbox SET status='sending', updated_at=?2
+     WHERE id=?1 AND status='pending' AND next_attempt_at <= ?2`
+  ).bind(job.id, claimTime).run();
+  if ((claim.meta?.changes || 0) === 0) return false;
+  if (!await isOutboxJobCurrent(env, job)) {
+    await env.DB.prepare(
+      `UPDATE notification_outbox SET status='cancelled', updated_at=?2,
+         last_error='Notification no longer matches current entity state'
+       WHERE id=?1 AND status='sending'`
+    ).bind(job.id, Date.now()).run();
+    return false;
+  }
+  const attempt = Number(job.attempt_count || 0) + 1;
+  let ok = false;
+  let uncertain = false;
+  let providerMessageId = null;
+  let deliveredChannel = job.channel;
+  let deliveredBody = job.body;
+  try {
+    if (job.channel === 'sms') {
+      const result = await sendSms(env, job.recipient, job.body, {
+        idempotencyKey: job.id,
+        returnResult: true,
+      });
+      ok = result.ok;
+      uncertain = result.uncertain;
+      providerMessageId = result.providerMessageId;
+    } else if (job.channel === 'email' && env.RESEND_API_KEY) {
+      providerMessageId = await resendSend(env.RESEND_API_KEY, JSON.parse(job.body), job.id);
+      ok = true;
+    } else if (job.channel === 'whatsapp') {
+      const result = await sendWhatsApp(env, job.recipient, JSON.parse(job.body), { returnResult: true });
+      ok = result.ok;
+      uncertain = result.uncertain;
+      providerMessageId = result.providerMessageId;
+    } else if (job.channel === 'reminder_fallback') {
+      const payload = JSON.parse(job.body);
+      let whatsappResult = { ok: false, uncertain: false, providerMessageId: null };
+      if (env.WHATSAPP_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID) {
+        whatsappResult = await sendWhatsApp(env, job.recipient, payload.whatsapp, { returnResult: true });
+      }
+      if (whatsappResult.ok) {
+        ok = true;
+        deliveredChannel = 'whatsapp';
+        providerMessageId = whatsappResult.providerMessageId;
+      } else if (whatsappResult.uncertain) {
+        uncertain = true;
+      } else {
+        const smsResult = await sendSms(env, job.recipient, payload.sms, {
+          idempotencyKey: job.id,
+          returnResult: true,
+        });
+        ok = smsResult.ok;
+        uncertain = smsResult.uncertain;
+        providerMessageId = smsResult.providerMessageId;
+        deliveredChannel = 'sms';
+        deliveredBody = payload.sms;
+      }
+    }
+  } catch (e) {
+    console.error('outbox delivery error', job.channel, e);
+    ok = false;
+  }
+  const now = Date.now();
+  if (uncertain) {
+    await env.DB.prepare(
+      `UPDATE notification_outbox SET status='uncertain', attempt_count=?2,
+         last_error='Provider outcome unknown; operator decision required', updated_at=?3
+       WHERE id=?1 AND status='sending'`
+    ).bind(job.id, attempt, now).run();
+    return false;
+  }
+  if (ok) {
+    const finalized = await finalizeOutboxSent(env, job, {
+      expectedStatus: 'sending',
+      sentAt: now,
+      attempt,
+      providerMessageId,
+      deliveredChannel,
+      deliveredBody,
+    });
+    return finalized > 0;
+  }
+
+  const exhausted = attempt >= OUTBOX_MAX_ATTEMPTS;
+  const delay = Math.min(24 * 3600_000, 5 * 60_000 * (2 ** Math.max(0, attempt - 1)));
+  await env.DB.prepare(
+    `UPDATE notification_outbox SET status=?2, attempt_count=?3, next_attempt_at=?4,
+       last_error=?5, updated_at=?6 WHERE id=?1 AND status='sending'`
+  ).bind(
+    job.id, exhausted ? 'failed' : 'pending', attempt, now + delay,
+    'Provider unavailable or rejected the message', now,
+  ).run();
+  return false;
+}
+
+async function queueNotification(env, {
+  entityType, entityId, eventKey, channel, recipient, body,
+  reactivateCancelled = false, deferDelivery = false,
+}) {
+  if (!entityType || !entityId || !eventKey || !channel || !recipient || !body) return false;
+  if (!['sms', 'email', 'whatsapp', 'reminder_fallback'].includes(channel)) return false;
+  const id = crypto.randomUUID();
+  const now = Date.now();
+  const normalizedRecipient = channel === 'email'
+    ? normalizeEmail(recipient)
+    : normalizePhone(recipient);
+  if (!normalizedRecipient) return false;
+  const storedBody = channel === 'sms' ? String(body) : JSON.stringify(body);
+  await env.DB.prepare(
+    `INSERT OR IGNORE INTO notification_outbox (
+       id, entity_type, entity_id, event_key, channel, recipient, body,
+       status, attempt_count, next_attempt_at, created_at, updated_at
+     ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'pending', 0, ?8, ?8, ?8)`
+  ).bind(id, entityType, entityId, eventKey, channel, normalizedRecipient, storedBody, now).run();
+  if (reactivateCancelled) {
+    await env.DB.prepare(
+      `UPDATE notification_outbox SET status='pending', recipient=?5, body=?6,
+         attempt_count=0, next_attempt_at=?7, last_error=NULL, updated_at=?7
+       WHERE entity_type=?1 AND entity_id=?2 AND event_key=?3 AND channel=?4
+         AND status='cancelled'
+         AND last_error IN (
+           'Trial date changed or invitation withdrawn',
+           'Notification no longer matches current entity state'
+         )`
+    ).bind(
+      entityType, entityId, eventKey, channel, normalizedRecipient, storedBody, now,
+    ).run();
+  }
+  const job = await env.DB.prepare(
+    `SELECT * FROM notification_outbox
+     WHERE entity_type=?1 AND entity_id=?2 AND event_key=?3 AND channel=?4`
+  ).bind(entityType, entityId, eventKey, channel).first();
+  if (job?.status === 'sent') {
+    await stampSentNotification(env, job, Number(job.sent_at) || now);
+    return true;
+  }
+  if (deferDelivery) return false;
+  return await deliverOutboxJob(env, job);
+}
+
+async function queueSmsNotification(env, details) {
+  return await queueNotification(env, { ...details, channel: 'sms' });
+}
+
+async function queueEmailNotification(env, details) {
+  return await queueNotification(env, { ...details, channel: 'email' });
+}
+
+async function queueWhatsAppNotification(env, details) {
+  return await queueNotification(env, { ...details, channel: 'whatsapp' });
+}
+
+async function queueReminderNotification(env, details) {
+  return await queueNotification(env, { ...details, channel: 'reminder_fallback' });
+}
+
+async function processNotificationOutbox(env) {
+  const now = Date.now();
+  // Po przerwaniu izolatu wynik wywołania dostawcy jest nieznany. Automatyczne
+  // ponowienie grozi duplikatem, więc operator musi świadomie uruchomić retry.
+  await env.DB.prepare(
+    `UPDATE notification_outbox SET status='uncertain', updated_at=?1,
+       last_error='Delivery outcome unknown after interrupted attempt; operator decision required'
+     WHERE status='sending' AND updated_at <= ?2`
+  ).bind(now, now - 10 * 60_000).run();
+  const rows = await env.DB.prepare(
+    `SELECT * FROM notification_outbox
+     WHERE status='pending' AND next_attempt_at <= ?1
+     ORDER BY next_attempt_at ASC LIMIT 50`
+  ).bind(now).all();
+  for (const job of rows.results || []) await deliverOutboxJob(env, job);
+}
+
+async function sendBookingLifecycleSms(env, booking, eventKey, text) {
+  if (!booking?.id || !booking.customer_phone) return false;
+  return await queueSmsNotification(env, {
+    entityType: 'booking', entityId: booking.id, eventKey,
+    recipient: booking.customer_phone, body: text,
+  });
+}
+
+/** Potwierdza rezerwację, dodaje wpis do kalendarza i informuje klienta. */
+async function confirmBooking(env, id, expectedStatus = null) {
+  const before = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
+  if (!before) return { ok: true, notified: false };
+  if (expectedStatus && before.status !== expectedStatus) return { error: 'state' };
+  const transitionAt = Date.now();
   // Status aktywny (!= cancelled), więc przywrócenie anulowanej rezerwacji,
   // której slot zajęła inna, narusza idx_bookings_active_slot. Mapujemy to na 'slot'.
   try {
-    await env.DB.prepare("UPDATE bookings SET status='confirmed' WHERE id=?1").bind(id).run();
+    const updated = expectedStatus
+      ? await env.DB.prepare(
+        "UPDATE bookings SET status='confirmed', archived_at=NULL WHERE id=?1 AND status=?2"
+      ).bind(id, expectedStatus).run()
+      : await env.DB.prepare(
+        "UPDATE bookings SET status='confirmed', archived_at=NULL WHERE id=?1"
+      ).bind(id).run();
+    if ((updated.meta?.changes || 0) === 0) return { error: 'state' };
   } catch (e) {
     if (/UNIQUE constraint/i.test(String(e?.message || e))) return { error: 'slot' };
     throw e;
   }
+  if (before.status !== 'confirmed') {
+    await auditEvent(env, 'booking', id, 'status_changed', { from: before.status, to: 'confirmed' });
+  }
+  await cancelStaleOutboxJobs(env, 'booking', id);
   // Wpis do kalendarza, best-effort, tylko raz. Błąd kalendarza nie psuje potwierdzenia.
   const b = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
   if (b && !b.gcal_event_id) {
@@ -1342,16 +3543,37 @@ async function confirmBooking(env, id) {
       }
     } catch (e) { console.error('Kalendarz error', e); }
   }
-  return { ok: true };
+  const notified = before.status === 'confirmed'
+    ? true
+    : await sendBookingLifecycleSms(env, b, `confirmed_${transitionAt}`, bookingConfirmedSms(b));
+  return { ok: true, notified };
 }
 
-/** Anuluje rezerwację i usuwa wpis z kalendarza, jeśli istniał. */
-async function cancelBooking(env, id) {
-  const b = await env.DB.prepare('SELECT gcal_event_id FROM bookings WHERE id=?1').bind(id).first();
-  await env.DB.prepare("UPDATE bookings SET status='cancelled', gcal_event_id=NULL WHERE id=?1").bind(id).run();
+/** Anuluje rezerwację, usuwa wpis z kalendarza i informuje klienta. */
+async function cancelBooking(env, id, expectedStatus = null) {
+  const b = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
+  if (!b) return { ok: true, notified: false };
+  if (expectedStatus && b.status !== expectedStatus) return { error: 'state' };
+  const transitionAt = Date.now();
+  const updated = expectedStatus
+    ? await env.DB.prepare(
+      "UPDATE bookings SET status='cancelled', gcal_event_id=NULL WHERE id=?1 AND status=?2"
+    ).bind(id, expectedStatus).run()
+    : await env.DB.prepare(
+      "UPDATE bookings SET status='cancelled', gcal_event_id=NULL WHERE id=?1"
+    ).bind(id).run();
+  if ((updated.meta?.changes || 0) === 0) return { error: 'state' };
+  if (b.status !== 'cancelled') {
+    await auditEvent(env, 'booking', id, 'status_changed', { from: b.status, to: 'cancelled' });
+  }
+  await cancelStaleOutboxJobs(env, 'booking', id);
   if (b?.gcal_event_id) {
     try { await deleteCalendarEvent(env, b.gcal_event_id); } catch (e) { console.error('Kalendarz delete error', e); }
   }
+  const notified = b.status === 'cancelled'
+    ? true
+    : await sendBookingLifecycleSms(env, b, `cancelled_${transitionAt}`, bookingCancelledSms(b));
+  return { ok: true, notified };
 }
 
 // SMS po przyjęciu roweru do serwisu (status -> in_progress).
@@ -1392,6 +3614,7 @@ async function adminCreateBooking(request, env) {
   if (!/^(\+?48)?[0-9]{9}$/.test(phone)) errors.push('telefon');
   if (!SERVICES.some(s => s.id === service_type)) errors.push('usługa');
   if (!BIKE_TYPES.includes(bike_type)) errors.push('typ roweru');
+  if (!['tel', 'google', 'inne'].includes(source)) errors.push('źródło');
   if (!isValidDate(date)) errors.push('data');
   // Realna godzina (odrzuca 99:99, które psuło sortowanie i insert do kalendarza).
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time_slot)) errors.push('godzina');
@@ -1406,22 +3629,26 @@ async function adminCreateBooking(request, env) {
     return redirect('/admin?err=zle-dane&fields=' + encodeURIComponent(errors.join(', ')) + '&' + prefillQs() + '#dodaj');
   }
 
-  const prefix = { tel: '[tel]', google: '[google]', inne: '[ręczna]' }[source] || '[ręczna]';
+  const prefix = { tel: '[tel]', google: '[google]', inne: '[ręczna]' }[source];
   const notes = rawNotes ? `${prefix} ${rawNotes}` : `${prefix} dodane ręcznie w panelu`;
 
   const id = crypto.randomUUID();
   try {
     await env.DB.prepare(
       `INSERT INTO bookings (id, created_at, date, time_slot, service_type, bike_type, bike_model,
-         customer_name, customer_phone, customer_email, notes, status)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, 'confirmed')`
-    ).bind(id, Date.now(), date, time_slot, service_type, bike_type, bike_model, name, phone, email, notes).run();
+         customer_name, customer_phone, customer_email, notes, status, source)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, 'confirmed', ?12)`
+    ).bind(
+      id, Date.now(), date, time_slot, service_type, bike_type, bike_model,
+      name, phone, email, notes, source,
+    ).run();
   } catch (e) {
     if (/UNIQUE constraint/i.test(String(e?.message || e))) {
       return redirect('/admin?err=slot-zajety&' + prefillQs() + '#dodaj');
     }
     throw e;
   }
+  await auditEvent(env, 'booking', id, 'created_manually', { source });
 
   // Kalendarz tylko dla terminów dziś/w przyszłości; wsteczne logi go nie potrzebują.
   if (date >= todayInWarsaw()) {
@@ -1556,6 +3783,8 @@ ${ADMIN_STYLES}
   <h1>${escapeHtml(title)}</h1>
   <div class="topbar-right">
     <a href="/admin" class="logout">← Rezerwacje</a>
+    <a href="/admin/warsztaty" class="logout">Zgłoszenia</a>
+    <a href="/admin/warsztaty/grupy" class="logout">Grupy</a>
     <!-- <a href="/admin/rozliczenie" class="logout">Rozliczenie</a> tymczasowo ukryte -->
     <a href="/admin/logout" class="logout">Wyloguj</a>
   </div>
@@ -1919,23 +4148,26 @@ async function adminDashboard(env, url) {
   const filter = url.searchParams.get('filter') || 'upcoming';
   const today = todayInWarsaw();
 
-  let where = '';
+  let where = 'WHERE archived_at IS NULL';
   let params = [];
   if (filter === 'upcoming') {
-    where = "WHERE date >= ?1 AND status IN ('pending','confirmed','in_progress')";
-    params = [today];
+    // Aktywne zlecenie nie może zniknąć tylko dlatego, że minęła data przyjęcia.
+    // Najstarsze zaległe pozycje lądują na górze i wymagają rozstrzygnięcia.
+    where = "WHERE archived_at IS NULL AND status IN ('pending','confirmed','in_progress')";
   } else if (filter === 'past') {
-    where = 'WHERE date < ?1';
+    where = 'WHERE archived_at IS NULL AND date < ?1';
     params = [today];
   } else if (filter === 'cancelled') {
-    where = "WHERE status='cancelled'";
+    where = "WHERE archived_at IS NULL AND status='cancelled'";
+  } else if (filter === 'archived') {
+    where = 'WHERE archived_at IS NOT NULL';
   } else if (filter === 'all') {
-    where = '';
+    where = 'WHERE archived_at IS NULL';
   }
 
   // Przeszłe i Wszystkie od najnowszych (przy >500 wierszach LIMIT ucina najstarsze, nie najświeższe);
   // Nadchodzące zostają rosnąco (najbliższa wizyta na górze).
-  const orderBy = (filter === 'past' || filter === 'all')
+  const orderBy = (filter === 'past' || filter === 'all' || filter === 'archived')
     ? 'ORDER BY date DESC, time_slot DESC'
     : 'ORDER BY date ASC, time_slot ASC';
   const q = env.DB.prepare(
@@ -1946,13 +4178,13 @@ async function adminDashboard(env, url) {
   // Widok dnia: wszystkie dzisiejsze wizyty niezależnie od statusu (w tym done, które
   // znika z Nadchodzących w chwili kliknięcia „Zrobione").
   const todayRows = (await env.DB.prepare(
-    'SELECT * FROM bookings WHERE date = ?1 ORDER BY time_slot ASC'
+    'SELECT * FROM bookings WHERE date = ?1 AND archived_at IS NULL ORDER BY time_slot ASC'
   ).bind(today).all()).results || [];
 
-  // Kropka pending liczona globalnie (osobny SELECT), niezależnie od aktywnego filtra.
+  // Kropka pending liczona globalnie, również dla zaległych rezerwacji.
   const pendingCount = (await env.DB.prepare(
-    "SELECT COUNT(*) AS n FROM bookings WHERE status = 'pending' AND date >= ?1"
-  ).bind(today).first())?.n || 0;
+    "SELECT COUNT(*) AS n FROM bookings WHERE status = 'pending' AND archived_at IS NULL"
+  ).first())?.n || 0;
 
   const blocked = (await env.DB.prepare(
     'SELECT * FROM blocked_slots WHERE date >= ?1 ORDER BY date ASC, time_slot ASC'
@@ -1968,6 +4200,17 @@ async function adminDashboard(env, url) {
 
   const outreach = (await env.DB.prepare(
     "SELECT * FROM outreach_contacts ORDER BY CASE status WHEN 'planned' THEN 0 WHEN 'sent' THEN 1 WHEN 'responded' THEN 2 WHEN 'closed' THEN 3 ELSE 4 END, channel ASC, id ASC"
+  ).all()).results || [];
+
+  const outboxCounts = Object.fromEntries(((await env.DB.prepare(
+    `SELECT status, COUNT(*) AS count FROM notification_outbox
+     WHERE status IN ('pending','failed','uncertain') GROUP BY status`
+  ).all()).results || []).map(row => [row.status, Number(row.count) || 0]));
+  const uncertainJobs = (await env.DB.prepare(
+    `SELECT id, entity_type, entity_id, event_key, channel, recipient,
+            attempt_count, last_error, updated_at
+     FROM notification_outbox WHERE status='uncertain'
+     ORDER BY updated_at ASC LIMIT 50`
   ).all()).results || [];
 
   // Toasty (kody mapowane na białe listy w adminToasts) + prefill formularza ręcznej
@@ -1991,7 +4234,7 @@ async function adminDashboard(env, url) {
   return html(renderDashboard({
     bookings, todayRows, pendingCount, blocked, filter, today,
     reviewsProfile, reviewsCount, reviewsStatus,
-    outreach, msg, err, errFields, prefill,
+    outreach, outboxCounts, uncertainJobs, msg, err, errFields, prefill,
   }));
 }
 
@@ -2014,7 +4257,11 @@ ${ADMIN_STYLES}
 </body></html>`);
 }
 
-function renderDashboard({ bookings, todayRows, pendingCount, blocked, filter, today, reviewsProfile, reviewsCount, reviewsStatus, outreach, msg, err, errFields, prefill }) {
+function renderDashboard({
+  bookings, todayRows, pendingCount, blocked, filter, today, reviewsProfile,
+  reviewsCount, reviewsStatus, outreach, outboxCounts, uncertainJobs,
+  msg, err, errFields, prefill,
+}) {
   const back = `/admin?filter=${encodeURIComponent(filter)}`;
   const backEsc = escapeHtml(back);
   const pf = prefill || {};
@@ -2057,12 +4304,13 @@ function renderDashboard({ bookings, todayRows, pendingCount, blocked, filter, t
       <td data-label="Status"><span class="badge badge-${b.status}">${statusLabel(b.status)}</span></td>
       <td class="actions">
         <a href="/admin/zlecenie?id=${escapeHtml(b.id)}" class="btn-ok" title="Szczegóły, kwoty, rozliczenie">Otwórz</a>
-        ${b.status === 'pending' ? `<form method="post" action="/admin/booking">${hidden}<button name="action" value="confirm" class="btn-ok">Potwierdź</button></form>` : ''}
-        ${b.status === 'pending' || b.status === 'confirmed' ? `<form method="post" action="/admin/booking" ${confirmAttr(`Przyjąć rower do serwisu? ${who}. Klient dostanie SMS o przyjęciu.`)}>${hidden}<button name="action" value="start" class="btn-ok" title="Przyjęto rower do serwisu, wyśle SMS do klienta">Przyjęto</button></form>` : ''}
-        ${b.status !== 'done' && b.status !== 'cancelled' ? `<form method="post" action="/admin/booking" class="done-form" onsubmit="var p=this.closest('tr').querySelector('.price-input'); if (p) this.final_price.value = p.value; return confirm('${confirmJs(`Oznaczyć jako zrobione? ${who}. Klient dostanie SMS z podsumowaniem i kosztem.`)}')">${hidden}<input type="hidden" name="final_price" value="${finalVal}"><input type="text" name="repair_summary" value="${escapeHtml(b.repair_summary || '')}" placeholder="co zrobiono (do SMS)" maxlength="300" class="summary-input" onkeydown="if(event.key==='Enter'){event.preventDefault()}"><button name="action" value="done" class="btn-ok" title="Naprawa gotowa, wyśle SMS z podsumowaniem">Zrobione</button></form>` : ''}
-        ${b.status === 'cancelled' ? `<form method="post" action="/admin/booking" ${confirmAttr(`Przywrócić rezerwację? ${who}. Wróci jako potwierdzona.`)}>${hidden}<button name="action" value="confirm" class="btn-ok">Przywróć</button></form>` : ''}
-        ${b.status !== 'cancelled' ? `<form method="post" action="/admin/booking" ${confirmAttr(`Anulować rezerwację? ${who}. Slot zostanie zwolniony.`)}>${hidden}<button name="action" value="cancel" class="btn-warn">Anuluj</button></form>` : ''}
-        <form method="post" action="/admin/booking" ${confirmAttr(`Usunąć rezerwację? ${who}. Tego nie można cofnąć.`)}>${hidden}<button name="action" value="delete" class="btn-del">Usuń</button></form>
+        ${b.archived_at == null && b.status === 'pending' ? `<form method="post" action="/admin/booking">${hidden}<button name="action" value="confirm" class="btn-ok">Potwierdź</button></form>` : ''}
+        ${b.archived_at == null && (b.status === 'pending' || b.status === 'confirmed') ? `<form method="post" action="/admin/booking" ${confirmAttr(`Przyjąć rower do serwisu? ${who}. Klient dostanie SMS o przyjęciu.`)}>${hidden}<button name="action" value="start" class="btn-ok" title="Przyjęto rower do serwisu, wyśle SMS do klienta">Przyjęto</button></form>` : ''}
+        ${b.archived_at == null && b.status !== 'done' && b.status !== 'cancelled' ? `<form method="post" action="/admin/booking" class="done-form" onsubmit="var p=this.closest('tr').querySelector('.price-input'); if (p) this.final_price.value = p.value; return confirm('${confirmJs(`Oznaczyć jako zrobione? ${who}. Klient dostanie SMS z podsumowaniem i kosztem.`)}')">${hidden}<input type="hidden" name="final_price" value="${finalVal}"><input type="text" name="repair_summary" value="${escapeHtml(b.repair_summary || '')}" placeholder="co zrobiono (do SMS)" maxlength="300" class="summary-input" onkeydown="if(event.key==='Enter'){event.preventDefault()}"><button name="action" value="done" class="btn-ok" title="Naprawa gotowa, wyśle SMS z podsumowaniem">Zrobione</button></form>` : ''}
+        ${b.archived_at == null && b.status === 'cancelled' ? `<form method="post" action="/admin/booking" ${confirmAttr(`Przywrócić rezerwację? ${who}. Wróci jako potwierdzona.`)}>${hidden}<button name="action" value="confirm" class="btn-ok">Przywróć</button></form>` : ''}
+        ${b.archived_at == null && b.status !== 'cancelled' ? `<form method="post" action="/admin/booking" ${confirmAttr(`Anulować rezerwację? ${who}. Slot zostanie zwolniony.`)}>${hidden}<button name="action" value="cancel" class="btn-warn">Anuluj</button></form>` : ''}
+        ${b.archived_at == null && ['done', 'cancelled'].includes(b.status) ? `<form method="post" action="/admin/booking" ${confirmAttr(`Przenieść rezerwację do archiwum? ${who}. Status pozostanie bez zmian.`)}>${hidden}<button name="action" value="archive" class="btn-del">Archiwizuj</button></form>` : ''}
+        ${b.archived_at != null ? `<form method="post" action="/admin/booking" ${confirmAttr(`Przywrócić rezerwację z archiwum? ${who}. Status pozostanie bez zmian.`)}>${hidden}<button name="action" value="unarchive" class="btn-ok">Przywróć z archiwum</button></form>` : ''}
       </td>
     </tr>`;
   };
@@ -2106,12 +4354,40 @@ ${ADMIN_STYLES}
   <div class="topbar-right">
     <span class="muted">Dziś: ${today}</span>
     <!-- <a href="/admin/rozliczenie" class="logout">Rozliczenie</a> tymczasowo ukryte -->
+    <a href="/admin/warsztaty" class="logout">Warsztaty</a>
+    <a href="/admin/warsztaty/grupy" class="logout">Grupy</a>
     <a href="#outreach" class="logout">Współpraca</a>
     <a href="/admin/logout" class="logout">Wyloguj</a>
   </div>
 </header>
 
 ${adminToasts(msg, err, errFields)}
+
+${(outboxCounts?.pending || outboxCounts?.failed || outboxCounts?.uncertain) ? `<section class="card">
+  <h2>Kolejka wiadomości</h2>
+  <p class="muted">Oczekujące: ${outboxCounts.pending || 0} · nieudane: ${outboxCounts.failed || 0} · wynik niepewny: ${outboxCounts.uncertain || 0}</p>
+  ${outboxCounts.failed ? `<form method="post" action="/admin/outbox-retry"><button type="submit">Ponów nieudane</button></form>` : ''}
+  ${uncertainJobs.length ? `<table class="cards outbox-uncertain"><thead><tr><th>Zadanie</th><th>Wynik</th><th>Rozstrzygnięcie</th></tr></thead><tbody>
+    ${uncertainJobs.map(job => `<tr>
+      <td data-label="Zadanie"><strong>${escapeHtml(job.channel)}</strong> · ${escapeHtml(job.event_key)}
+        <div class="muted">${escapeHtml(job.entity_type)}: ${escapeHtml(job.entity_id)}</div>
+        <div class="muted">${escapeHtml(job.recipient)} · próba ${escapeHtml(job.attempt_count)} · ${escapeHtml(warsawDateTime(job.updated_at))}</div>
+      </td>
+      <td data-label="Wynik">${escapeHtml(job.last_error || 'Wynik dostarczenia jest nieznany.')}</td>
+      <td data-label="Rozstrzygnięcie" class="actions">
+        <form method="post" action="/admin/outbox-resolve" ${confirmAttr('Wynik wysyłki jest nieznany. Ponowienie może dostarczyć duplikat. Czy świadomie ponowić?')}>
+          <input type="hidden" name="id" value="${escapeHtml(job.id)}"><button name="action" value="retry" class="btn-warn">Ponów z ryzykiem</button>
+        </form>
+        <form method="post" action="/admin/outbox-resolve" ${confirmAttr('Oznacz jako wysłane tylko po sprawdzeniu u dostawcy. Kontynuować?')}>
+          <input type="hidden" name="id" value="${escapeHtml(job.id)}"><button name="action" value="mark_sent" class="btn-ok">Oznacz wysłane</button>
+        </form>
+        <form method="post" action="/admin/outbox-resolve" ${confirmAttr('Anulowanie nie cofnie wiadomości, jeśli dostawca już ją przyjął. Kontynuować?')}>
+          <input type="hidden" name="id" value="${escapeHtml(job.id)}"><button name="action" value="cancel" class="btn-del">Anuluj job</button>
+        </form>
+      </td>
+    </tr>`).join('')}
+  </tbody></table>` : ''}
+</section>` : ''}
 
 <section class="card today-card">
   <h2>Dziś · ${today}${todayRows.length ? ` · wizyt: ${todayRows.length}` : ''}</h2>
@@ -2125,6 +4401,7 @@ ${adminToasts(msg, err, errFields)}
   <a href="?filter=past" class="${filter === 'past' ? 'active' : ''}">Przeszłe</a>
   <a href="?filter=cancelled" class="${filter === 'cancelled' ? 'active' : ''}">Anulowane</a>
   <a href="?filter=all" class="${filter === 'all' ? 'active' : ''}">Wszystkie</a>
+  <a href="?filter=archived" class="${filter === 'archived' ? 'active' : ''}">Archiwum</a>
 </nav>
 
 <section class="card">
@@ -2444,6 +4721,63 @@ tr.status-done td { opacity: .65; }
 .calc-row.total b { color: #9fe22e; }
 tr.settled td { opacity: .5; }
 
+.workshop-stats { display: grid; grid-template-columns: repeat(5, minmax(120px, 1fr)); gap: 10px; margin-bottom: 20px; }
+.workshop-stat { display: flex; flex-direction: column; background: #161616; border: 1px solid #222; border-radius: 8px; padding: 14px 16px; color: #aaa; }
+.workshop-stat:hover { border-color: #9fe22e; text-decoration: none; }
+.workshop-stat strong { color: #9fe22e; font-size: 24px; line-height: 1.1; }
+.workshop-stat span { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.workshop-due-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.workshop-due-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px 10px; background: #101010; border: 1px solid #3d3212; border-radius: 6px; }
+.workshop-tabs { flex-wrap: wrap; }
+.workshop-table tr { scroll-margin-top: 16px; }
+.workshop-table tr.workshop-due td:first-child { border-left: 3px solid #f4c542; padding-left: 10px; }
+.workshop-table tr.status-lost td { opacity: .55; }
+.workshop-table td:nth-child(1) { min-width: 180px; }
+.workshop-table td:nth-child(2), .workshop-table td:nth-child(3) { min-width: 160px; }
+.workshop-form { display: grid; grid-template-columns: repeat(2, minmax(150px, 1fr)); gap: 8px; min-width: 390px; }
+.workshop-form label { display: flex; flex-direction: column; gap: 3px; color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.workshop-form input, .workshop-form select, .workshop-form textarea { width: 100%; background: #0e0e0e; border: 1px solid #333; color: #fff; padding: 7px 9px; border-radius: 4px; font: inherit; font-size: 13px; text-transform: none; letter-spacing: normal; }
+.workshop-form textarea { resize: vertical; }
+.workshop-form .workshop-notes { grid-column: 1 / -1; }
+.workshop-form button { justify-self: start; background: #9fe22e; color: #000; border: 0; border-radius: 4px; padding: 8px 16px; font-weight: 700; cursor: pointer; }
+.workshop-ops-form { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 10px; margin-top: 12px; }
+.workshop-ops-form label, .workshop-payment-form label { display: flex; flex-direction: column; gap: 3px; color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.workshop-ops-form input, .workshop-ops-form select, .workshop-ops-form textarea,
+.workshop-payment-form input, .workshop-payment-form select,
+.workshop-attendance-form input, .workshop-attendance-form select, .ops-inline-form select {
+  width: 100%; background: #0e0e0e; border: 1px solid #333; color: #fff;
+  padding: 7px 9px; border-radius: 4px; font: inherit; font-size: 13px;
+}
+.workshop-ops-form textarea { resize: vertical; }
+.workshop-ops-form .ops-wide { grid-column: span 2; }
+.workshop-ops-form button, .workshop-payment-form button, .workshop-attendance-form button, .ops-inline-form button {
+  align-self: end; justify-self: start; background: #9fe22e; color: #000; border: 0;
+  border-radius: 4px; padding: 8px 14px; font-weight: 700; cursor: pointer;
+}
+.workshop-ops-form button:disabled { cursor: not-allowed; opacity: .4; }
+.workshop-group-card, .workshop-session-card { scroll-margin-top: 12px; }
+.workshop-group-card details { margin: 12px 0; border-top: 1px solid #222; border-bottom: 1px solid #222; padding: 10px 0; }
+.workshop-group-card summary { color: #aaa; cursor: pointer; }
+.workshop-group-card h3 { font-size: 15px; margin: 18px 0 8px; }
+.ops-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.ops-heading > :last-child { text-align: right; }
+.ops-actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0 18px; }
+.ops-compact { grid-template-columns: repeat(2, minmax(120px, 1fr)); background: #101010; border: 1px solid #222; border-radius: 6px; padding: 12px; margin: 0; }
+.ops-inline-form { display: flex; align-items: center; gap: 6px; }
+.workshop-payment-form { display: grid; grid-template-columns: repeat(3, minmax(90px, 1fr)); gap: 6px; min-width: 360px; }
+.workshop-payment-form button { align-self: end; }
+.workshop-attendance-form { display: grid; grid-template-columns: minmax(150px, 1fr) 2fr auto; gap: 6px; }
+.workshop-members-table td:last-child { min-width: 380px; }
+.ops-section-title { margin: 28px 0 12px; }
+.workshop-session-card.status-cancelled { opacity: .55; }
+.badge-active, .badge-completed { background: #122a14; color: #9fe22e; }
+.badge-paused { background: #2a2410; color: #f4c542; }
+.badge-new { background: #2a2410; color: #f4c542; }
+.badge-contacted { background: #10202a; color: #4fb3e2; }
+.badge-trial_booked { background: #21162a; color: #c58be2; }
+.badge-enrolled { background: #122a14; color: #9fe22e; }
+.badge-lost { background: #2a1414; color: #d66; }
+
 body.login { display: flex; align-items: center; justify-content: center; }
 .login-box { background: #161616; border: 1px solid #222; border-radius: 8px; padding: 32px; width: 100%; max-width: 360px; }
 .login-box h1 { margin-bottom: 20px; }
@@ -2454,6 +4788,8 @@ body.login { display: flex; align-items: center; justify-content: center; }
 
 @media (max-width: 720px) {
   body { padding: 12px; }
+  .topbar { align-items: flex-start; flex-direction: column; }
+  .topbar-right { flex-wrap: wrap; gap: 8px; }
   table { font-size: 13px; }
   th, td { padding: 6px 4px; }
   .notes { max-width: 200px; }
@@ -2469,6 +4805,21 @@ body.login { display: flex; align-items: center; justify-content: center; }
   .outreach-add { grid-template-columns: 1fr; }
   .logout { min-height: 44px; display: inline-flex; align-items: center; }
   .finance-form button, .sms-form button { min-height: 44px; }
+  .workshop-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .workshop-form { grid-template-columns: 1fr; min-width: 0; }
+  .workshop-form .workshop-notes { grid-column: auto; }
+  .workshop-form input, .workshop-form select, .workshop-form textarea, .workshop-form button { min-height: 44px; font-size: 16px; }
+  .workshop-ops-form, .ops-compact, .ops-actions-grid { grid-template-columns: 1fr; }
+  .workshop-ops-form .ops-wide { grid-column: auto; }
+  .ops-heading { flex-direction: column; }
+  .ops-heading > :last-child { text-align: left; }
+  .workshop-payment-form, .workshop-attendance-form { grid-template-columns: 1fr; min-width: 0; }
+  .workshop-members-table td:last-child { min-width: 0; }
+  .workshop-ops-form input, .workshop-ops-form select, .workshop-ops-form textarea,
+  .workshop-ops-form button, .workshop-payment-form input, .workshop-payment-form select,
+  .workshop-payment-form button, .workshop-attendance-form input,
+  .workshop-attendance-form select, .workshop-attendance-form button,
+  .ops-inline-form select, .ops-inline-form button { min-height: 44px; font-size: 16px; }
 
   /* Tabele jako karty: wiersz = karta, komórki z etykietami data-label (bez overflow-x). */
   table.cards, table.cards tbody, table.cards tr, table.cards td { display: block; width: 100%; }
@@ -2487,7 +4838,7 @@ function statusLabel(s) {
 // ─── AUTH ───────────────────────────────────────────────────────────────────
 
 async function isAdmin(request, env) {
-  const cookie = parseCookie(request.headers.get('Cookie'))['admin'];
+  const cookie = parseCookie(request.headers.get('Cookie'))['__Host-admin'];
   if (!cookie) return false;
   return await verifySessionCookie(cookie, env);
 }
@@ -2559,13 +4910,24 @@ function parseCookie(header) {
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
     status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' },
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+    },
   });
 }
 
 function html(body) {
   return new Response(body, {
-    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'Referrer-Policy': 'no-referrer',
+      'Content-Security-Policy': "frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+    },
   });
 }
 
@@ -2627,33 +4989,34 @@ async function sendDailyReminders(env) {
   ).bind(tomorrow).all();
 
   for (const b of rows.results || []) {
-    const firstName = b.customer_name.split(' ')[0];
-    // WhatsApp ma pierwszeństwo (jeśli kanał skonfigurowany), SMS jako fallback.
-    let ok = false;
-    if (env.WHATSAPP_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID) {
-      ok = await sendWhatsApp(env, b.customer_phone, {
-        type: 'template',
-        template: {
-          name: env.WHATSAPP_TPL_REMINDER || 'przypomnienie_wizyty',
-          language: { code: env.WHATSAPP_LANG || 'pl' },
-          components: [{
-            type: 'body',
-            parameters: [
-              { type: 'text', text: firstName },
-              { type: 'text', text: b.time_slot },
-            ],
-          }],
+    const firstName = (b.customer_name || '').split(' ')[0];
+    const sms = `Cześć ${firstName}! Przypomnienie: jutro o ${b.time_slot} wizyta w skocznarower.pl, Jesionowa 18 Grodzisk Maz. Jakby coś: ${PUBLIC_PHONE_DISPLAY}.`;
+    await queueReminderNotification(env, {
+      entityType: 'booking',
+      entityId: b.id,
+      eventKey: `reminder_24h_${b.date}_${b.time_slot}`,
+      recipient: b.customer_phone,
+      deferDelivery: true,
+      body: {
+        // Outbox próbuje WhatsApp jako pierwszy. Po jednoznacznym odrzuceniu
+        // automatycznie używa SMS; nie robi fallbacku przy nieznanym wyniku Meta.
+        whatsapp: {
+          type: 'template',
+          template: {
+            name: env.WHATSAPP_TPL_REMINDER || 'przypomnienie_wizyty',
+            language: { code: env.WHATSAPP_LANG || 'pl' },
+            components: [{
+              type: 'body',
+              parameters: [
+                { type: 'text', text: firstName },
+                { type: 'text', text: b.time_slot },
+              ],
+            }],
+          },
         },
-      });
-    }
-    if (!ok) {
-      const text = `Cześć ${firstName}! Przypomnienie: jutro o ${b.time_slot} wizyta w skocznarower.pl, Jesionowa 18 Grodzisk Maz. Jakby coś: ${PUBLIC_PHONE_DISPLAY}.`;
-      ok = await sendSms(env, b.customer_phone, text);
-    }
-    if (ok) {
-      await env.DB.prepare('UPDATE bookings SET reminder_sent_at = ?1 WHERE id = ?2')
-        .bind(Date.now(), b.id).run();
-    }
+        sms,
+      },
+    });
   }
 }
 
@@ -2663,7 +5026,7 @@ async function sendFollowUps(env) {
   // Dolne okno daty, żeby pierwszy cron po wdrożeniu nie wysłał prośby o opinię
   // do wszystkich historycznych wizyt naraz.
   const rows = await env.DB.prepare(
-    `SELECT id, customer_name, customer_phone
+    `SELECT id, customer_name, customer_phone, date
      FROM bookings
      WHERE date <= ?1 AND date >= ?2 AND status = 'done' AND feedback_sent_at IS NULL`
   ).bind(threeDaysAgo, thirtyDaysAgo).all();
@@ -2672,13 +5035,12 @@ async function sendFollowUps(env) {
   const reviewLink = (env.REVIEW_LINK && !env.REVIEW_LINK.includes('CHANGE_TO_'))
     ? env.REVIEW_LINK : 'https://www.skocznarower.pl/';
   for (const b of rows.results || []) {
-    const firstName = b.customer_name.split(' ')[0];
+    const firstName = (b.customer_name || '').split(' ')[0];
     const text = `Dzięki za zaufanie, ${firstName}! Jeśli wszystko gra, zostaw opinię na Google: ${reviewLink} . To 30 sekund, a mi pomaga zdobywać klientów.`;
-    const ok = await sendSms(env, b.customer_phone, text);
-    if (ok) {
-      await env.DB.prepare('UPDATE bookings SET feedback_sent_at = ?1 WHERE id = ?2')
-        .bind(Date.now(), b.id).run();
-    }
+    await queueSmsNotification(env, {
+      entityType: 'booking', entityId: b.id, eventKey: `followup_${b.date}`,
+      recipient: b.customer_phone, body: text, deferDelivery: true,
+    });
   }
 }
 
@@ -2703,7 +5065,7 @@ async function sendWinBack(env) {
        FROM bookings
        WHERE status != 'cancelled' AND customer_phone IS NOT NULL AND customer_phone != ''
      )
-     SELECT l.id, l.customer_phone, l.customer_name
+     SELECT l.id, l.customer_phone, l.customer_name, l.date
      FROM latest l
      WHERE l.rn = 1
        AND l.winback_sent_at IS NULL
@@ -2716,12 +5078,10 @@ async function sendWinBack(env) {
   for (const b of rows.results || []) {
     const firstName = (b.customer_name || '').split(' ')[0];
     const text = `Cześć ${firstName}! Minęło trochę od ostatniego serwisu Twojego roweru. Przed sezonem warto sprawdzić hamulce i łańcuch, po zimie zwykle najbardziej cierpią. Umówisz się tutaj: skocznarower.pl/umow`;
-    const ok = await sendSms(env, b.customer_phone, text);
-    if (ok) {
-      await env.DB.prepare(
-        "UPDATE bookings SET winback_sent_at = ?1 WHERE id = ?2"
-      ).bind(Date.now(), b.id).run();
-    }
+    await queueSmsNotification(env, {
+      entityType: 'booking', entityId: b.id, eventKey: `winback_${b.date}`,
+      recipient: b.customer_phone, body: text, deferDelivery: true,
+    });
   }
 }
 
@@ -2731,8 +5091,10 @@ async function sendSeasonalReminders(env) {
   if (month !== '03' || day !== '15') return;
 
   const rows = await env.DB.prepare(
-    `SELECT id, email FROM seasonal_reminders WHERE sent_at IS NULL`
-  ).all();
+    `SELECT id, email, unsubscribe_token FROM seasonal_reminders
+     WHERE unsubscribed_at IS NULL
+       AND (last_sent_year IS NULL OR last_sent_year < ?1)`
+  ).bind(Number(year)).all();
 
   if (!env.RESEND_API_KEY) {
     console.log('seasonal reminders: no RESEND_API_KEY, skipping send for', (rows.results || []).length);
@@ -2743,6 +5105,13 @@ async function sendSeasonalReminders(env) {
 
   for (const r of rows.results || []) {
     try {
+      const unsubscribeToken = r.unsubscribe_token || crypto.randomUUID();
+      if (!r.unsubscribe_token) {
+        await env.DB.prepare(
+          'UPDATE seasonal_reminders SET unsubscribe_token = ?1 WHERE id = ?2'
+        ).bind(unsubscribeToken, r.id).run();
+      }
+      const unsubscribeUrl = 'https://www.skocznarower.pl/api/reminders/unsubscribe?t=' + encodeURIComponent(unsubscribeToken);
       const payload = {
         from,
         to: r.email,
@@ -2758,12 +5127,18 @@ Do zobaczenia w warsztacie,
 Mateusz / skocznarower.pl
 Jesionowa 18, Grodzisk Mazowiecki
 Tel. ${PUBLIC_PHONE_DISPLAY}
+
+Rezygnacja z przypomnień: ${unsubscribeUrl}
 `,
       };
       if (replyTo) payload.reply_to = replyTo;
-      await resendSend(env.RESEND_API_KEY, payload);
-      await env.DB.prepare('UPDATE seasonal_reminders SET sent_at = ?1 WHERE id = ?2')
-        .bind(Date.now(), r.id).run();
+      await queueEmailNotification(env, {
+        entityType: 'seasonal_reminder',
+        entityId: r.id,
+        eventKey: 'seasonal_' + year,
+        recipient: r.email,
+        body: payload,
+      });
     } catch (e) {
       console.error('seasonal mail error for', r.email, e);
     }
@@ -2777,13 +5152,17 @@ Tel. ${PUBLIC_PHONE_DISPLAY}
  * Pole nadawcy: env.SMS_SENDER, fallback 'Info' (darmowy nadawca SMSAPI dostępny od razu).
  * Własna nazwa alfanumeryczna wymaga zatwierdzenia w panelu SMSAPI (1-3 dni).
  */
-async function sendSms(env, phoneRaw, text) {
+async function sendSms(env, phoneRaw, text, options = {}) {
   const phone = normalizePhone(phoneRaw);
   const target = phone.startsWith('48') ? phone : (phone.length === 9 ? '48' + phone : phone);
+  const outcome = (ok, providerMessageId = null, uncertain = false) => options.returnResult
+    ? { ok, providerMessageId, uncertain }
+    : ok;
 
   if (!env.SMSAPI_TOKEN) {
-    console.log('[SMS dry-run] →', target, text);
-    return true;
+    console.log(JSON.stringify({ event: 'sms_dry_run', message_length: String(text || '').length }));
+    // Brak providera nie jest doręczeniem. Callery nie mogą stemplować rekordu jako wysłany.
+    return outcome(false);
   }
 
   try {
@@ -2794,6 +5173,12 @@ async function sendSms(env, phoneRaw, text) {
       format: 'json',
       encoding: 'utf-8',
     });
+    const idx = String(options.idempotencyKey || '').toLowerCase()
+      .replace(/[^a-z0-9]/g, '').slice(0, 255);
+    if (idx) {
+      body.set('idx', idx);
+      body.set('check_idx', '1');
+    }
     const r = await fetch('https://api.smsapi.pl/sms.do', {
       method: 'POST',
       headers: {
@@ -2804,14 +5189,18 @@ async function sendSms(env, phoneRaw, text) {
       body,
     });
     const data = await r.json().catch(() => ({}));
+    if (idx && Number(data?.error) === 53) {
+      return outcome(true);
+    }
     if (!r.ok || data?.error) {
       console.error('SMS send failed', r.status, data);
-      return false;
+      return outcome(false);
     }
-    return true;
+    return outcome(true, data?.list?.[0]?.id || data?.id || null);
   } catch (e) {
     console.error('SMS send exception', e);
-    return false;
+    // Stabilny SMSAPI idx chroni retry tego samego joba przed duplikatem przez 24h.
+    return outcome(false);
   }
 }
 
@@ -2819,20 +5208,24 @@ async function sendSms(env, phoneRaw, text) {
 
 /**
  * Wysyła wiadomość WhatsApp przez Cloud API (Meta Graph; 360dialog jest zgodny z tym kształtem).
- * Wymaga env.WHATSAPP_TOKEN i env.WHATSAPP_PHONE_NUMBER_ID. Bez nich loguje dry-run i zwraca true.
+ * Wymaga env.WHATSAPP_TOKEN i env.WHATSAPP_PHONE_NUMBER_ID. Bez nich loguje bez danych
+ * odbiorcy i zwraca false, bo dry-run nie jest doręczeniem.
  * `message` to obiekt Graph bez messaging_product/to, np.:
  *   { type:'text', text:{ body:'...' } }                                  // free-form (tylko w oknie 24h)
  *   { type:'template', template:{ name, language:{code}, components:[...] } }  // szablon (poza oknem 24h)
  * env.WHATSAPP_API_BASE domyślnie 'graph.facebook.com', env.WHATSAPP_API_VERSION domyślnie 'v21.0'
  * (BSP typu 360dialog ma inny host/nagłówek auth, wtedy dostroić tutaj). Fail-soft jak sendSms.
  */
-async function sendWhatsApp(env, phoneRaw, message) {
+async function sendWhatsApp(env, phoneRaw, message, options = {}) {
   const phone = normalizePhone(phoneRaw);
   const to = phone.startsWith('48') ? phone : (phone.length === 9 ? '48' + phone : phone);
+  const outcome = (ok, providerMessageId = null, uncertain = false) => options.returnResult
+    ? { ok, providerMessageId, uncertain }
+    : ok;
 
   if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_NUMBER_ID) {
-    console.log('[WA dry-run] →', to, JSON.stringify(message));
-    return true;
+    console.log(JSON.stringify({ event: 'whatsapp_dry_run', message_type: message?.type || 'unknown' }));
+    return outcome(false);
   }
 
   try {
@@ -2849,12 +5242,17 @@ async function sendWhatsApp(env, phoneRaw, message) {
     const data = await r.json().catch(() => ({}));
     if (!r.ok || data?.error) {
       console.error('WA send failed', r.status, data?.error || data);
-      return false;
+      // Meta nie udostępnia klucza idempotencji. Timeout lub błąd serwera może
+      // nadejść już po przyjęciu wiadomości, więc bezpieczniej wymagać decyzji
+      // operatora niż automatycznie ponowić WA albo uruchomić SMS fallback.
+      const uncertain = r.status === 408 || r.status >= 500;
+      return outcome(false, null, uncertain);
     }
-    return true;
+    return outcome(true, data?.messages?.[0]?.id || null);
   } catch (e) {
     console.error('WA send exception', e);
-    return false;
+    // Meta nie zapewnia klucza idempotencji: po błędzie sieci wynik może być nieznany.
+    return outcome(false, null, true);
   }
 }
 

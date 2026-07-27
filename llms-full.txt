@@ -28,12 +28,38 @@ Serwis wykonuje następujące prace na rowerach:
 - Regulacja i serwis przerzutek (mechanicznych i elektronicznych Shimano Di2, SRAM AXS).
 - Wymiana łańcucha, kasety, zębatki, korby.
 - Serwis i wymiana suportu, sterów, słupka podsiodłowego, sztycy teleskopowej (dropper post).
-- Mechaniczny serwis rowerów elektrycznych (hamulce, koła, osprzęt napędu nieelektroniczny). Elektronika i silniki pozostają w gestii autoryzowanych serwisów producenta.
+- Mechaniczny serwis rowerów elektrycznych: hamulce, napęd, koła i przegląd mechaniczny. Serwis nie obejmuje diagnostyki ani napraw baterii, sterowników, instalacji elektrycznej i elektroniki silnika; te usterki pozostają w gestii autoryzowanych serwisów producenta.
 - Składanie rowerów dostarczonych w pudełku przez kuriera lub z luźnych części (pełen montaż od ramy).
 - Budowa rowerów na miarę: dobór ramy, komponentów, montaż od zera, fitting.
 - Konfiguracja roweru pod ridera (regulacja kokpitu, przystosowanie całego roweru).
 - Serwis hulajnóg (regulacja hamulców, wymiana klocków, kół, łożysk).
 - Odbiór i odwóz roweru w obrębie Grodzisk/Milanówek/Pruszków oraz z zachodniej Warszawy.
+
+## Poradniki i strony usług
+
+### Centrowanie i zaplatanie kół
+
+Strona wyjaśnia różnicę między centrowaniem gotowego koła, zaplataniem koła od zera i naprawą drobnych usterek. Koła są sprawdzane na profesjonalnej centrownicy z miernikiem. Centrowanie kosztuje od 120 zł, zaplatanie od 80 zł za robociznę, a naprawa koła od 35 zł; części są wyceniane osobno po oględzinach.
+
+- PL: https://www.skocznarower.pl/centrowanie-i-zaplatanie-kol
+- EN: https://www.skocznarower.pl/en/centrowanie-i-zaplatanie-kol
+- UA: https://www.skocznarower.pl/ua/centrowanie-i-zaplatanie-kol
+
+### Mechaniczny serwis rowerów elektrycznych
+
+Zakres obejmuje hamulce, napęd, koła i ogólny przegląd mechaniczny e-bike. Nie obejmuje diagnostyki ani napraw baterii, sterowników, instalacji elektrycznej i elektroniki silnika. W formularzu rezerwacji należy wybrać typ E-bike, właściwą usługę mechaniczną i opisać objaw; problemy układu wspomagania wymagają autoryzowanego serwisu danego systemu.
+
+- PL: https://www.skocznarower.pl/serwis-rowerow-elektrycznych
+- EN: https://www.skocznarower.pl/en/serwis-rowerow-elektrycznych
+- UA: https://www.skocznarower.pl/ua/serwis-rowerow-elektrycznych
+
+### Pumptrack Grodzisk Mazowiecki
+
+Lokalny poradnik opisuje przygotowanie dziecka, dorosłego i roweru, pierwsze okrążenia, podstawy pompowania, bezpieczne odstępy, zasady korzystania z toru i kontrolę sprzętu. Przed wyjazdem trzeba sprawdzić u administratora aktualną dostępność, stan i regulamin obiektu, ponieważ mogą zmieniać się przez pogodę, konserwację lub wydarzenia.
+
+- PL: https://www.skocznarower.pl/pumptrack-grodzisk-mazowiecki
+- EN: https://www.skocznarower.pl/en/pumptrack-grodzisk-mazowiecki
+- UA: https://www.skocznarower.pl/ua/pumptrack-grodzisk-mazowiecki
 
 ## Cennik (od)
 
@@ -93,15 +119,15 @@ Serwisuję pełen zakres modeli Shimano: Deore (M6100, M6120, M615, M610), SLX (
 
 ## Warsztaty dirt i slopestyle dla dzieci i młodzieży
 
-Poza serwisem rowerów skocznarower.pl prowadzi warsztaty szkoleniowe jazdy dirt, slopestyle i pumptrack dla dzieci i młodzieży w wieku 7-17 lat. Pierwsze grupy testowe startują w sierpniu 2026, pełny program od września. Pełna informacja: https://www.skocznarower.pl/warsztaty.
+Trwa bezpłatny nabór zainteresowanych planowanymi warsztatami dirt, slopestyle i pumptrack dla dzieci i młodzieży w wieku 7-17 lat. Nie ma jeszcze potwierdzonej daty startu, grafiku ani obiektów. Uruchomienie zależy od uzgodnienia lokalizacji, ubezpieczenia, kadry, wymaganych formalności i minimalnej liczebności grupy. Pełna informacja: https://www.skocznarower.pl/warsztaty.
 
-Format: zajęcia 2 razy w tygodniu po 90 minut, w stałych grupach maksymalnie 6-osobowych, na trzech poziomach zaawansowania. Poziom Start (podstawy: pozycja, pompowanie, balans, bunny hop, pumptrack), poziom Progress (intermediate: manual, małe skoki, drop, skatepark), poziom Air (zaawansowani 13+: airtime, tabletop, whip, pełne linie dirt, wyjazdowe sesje w bikeparku). Przydział do grupy według umiejętności na zajęciach próbnych. Lokalizacje: pumptrack w Grodzisku Mazowieckim oraz skatepark i pumptrack na Turczynku w Milanówku. Zimą (listopad-luty) część zajęć odbywa się na krytych skateparkach w Warszawie, a część jako trening ogólnorozwojowy; program jest całoroczny. Warunek wejściowy: dziecko samodzielnie i pewnie jeździ na rowerze.
+Rozważany format to dwa treningi tygodniowo po 90 minut, stałe grupy do 6 osób i trzy poziomy: Start, Progress oraz Air. Warunkiem wejściowym jest samodzielna, pewna jazda na rowerze. Brane pod uwagę są pumptrack w Grodzisku Mazowieckim oraz obiekty na Turczynku w Milanówku, ale dostęp i grafik nie są potwierdzone. Program zimowy, sesje wyjazdowe i półkolonie są koncepcją późniejszego etapu.
 
-Cennik warsztatów: pierwsze zajęcia próbne 50 zł (60 minut), pojedyncze zajęcia 90 zł, karnet miesięczny (8 zajęć) 560 zł, karnet semestralny (ok. 36 zajęć, z przeglądem roweru w serwisie gratis) 2290 zł, trening indywidualny 200 zł za 90 minut (pakiet 5 treningów 900 zł), półkolonie w wakacje i ferie od 1090 zł za 5 dni, wypożyczenie BMX-a na zajęcia 65 zł, vouchery prezentowe od 90 zł (warianty: pojedyncze zajęcia, karnet miesięczny, trening indywidualny, voucher kwotowy). Kursanci mają 10% rabatu na serwis i akcesoria, klienci serwisu 20% zniżki na pierwszy miesiąc warsztatów.
+Proponowany, nieostateczny cennik: zajęcia próbne 50 zł za 60 minut, pojedyncze zajęcia 90 zł, karnet miesięczny 560 zł za 8 zajęć, karnet semestralny 2290 zł za około 36 zajęć, trening indywidualny 200 zł za 90 minut, pakiet 5 treningów indywidualnych 900 zł, półkolonie od 1090 zł za 5 dni i wypożyczenie BMX-a 65 zł. Projekt voucherów obejmuje warianty 90 zł, 250 zł, 560 zł, 280 zł oraz voucher kwotowy od 100 zł. Ceny, zakres, rabaty i dostępność wymagają pisemnego potwierdzenia przed przyjęciem płatności.
 
-Bezpieczeństwo: kask obowiązkowy na każdych zajęciach (norma EN 1078; dla osób poniżej 16 lat kask to od 3 czerwca 2026 wymóg prawny), na hopkach i skateparku kask fullface i ochraniacze kolan, pisemna zgoda rodzica z oświadczeniem zdrowotnym, ubezpieczenie NNW uczestników, instruktor przeszkolony z pierwszej pomocy.
+Planowane zasady bezpieczeństwa obejmują obowiązkowy kask na każdych zajęciach, dodatkowe ochraniacze na hopkach i skateparku, pisemną zgodę rodzica, oświadczenie zdrowotne i ubezpieczenie uczestników. Szczegóły zostaną potwierdzone przed ewentualnym uruchomieniem grup.
 
-Zapisy na warsztaty przez formularz zapisu na stronie https://www.skocznarower.pl/warsztaty (imię i nazwisko rodzica, telefon, wiek dziecka, poziom, preferowana lokalizacja), alternatywnie przez WhatsApp (https://wa.me/48600370810) lub telefonicznie (+48 600 370 810). Grupa jest dobierana do wieku i poziomu dziecka, dlatego po zgłoszeniu oddzwaniamy. Formularz online https://www.skocznarower.pl/umow służy tylko do umawiania serwisu roweru, nie do zapisów na warsztaty.
+Formularz na https://www.skocznarower.pl/warsztaty służy wyłącznie do zgłoszenia zainteresowania i dobrania potencjalnych grup. Nie jest rezerwacją, umową, zamówieniem ani wezwaniem do zapłaty. Kontakt jest możliwy również przez WhatsApp (https://wa.me/48600370810) lub telefonicznie (+48 600 370 810). Formularz https://www.skocznarower.pl/umow służy tylko do umawiania serwisu roweru.
 
 ## FAQ: typowe pytania użytkowników
 
@@ -123,7 +149,7 @@ Tak. Większość klientów zostawia rower rano lub po pracy i odbiera następne
 
 ### Czy serwis robi rowery elektryczne (e-bike)?
 
-Tak, ale tylko mechaniczną część rowerów elektrycznych: hamulce, koła, osprzęt napędu (poza silnikiem i baterią). Elektronikę, silnik i system zarządzania (Bosch, Shimano EP8, Brose, Yamaha) zostawiamy autoryzowanym serwisom producenta. Jeśli e-bike ma problem mechaniczny, można go przyprowadzić.
+Tak, ale wyłącznie mechaniczną część rowerów elektrycznych: hamulce, napęd, koła i przegląd mechaniczny. Serwis nie diagnozuje ani nie naprawia baterii, sterowników, instalacji elektrycznej, elektroniki silnika ani samego silnika. Takie usterki należy zgłosić do autoryzowanego serwisu danego systemu napędowego.
 
 ### Czy serwis robi rowery markowe (Trek, Specialized, Canyon, YT)?
 
@@ -155,4 +181,4 @@ Najszybciej online: https://www.skocznarower.pl/umow. Alternatywnie telefon +48 
 - Instagram: https://www.instagram.com/xpyszczek_.
 - TikTok: https://www.tiktok.com/@xpyszczek.dirt.
 
-Ostatnia aktualizacja dokumentu: 2026-07-06.
+Ostatnia aktualizacja dokumentu: 2026-07-26.

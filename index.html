@@ -1563,6 +1563,7 @@
       .price-grid { grid-template-columns: 1fr; }
     }
   </style>
+  <script src="/turnstile.js" defer></script>
 </head>
 <body>
 
@@ -2343,6 +2344,9 @@
     <a href="/serwis-rowerow-pruszkow">Serwis rowerów Pruszków</a>
     <a href="/serwis-rowerow-milanowek">Serwis rowerów Milanówek</a>
     <a href="/bleeding-hamulcow-shimano">Bleeding hamulców Shimano</a>
+    <a href="/centrowanie-i-zaplatanie-kol">Centrowanie i zaplatanie kół</a>
+    <a href="/serwis-rowerow-elektrycznych">Mechaniczny serwis e-bike</a>
+    <a href="/pumptrack-grodzisk-mazowiecki">Poradnik: pumptrack Grodzisk</a>
   </div>
 </section>
 
@@ -2429,7 +2433,11 @@
         const r = await fetch('/api/reminders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, consent: true }),
+          body: JSON.stringify({
+            email,
+            consent: true,
+            turnstile_token: remForm.querySelector('[name="cf-turnstile-response"]')?.value || undefined,
+          }),
         });
         const data = await r.json();
         if (!r.ok) {

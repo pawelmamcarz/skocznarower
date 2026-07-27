@@ -1,6 +1,15 @@
 # Skopiuj do .dev.vars (gitignored) i wypełnij własnymi wartościami
 ADMIN_PASSWORD=zmien-mnie
 SESSION_SECRET=wygeneruj-losowy-ciag-np-openssl-rand-hex-32
+# Osobny klucz HMAC do anonimowych kubełków limitowania żądań publicznych.
+# Wygeneruj niezależnie od SESSION_SECRET, np. openssl rand -hex 32.
+RATE_LIMIT_SECRET=
+
+# Cloudflare Turnstile (opcjonalne; ochrona formularzy aktywuje się dopiero,
+# gdy ustawione są oba klucze). Site key może być zwykłą zmienną produkcyjną,
+# secret key ustaw przez `wrangler secret put TURNSTILE_SECRET_KEY`.
+TURNSTILE_SITE_KEY=
+TURNSTILE_SECRET_KEY=
 
 # Email (opcjonalne, jeśli puste, rezerwacje działają, ale bez powiadomień)
 RESEND_API_KEY=

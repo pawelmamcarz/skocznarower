@@ -2,5 +2,11 @@
 # are stable), so cache it for a year in the browser instead of revalidating
 # every visit. HTML keeps its default (max-age=0, must-revalidate) so content
 # edits go live immediately. Processed by the assets binding; not served itself.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  X-Frame-Options: DENY
+
 /uploads/*
   Cache-Control: public, max-age=31536000, immutable

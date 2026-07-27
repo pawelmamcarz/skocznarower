@@ -1567,6 +1567,7 @@
     /* Oswald ma cyrylice, ale nie jest krojem samych wersalikow jak Bebas Neue: wymuszamy wersaliki tam, gdzie uzywany jest --fd */
     .logo-type, .hero-h1, .display, .about-badge, .service-name, .social-link, .footer-brand, .price-cat-name, .reviews-score, .review::before, .faq-q { text-transform: uppercase; }
   </style>
+  <script src="/turnstile.js" defer></script>
 </head>
 <body>
 
@@ -2347,6 +2348,9 @@
     <a href="/ua/serwis-rowerow-pruszkow">Велосервіс Pruszków</a>
     <a href="/ua/serwis-rowerow-milanowek">Велосервіс Milanówek</a>
     <a href="/ua/bleeding-hamulcow-shimano">Прокачування гальм Shimano</a>
+    <a href="/ua/centrowanie-i-zaplatanie-kol">Центрування і спицювання коліс</a>
+    <a href="/ua/serwis-rowerow-elektrycznych">Механічний сервіс e-bike</a>
+    <a href="/ua/pumptrack-grodzisk-mazowiecki">Порадник: памптрек Grodzisk</a>
   </div>
 </section>
 
@@ -2433,7 +2437,11 @@
         const r = await fetch('/api/reminders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, consent: true }),
+          body: JSON.stringify({
+            email,
+            consent: true,
+            turnstile_token: remForm.querySelector('[name="cf-turnstile-response"]')?.value || undefined,
+          }),
         });
         const data = await r.json();
         if (!r.ok) {
