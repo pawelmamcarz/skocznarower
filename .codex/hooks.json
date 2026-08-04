@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/pre-deploy-d1-check.sh\"",
+            "statusMessage": "Sprawdzam migracje D1 przed deployem...",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

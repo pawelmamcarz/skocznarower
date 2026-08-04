@@ -85,8 +85,9 @@ npm run dev
 # Worker/D1 integration tests (real local migrations and ASSETS binding)
 npm test
 
-# Deploy to Cloudflare (production)
-npx wrangler deploy
+# Deploy to Cloudflare (production). ALWAYS via this script, never a bare `wrangler deploy`:
+# it applies pending D1 migrations first, then deploys, then smoke-tests the API.
+npm run deploy
 
 # D1 migrations
 npx wrangler d1 migrations apply skocznarower-db            # remote (production)
@@ -141,6 +142,7 @@ Before committing any copy change (HTML or Worker strings), re-scan the diff for
 
 ## Deploy / infra notes
 
+- **Migrations before code, always.** On 2026-07-27 a `wrangler deploy` shipped a Worker that reads `request_rate_limits` (migration 0017) while production D1 was still on 0014; every public `POST` (`/api/bookings`, `/api/warsztaty`, `/api/reminders`) returned 500 `{"error":"Server error"}` for ~8 days, because `consumeRateLimit` runs before the route handlers and its `D1_ERROR` hits the top-level catch in `fetch`. Three guards now exist, all pointing at the same script: `scripts/deploy.sh` (= `npm run deploy`; applies migrations, deploys, smoke-tests) and a `PreToolUse` hook that denies a bare `wrangler deploy` while migrations are pending, wired for Claude Code in `.claude/settings.json` and for Codex in `.codex/hooks.json` (both call `scripts/pre-deploy-d1-check.sh`). To check a hook is alive in either tool, have it run `echo d1-hook-selftest`: a live hook blocks that command with a confirmation message. Codex additionally requires the user to accept its project-trust and hook-trust prompts once, in the interactive TUI, before project hooks run at all.
 - Domain registered at OVH; DNS and proxy on Cloudflare.
 - Worker routes bound to both `skocznarower.pl/*` and `www.skocznarower.pl/*`. Both must stay.
 - `compatibility_flags: ["nodejs_compat"]` is set but currently unused; leave it unless you're trimming config.

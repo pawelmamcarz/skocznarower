@@ -9,10 +9,10 @@ This is a no-build static site and booking application deployed as one Cloudflar
 - `cp .dev.vars.example .dev.vars`: create ignored local configuration.
 - `npx wrangler dev`: serve the static files and Worker locally.
 - `npx wrangler d1 migrations apply skocznarower-db --local`: update the local D1 database.
-- `npx wrangler deploy`: deploy directly to production; run only when explicitly authorized.
+- `npm run deploy`: the only sanctioned production deploy; run only when explicitly authorized. It applies pending D1 migrations, then deploys, then smoke-tests the API. Never run a bare `npx wrangler deploy`: shipping code ahead of its migration broke every public POST for eight days on 2026-07-27, and a `PreToolUse` hook (`scripts/pre-deploy-d1-check.sh`, wired in `.codex/hooks.json`) now denies that command while migrations are pending.
 - `curl -sI https://skocznarower.pl/`: verify the production apex-to-`www` redirect after deployment.
 
-There is no build step, package manifest, automated test suite, or linter. Do not run `npm install`; `npx` obtains Wrangler as needed.
+There is no build step or linter. `npm test` runs the Vitest Worker/D1 integration suite.
 
 ## Coding Style & Naming Conventions
 

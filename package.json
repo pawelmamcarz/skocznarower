@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
+    "deploy": "./scripts/deploy.sh",
     "d1:migrate:local": "wrangler d1 migrations apply skocznarower-db --local",
     "test": "vitest run",
     "test:watch": "vitest"
