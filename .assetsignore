@@ -7,6 +7,7 @@ uploads/FastDL.to_*
 .codex/
 .grok/
 .playwright-mcp/
+qa-*.png
 node_modules/
 package-lock.json
 package.json
