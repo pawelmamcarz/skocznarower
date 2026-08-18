@@ -3,108 +3,180 @@
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://www.skocznarower.pl/</loc>
-    <lastmod>2026-07-26</lastmod>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/" />
+    <lastmod>2026-08-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://www.skocznarower.pl/umow</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/umow" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/umow" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/umow" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/umow" />
     <lastmod>2026-07-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.skocznarower.pl/serwis-rowerow-pruszkow</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/serwis-rowerow-pruszkow" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/serwis-rowerow-pruszkow" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/serwis-rowerow-pruszkow" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/serwis-rowerow-pruszkow" />
     <lastmod>2026-07-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.skocznarower.pl/serwis-rowerow-milanowek</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/serwis-rowerow-milanowek" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/serwis-rowerow-milanowek" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/serwis-rowerow-milanowek" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/serwis-rowerow-milanowek" />
     <lastmod>2026-07-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.skocznarower.pl/bleeding-hamulcow-shimano</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/bleeding-hamulcow-shimano" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/bleeding-hamulcow-shimano" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/bleeding-hamulcow-shimano" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/bleeding-hamulcow-shimano" />
     <lastmod>2026-07-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.skocznarower.pl/warsztaty</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/warsztaty" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/warsztaty" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/warsztaty" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/warsztaty" />
     <lastmod>2026-07-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.skocznarower.pl/en/</loc>
-    <lastmod>2026-07-26</lastmod>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/" />
+    <lastmod>2026-08-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.skocznarower.pl/en/umow</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/umow" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/umow" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/umow" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/umow" />
     <lastmod>2026-07-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.skocznarower.pl/en/warsztaty</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/warsztaty" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/warsztaty" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/warsztaty" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/warsztaty" />
     <lastmod>2026-07-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.skocznarower.pl/en/serwis-rowerow-pruszkow</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/serwis-rowerow-pruszkow" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/serwis-rowerow-pruszkow" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/serwis-rowerow-pruszkow" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/serwis-rowerow-pruszkow" />
     <lastmod>2026-07-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://www.skocznarower.pl/en/serwis-rowerow-milanowek</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/serwis-rowerow-milanowek" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/serwis-rowerow-milanowek" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/serwis-rowerow-milanowek" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/serwis-rowerow-milanowek" />
     <lastmod>2026-07-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://www.skocznarower.pl/en/bleeding-hamulcow-shimano</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/bleeding-hamulcow-shimano" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/bleeding-hamulcow-shimano" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/bleeding-hamulcow-shimano" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/bleeding-hamulcow-shimano" />
     <lastmod>2026-07-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://www.skocznarower.pl/ua/</loc>
-    <lastmod>2026-07-26</lastmod>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/" />
+    <lastmod>2026-08-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.skocznarower.pl/ua/umow</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/umow" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/umow" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/umow" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/umow" />
     <lastmod>2026-07-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.skocznarower.pl/ua/warsztaty</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/warsztaty" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/warsztaty" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/warsztaty" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/warsztaty" />
     <lastmod>2026-07-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.skocznarower.pl/ua/serwis-rowerow-pruszkow</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/serwis-rowerow-pruszkow" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/serwis-rowerow-pruszkow" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/serwis-rowerow-pruszkow" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/serwis-rowerow-pruszkow" />
     <lastmod>2026-07-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://www.skocznarower.pl/ua/serwis-rowerow-milanowek</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/serwis-rowerow-milanowek" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/serwis-rowerow-milanowek" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/serwis-rowerow-milanowek" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/serwis-rowerow-milanowek" />
     <lastmod>2026-07-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://www.skocznarower.pl/ua/bleeding-hamulcow-shimano</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/bleeding-hamulcow-shimano" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/bleeding-hamulcow-shimano" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/bleeding-hamulcow-shimano" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/bleeding-hamulcow-shimano" />
     <lastmod>2026-07-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>

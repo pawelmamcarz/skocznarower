@@ -5,6 +5,7 @@ uploads/FastDL.to_*
 .git/
 .claude/
 .codex/
+.grok/
 .playwright-mcp/
 node_modules/
 package-lock.json

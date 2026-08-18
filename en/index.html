@@ -24,6 +24,7 @@
   <meta property="og:title"       content="Bike Repair Shop Grodzisk Mazowiecki | skocznarower.pl">
   <meta property="og:description" content="Dirt Jump, MTB, BMX, e-bike. Grodzisk Mazowiecki, Pruszków, Milanówek, Warsaw. Call: 600 370 810.">
   <meta property="og:image"       content="https://www.skocznarower.pl/uploads/photo-1778431658856.jpeg">
+  <meta property="og:image:alt"   content="skocznarower.pl bicycle workshop, Grodzisk Mazowiecki">
   <meta property="og:locale"      content="en_GB">
   <meta name="twitter:card"       content="summary_large_image">
 
@@ -733,6 +734,30 @@
       letter-spacing: .03em;
       color: var(--white);
       line-height: 1.05;
+    }
+    a.service-name {
+      text-decoration: none;
+      color: var(--white);
+    }
+    a.service-name:hover,
+    a.service-name:focus-visible { color: var(--accent); }
+    .price-label a {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px solid var(--border);
+    }
+    .price-label a:hover,
+    .price-label a:focus-visible {
+      color: var(--white);
+      border-bottom-color: var(--accent);
+    }
+    .dirt-hint {
+      text-align: center;
+      color: var(--muted);
+      font-size: 14.5px;
+      line-height: 1.5;
+      margin: 12px auto 0;
+      max-width: 440px;
     }
     .service-desc {
       font-size: 14.5px;
@@ -1505,9 +1530,9 @@
       .game-btn-gas { font-size: 13px; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .scroll-ground, .rider-pos, .rider-rot, .rider-flip { animation: none; }
-      .rider-pos { transform: translate(600px, 70px); }
-      .rider-rot { transform: rotate(-180deg); }
+      .scroll-ground, .rider-pos, .rider-rot, .rider-tilt, .rider-flip, .progress-fill, .bonus { animation: none; }
+      .rider-pos { transform: translate(600px, 280px); }
+      .rider-rot, .rider-tilt, .rider-flip { transform: none; }
     }
 
     /* ─── RESPONSIVE ─────────────────────────────────────── */
@@ -1699,7 +1724,10 @@
       <span class="sr-no">01</span>
       <div class="sr-head">
         <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/><path d="M8 11l2 2 4-4"/>
+          <path d="M3 21h18"/>
+          <path d="M6 21L8 8h8l2 13"/>
+          <path d="M12 8V4"/>
+          <circle cx="12" cy="3.5" r="1.2"/>
         </svg>
         <div class="service-name">TUNE-UP</div>
       </div>
@@ -1710,7 +1738,9 @@
       <span class="sr-no">02</span>
       <div class="sr-head">
         <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.77 3.77z"/>
+          <path d="M8 3v11l4 4"/>
+          <path d="M8 8h3"/>
+          <circle cx="15.5" cy="18.5" r="2.5"/>
         </svg>
         <div class="service-name">SERVICE</div>
       </div>
@@ -1722,12 +1752,10 @@
       <div class="sr-head">
         <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="9"/>
-          <line x1="12" y1="3" x2="12" y2="12"/><line x1="12" y1="12" x2="19.5" y2="7.5"/>
-          <line x1="12" y1="12" x2="19.5" y2="16.5"/><line x1="12" y1="12" x2="12" y2="21"/>
-          <line x1="12" y1="12" x2="4.5" y2="16.5"/><line x1="12" y1="12" x2="4.5" y2="7.5"/>
           <circle cx="12" cy="12" r="2"/>
+          <path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/>
         </svg>
-        <div class="service-name">WHEEL BUILDING</div>
+        <a class="service-name" href="/en/centrowanie-i-zaplatanie-kol">WHEEL BUILDING</a>
       </div>
       <div class="service-desc">Truing, building from scratch, spoke replacement. I work on a truing stand with a dial indicator and measure runout to tenths of a millimetre, no guessing. The wheel will survive whatever you plan to send on it.</div>
     </div>
@@ -1736,8 +1764,10 @@
       <span class="sr-no">04</span>
       <div class="sr-head">
         <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-2.12 2.12M6.34 17.66l-1.41 1.41M4.93 4.93l2.12 2.12M17.66 17.66l1.41 1.41"/>
-          <path d="M12 2v2M12 20v2M2 12h2M20 12h2"/>
+          <circle cx="8" cy="15" r="6"/>
+          <circle cx="8" cy="15" r="2"/>
+          <path d="M8 9V4h4"/>
+          <path d="M14 5l6-1-1 5"/>
         </svg>
         <div class="service-name">COMPONENTS</div>
       </div>
@@ -1748,20 +1778,21 @@
       <span class="sr-no">05</span>
       <div class="sr-head">
         <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M2 20h20"/>
-          <path d="M2 20l5-8 4 5 4-7 4 4 3-3"/>
+          <path d="M2 20c5 0 7-8 12-10h8"/>
+          <circle cx="15" cy="8" r="2"/>
+          <path d="M14 10l-2 4 4 1"/>
         </svg>
         <div class="service-name">DIRT JUMP</div>
       </div>
-      <div class="service-desc">I ride dirt myself. I know what takes a beating on the ramp, how to set up a brake for tail whips and why your crank works loose every other weekend.</div>
+      <div class="service-desc">I ride dirt myself. I know what takes a beating on the ramp, how to set up a brake for tail whips and why your crank works loose every other weekend. <a href="/en/pumptrack-grodzisk-mazowiecki" style="color:var(--accent)">Grodzisk pump track</a>.</div>
     </div>
 
     <div class="service-row reveal" data-delay="3">
       <span class="sr-no">06</span>
       <div class="sr-head">
         <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/>
-          <path d="M6 18l4-8h6l3 8M10 10h5"/><path d="M15 6v4"/><path d="M13 6h4"/>
+          <path d="M4 9h16M7 9V6M17 9V6"/>
+          <rect x="8" y="13" width="8" height="6" rx="0.5"/>
         </svg>
         <div class="service-name">BMX</div>
       </div>
@@ -1772,9 +1803,11 @@
       <span class="sr-no">07</span>
       <div class="sr-head">
         <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          <circle cx="10" cy="14" r="7"/>
+          <circle cx="10" cy="14" r="2"/>
+          <path d="M17 3l-2 5h4l-3 7"/>
         </svg>
-        <div class="service-name">E-BIKE</div>
+        <a class="service-name" href="/en/serwis-rowerow-elektrycznych">E-BIKE</a>
       </div>
       <div class="service-desc">E-bike mechanics is regular bike servicing. I do brakes, wheels, components. The electronics and the motor stay untouched.</div>
     </div>
@@ -1783,8 +1816,10 @@
       <span class="sr-no">08</span>
       <div class="sr-head">
         <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/>
-          <path d="M5 19h10l5-13"/><path d="M18 6h3"/>
+          <circle cx="6" cy="18" r="3"/>
+          <circle cx="16" cy="18" r="3"/>
+          <path d="M6 18h9L18 7"/>
+          <path d="M18 7V4"/>
         </svg>
         <div class="service-name">SCOOTERS</div>
       </div>
@@ -1795,9 +1830,11 @@
       <span class="sr-no">09</span>
       <div class="sr-head">
         <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/>
-          <path d="M6 17l5-9h5l3 9M10 8h5"/>
-          <rect x="2" y="6" width="5" height="3"/>
+          <circle cx="6" cy="17" r="3"/>
+          <circle cx="18" cy="17" r="3"/>
+          <path d="M6 17l5-8h5l2 8"/>
+          <path d="M11 9c1-3 4-3 5-1"/>
+          <circle cx="16.5" cy="6" r="1.3"/>
         </svg>
         <div class="service-name">CITY BIKES</div>
       </div>
@@ -1814,123 +1851,63 @@
 <section class="dirt-section">
   <p class="eyebrow reveal" style="text-align:center;">Dirt</p>
   <h2 class="display reveal" data-delay="1" style="text-align:center;">FLIPS<br>AND WHIPS</h2>
+  <p class="dirt-hint reveal" data-delay="2">Crank and brake. Collect parts, skip the flats.</p>
   <div class="dirt-scene">
     <svg viewBox="0 -30 1500 350" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
       <defs>
         <path id="hopki-line" d="M 0 280 C 120 274 240 270 360 273 C 440 280 560 282 680 280 L 800 280 C 900 280 1000 250 1120 222 L 1240 220 C 1280 220 1328 280 1360 280 L 1520 280 C 1560 280 1600 224 1620 222 L 1740 222 C 1768 222 1800 268 1840 280 L 1880 280 C 2040 282 2240 295 2440 310 C 2560 315 2680 315 2800 315 L 2880 315 C 2920 313 2960 314 3000 315 L 3080 315 C 3120 315 3180 290 3240 285 L 3320 285 C 3340 285 3368 315 3380 315 L 3460 315 C 3480 315 3500 290 3520 285 L 3620 285 C 3648 285 3672 315 3680 315 C 3780 308 3920 280 4000 240 C 4040 215 4052 205 4060 200 L 4200 200 C 4280 200 4340 200 4400 200 C 4480 200 4600 280 4680 280 L 4840 280 C 4940 280 5080 180 5160 145 L 5320 142 C 5360 142 5420 280 5440 280 L 5680 280 C 5720 280 5768 150 5800 145 L 5920 145 C 5960 145 5992 280 6000 280"/>
         <path id="hopki-fill" d="M 0 280 C 120 274 240 270 360 273 C 440 280 560 282 680 280 L 800 280 C 900 280 1000 250 1120 222 L 1240 220 C 1280 220 1328 280 1360 280 L 1520 280 C 1560 280 1600 224 1620 222 L 1740 222 C 1768 222 1800 268 1840 280 L 1880 280 C 2040 282 2240 295 2440 310 C 2560 315 2680 315 2800 315 L 2880 315 C 2920 313 2960 314 3000 315 L 3080 315 C 3120 315 3180 290 3240 285 L 3320 285 C 3340 285 3368 315 3380 315 L 3460 315 C 3480 315 3500 290 3520 285 L 3620 285 C 3648 285 3672 315 3680 315 C 3780 308 3920 280 4000 240 C 4040 215 4052 205 4060 200 L 4200 200 C 4280 200 4340 200 4400 200 C 4480 200 4600 280 4680 280 L 4840 280 C 4940 280 5080 180 5160 145 L 5320 142 C 5360 142 5420 280 5440 280 L 5680 280 C 5720 280 5768 150 5800 145 L 5920 145 C 5960 145 5992 280 6000 280 L 6000 350 L 0 350 Z"/>
+        <g id="sym-rotor" fill="none" stroke="#9fe22e" stroke-width="2" stroke-linecap="round">
+          <circle r="14"/>
+          <circle r="3.5"/>
+          <path d="M0 -14v5M0 9v5M-14 0h5M9 0h5M-10-10  -6.5-6.5M6.5 6.5 10 10M10-10 6.5-6.5M-6.5 6.5-10 10"/>
+        </g>
+        <g id="sym-valve" fill="none" stroke="#9fe22e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="-4" y="-2" width="8" height="12" rx="1"/>
+          <path d="M0 -2v-10M-3 -12h6"/>
+          <circle cx="0" cy="4" r="1.4"/>
+        </g>
+        <g id="sym-tube" fill="none" stroke="#9fe22e" stroke-width="2" stroke-linecap="round">
+          <ellipse cx="0" cy="2" rx="16" ry="6"/>
+          <path d="M-6 -4l12 12M6 -4L-6 8"/>
+        </g>
+        <g id="sym-plate" fill="none" stroke="#9fe22e" stroke-width="2" stroke-linejoin="round">
+          <rect x="-12" y="-9" width="24" height="16" rx="1"/>
+          <path d="M-5 -3v8M0 -3v8M5 -3v8"/>
+        </g>
+        <g id="sym-dj" fill="none" stroke="#9fe22e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="-22" cy="0" r="14"/>
+          <circle cx="22" cy="0" r="14"/>
+          <path d="M-22 0L-4-14 16-4 22 0M-4-14L4 0 16-4"/>
+          <path d="M-4-14l2-12M-8-26h14"/>
+        </g>
+        <g id="sym-bmx" fill="none" stroke="#9fe22e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="-20" cy="4" r="13"/>
+          <circle cx="22" cy="4" r="13"/>
+          <path d="M-20 4l10-16h16L22 4M-10-12 4 4 18-12"/>
+          <path d="M18-12v-10M8-22h18"/>
+          <rect x="4" y="-36" width="16" height="10" rx="1"/>
+        </g>
         <g id="extras">
-          <g transform="translate(380, 270) scale(0.65)">
-            <circle r="16" fill="#fbbf24" stroke="#78350f" stroke-width="2"/>
-            <circle r="10" fill="none" stroke="#78350f" stroke-width="1.5"/>
-            <ellipse cx="-4" cy="-4" rx="4" ry="3" fill="#fde68a" opacity="0.8"/>
-          </g>
-          <g transform="translate(550, 265)">
-            <circle r="16" fill="#fbbf24" stroke="#78350f" stroke-width="2"/>
-            <circle r="10" fill="none" stroke="#78350f" stroke-width="1.5"/>
-            <ellipse cx="-4" cy="-4" rx="4" ry="3" fill="#fde68a" opacity="0.8"/>
-          </g>
-          <g transform="translate(750, 280)">
-            <circle cx="-38" cy="-21" r="21" fill="none" stroke="#fb923c" stroke-width="3.5"/>
-            <circle cx="38" cy="-21" r="21" fill="none" stroke="#fb923c" stroke-width="3.5"/>
-            <path d="M -38 -21 L 0 -49 L 38 -21 M 0 -49 L 32 -56" stroke="#fb923c" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M 32 -56 L 42 -63 Q 49 -56 42 -46" stroke="#fb923c" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <ellipse cx="-7" cy="-67" rx="21" ry="17" fill="#fb923c" transform="rotate(-20 -7 -67)"/>
-            <circle cx="21" cy="-81" r="12" fill="#fb923c"/>
-            <path d="M 10 -88 Q 21 -98 35 -88" stroke="#fb923c" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-          </g>
-          <g transform="translate(1500, 240) scale(1.6)">
-            <circle r="13" fill="#dc2626" stroke="#7f1d1d" stroke-width="1.5"/>
-            <path d="M 0 -13 L 1 -20" stroke="#78350f" stroke-width="2.5" stroke-linecap="round"/>
-            <ellipse cx="5" cy="-19" rx="5" ry="2.5" fill="#15803d" transform="rotate(25 5 -19)"/>
-            <ellipse cx="-4" cy="-4" rx="2.5" ry="2" fill="#fca5a5" opacity="0.7"/>
-          </g>
-          <g transform="translate(1700, 280) scale(0.7)">
-            <ellipse cx="0" cy="0" rx="16" ry="4" fill="#5c2e0a"/>
-            <ellipse cx="-1" cy="-6" rx="12" ry="4" fill="#78350f"/>
-            <ellipse cx="1" cy="-12" rx="7" ry="3" fill="#92400e"/>
-          </g>
-          <g transform="translate(2150, 295) scale(1.5)">
-            <circle r="16" fill="#fbbf24" stroke="#78350f" stroke-width="2"/>
-            <circle r="10" fill="none" stroke="#78350f" stroke-width="1.5"/>
-            <ellipse cx="-4" cy="-4" rx="4" ry="3" fill="#fde68a" opacity="0.8"/>
-          </g>
-          <g transform="translate(1900, 268)">
-            <circle r="13" fill="#dc2626" stroke="#7f1d1d" stroke-width="1.5"/>
-            <path d="M 0 -13 L 1 -20" stroke="#78350f" stroke-width="2.5" stroke-linecap="round"/>
-            <ellipse cx="5" cy="-19" rx="5" ry="2.5" fill="#15803d" transform="rotate(25 5 -19)"/>
-            <ellipse cx="-4" cy="-4" rx="2.5" ry="2" fill="#fca5a5" opacity="0.7"/>
-          </g>
-          <g transform="translate(2350, 295)">
-            <circle r="16" fill="#fbbf24" stroke="#78350f" stroke-width="2"/>
-            <circle r="10" fill="none" stroke="#78350f" stroke-width="1.5"/>
-            <ellipse cx="-4" cy="-4" rx="4" ry="3" fill="#fde68a" opacity="0.8"/>
-          </g>
-          <g transform="translate(2750, 315) scale(0.55)">
-            <ellipse cx="0" cy="-6" rx="9" ry="7" fill="#9fe22e"/>
-            <ellipse cx="5" cy="-14" rx="5.5" ry="6.5" fill="#9fe22e"/>
-            <path d="M 3 -18 Q 0 -28 3 -30 Q 7 -23 7 -18 Z" fill="#9fe22e"/>
-            <path d="M 8 -18 Q 8 -28 12 -27 Q 13 -22 11 -17 Z" fill="#9fe22e"/>
-            <circle cx="7" cy="-14" r="1" fill="#080808"/>
-          </g>
-          <g transform="translate(2900, 311)">
-            <ellipse cx="0" cy="0" rx="16" ry="4" fill="#5c2e0a"/>
-            <ellipse cx="-1" cy="-6" rx="12" ry="4" fill="#78350f"/>
-            <ellipse cx="1" cy="-12" rx="7" ry="3" fill="#92400e"/>
-            <path d="M 1 -15 L 1 -19" stroke="#92400e" stroke-width="2" stroke-linecap="round"/>
-          </g>
-          <g transform="translate(3000, 302)">
-            <circle r="16" fill="#fbbf24" stroke="#78350f" stroke-width="2"/>
-            <circle r="10" fill="none" stroke="#78350f" stroke-width="1.5"/>
-            <ellipse cx="-4" cy="-4" rx="4" ry="3" fill="#fde68a" opacity="0.8"/>
-          </g>
-          <g transform="translate(3370, 295) scale(1.5)">
-            <circle r="16" fill="#fbbf24" stroke="#78350f" stroke-width="2"/>
-            <circle r="10" fill="none" stroke="#78350f" stroke-width="1.5"/>
-            <ellipse cx="-4" cy="-4" rx="4" ry="3" fill="#fde68a" opacity="0.8"/>
-          </g>
-          <g transform="translate(3920, 273) scale(0.7)">
-            <circle r="13" fill="#dc2626" stroke="#7f1d1d" stroke-width="1.5"/>
-            <path d="M 0 -13 L 1 -20" stroke="#78350f" stroke-width="2.5" stroke-linecap="round"/>
-            <ellipse cx="5" cy="-19" rx="5" ry="2.5" fill="#15803d" transform="rotate(25 5 -19)"/>
-          </g>
-          <g transform="translate(4900, 280) scale(0.55)">
-            <ellipse cx="0" cy="0" rx="16" ry="4" fill="#5c2e0a"/>
-            <ellipse cx="-1" cy="-6" rx="12" ry="4" fill="#78350f"/>
-            <ellipse cx="1" cy="-12" rx="7" ry="3" fill="#92400e"/>
-          </g>
-          <g transform="translate(4200, 185)">
-            <circle r="16" fill="#fbbf24" stroke="#78350f" stroke-width="2"/>
-            <circle r="10" fill="none" stroke="#78350f" stroke-width="1.5"/>
-            <ellipse cx="-4" cy="-4" rx="4" ry="3" fill="#fde68a" opacity="0.8"/>
-          </g>
-          <g transform="translate(4480, 200)">
-            <circle cx="-36" cy="-20" r="20" fill="none" stroke="#ec4899" stroke-width="3.5"/>
-            <circle cx="36" cy="-20" r="20" fill="none" stroke="#ec4899" stroke-width="3.5"/>
-            <path d="M -36 -20 L 0 -44 L 36 -20 M 0 -44 L 8 -60" stroke="#ec4899" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M 8 -60 L 8 -80 M -12 -80 L 28 -80" stroke="#ec4899" stroke-width="4" stroke-linecap="round"/>
-            <ellipse cx="0" cy="-58" rx="18" ry="22" fill="#ec4899"/>
-            <ellipse cx="8" cy="-86" rx="15" ry="13" fill="#ec4899"/>
-            <path d="M -8 -94 L 23 -94 L 23 -82 L 35 -82" stroke="#ec4899" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          </g>
-          <g transform="translate(4760, 268)">
-            <ellipse cx="0" cy="-6" rx="9" ry="7" fill="#9fe22e"/>
-            <ellipse cx="5" cy="-14" rx="5.5" ry="6.5" fill="#9fe22e"/>
-            <path d="M 3 -18 Q 0 -28 3 -30 Q 7 -23 7 -18 Z" fill="#9fe22e"/>
-            <path d="M 8 -18 Q 8 -28 12 -27 Q 13 -22 11 -17 Z" fill="#9fe22e"/>
-            <circle cx="7" cy="-14" r="1" fill="#080808"/>
-          </g>
-          <g transform="translate(5500, 230)">
-            <circle r="16" fill="#fbbf24" stroke="#78350f" stroke-width="2"/>
-            <circle r="10" fill="none" stroke="#78350f" stroke-width="1.5"/>
-            <ellipse cx="-4" cy="-4" rx="4" ry="3" fill="#fde68a" opacity="0.8"/>
-          </g>
-          <g transform="translate(5950, 268)">
-            <circle r="13" fill="#dc2626" stroke="#7f1d1d" stroke-width="1.5"/>
-            <path d="M 0 -13 L 1 -20" stroke="#78350f" stroke-width="2.5" stroke-linecap="round"/>
-            <ellipse cx="5" cy="-19" rx="5" ry="2.5" fill="#15803d" transform="rotate(25 5 -19)"/>
-            <ellipse cx="-4" cy="-4" rx="2.5" ry="2" fill="#fca5a5" opacity="0.7"/>
-          </g>
+          <g id="item-380" transform="translate(380, 258) scale(0.85)"><use href="#sym-rotor"/></g>
+          <g id="item-550" transform="translate(550, 252)"><use href="#sym-rotor"/></g>
+          <g id="item-750" transform="translate(750, 258) scale(0.95)"><use href="#sym-dj"/></g>
+          <g id="item-1500" transform="translate(1500, 218) scale(1.15)"><use href="#sym-valve"/></g>
+          <g id="item-1700" transform="translate(1700, 272)"><use href="#sym-tube"/></g>
+          <g id="item-1900" transform="translate(1900, 250)"><use href="#sym-valve"/></g>
+          <g id="item-2150" transform="translate(2150, 278) scale(1.15)"><use href="#sym-rotor"/></g>
+          <g id="item-2350" transform="translate(2350, 280)"><use href="#sym-rotor"/></g>
+          <g id="item-2750" transform="translate(2750, 298)"><use href="#sym-plate"/></g>
+          <g id="item-2900" transform="translate(2900, 304)"><use href="#sym-tube"/></g>
+          <g id="item-3000" transform="translate(3000, 288)"><use href="#sym-rotor"/></g>
+          <g id="item-3370" transform="translate(3370, 278) scale(1.15)"><use href="#sym-rotor"/></g>
+          <g id="item-3920" transform="translate(3920, 258)"><use href="#sym-valve"/></g>
+          <g id="item-4200" transform="translate(4200, 172)"><use href="#sym-rotor"/></g>
+          <g id="item-4480" transform="translate(4480, 188) scale(0.9)"><use href="#sym-bmx"/></g>
+          <g id="item-4760" transform="translate(4760, 258)"><use href="#sym-plate"/></g>
+          <g id="item-4900" transform="translate(4900, 274)"><use href="#sym-tube"/></g>
+          <g id="item-5500" transform="translate(5500, 216)"><use href="#sym-rotor"/></g>
+          <g id="item-5950" transform="translate(5950, 254)"><use href="#sym-valve"/></g>
         </g>
       </defs>
 
@@ -1947,7 +1924,19 @@
         <g class="rider-rot">
           <g class="rider-tilt">
             <g class="rider-flip">
-              <image href="/uploads/logo-icon.png" x="-50" y="-107" width="100" height="107"/>
+              <g class="rider-sprite" fill="none" stroke="#9fe22e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="-26" cy="0" r="15"/>
+                <circle cx="26" cy="0" r="15"/>
+                <circle cx="-26" cy="0" r="2.2"/>
+                <circle cx="26" cy="0" r="2.2"/>
+                <path d="M-26 0L-8-16 18-6 26 0"/>
+                <path d="M-8-16L4 0 18-6"/>
+                <path d="M-8-16l1-14M-14-30h16"/>
+                <circle cx="-4" cy="-44" r="7"/>
+                <path d="M-4-37l4 16 12 4"/>
+                <path d="M0-21l-16 14M0-21l12 16"/>
+                <path d="M-4-32l-12 8"/>
+              </g>
             </g>
           </g>
         </g>
@@ -2005,7 +1994,7 @@
       <span class="reviews-stars" id="reviews-stars" aria-hidden="true"></span>
       <span class="reviews-count" id="reviews-count"></span>
     </div>
-    <a class="reviews-cta" id="reviews-cta" href="https://g.page/r/" target="_blank" rel="noopener" hidden>Leave a review <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></a>
+    <a class="reviews-cta" id="reviews-cta" href="https://maps.google.com/?cid=6298905504059882234" target="_blank" rel="noopener" hidden>Leave a review <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></a>
   </div>
 
   <div class="reviews-grid" id="reviews-grid"></div>
@@ -2053,8 +2042,8 @@
 
     <div class="price-cat reveal" data-delay="2">
       <div class="price-cat-name">WHEELS</div>
-      <div class="price-row"><span class="price-label">Wheel truing</span><span class="price-val">from 120 zł</span></div>
-      <div class="price-row"><span class="price-label">Wheel building (labour)</span><span class="price-val">from 80 zł</span></div>
+      <div class="price-row"><span class="price-label"><a href="/en/centrowanie-i-zaplatanie-kol">Wheel truing</a></span><span class="price-val">from 120 zł</span></div>
+      <div class="price-row"><span class="price-label"><a href="/en/centrowanie-i-zaplatanie-kol">Wheel building (labour)</a></span><span class="price-val">from 80 zł</span></div>
       <div class="price-row"><span class="price-label">Wheel repair</span><span class="price-val">from 35 zł</span></div>
       <div class="price-row"><span class="price-label">Inner tube replacement</span><span class="price-val">35 zł + tube</span></div>
       <div class="price-row"><span class="price-label">Tyre replacement</span><span class="price-val">40 zł + tyre</span></div>
@@ -2070,7 +2059,7 @@
     <div class="price-cat reveal" data-delay="1">
       <div class="price-cat-name">SPECIALITIES</div>
       <div class="price-row"><span class="price-label">Component installation (brakes, shifters)</span><span class="price-val">from 60 zł</span></div>
-      <div class="price-row"><span class="price-label">Hydraulic brake bleeding</span><span class="price-val">from 100 zł</span></div>
+      <div class="price-row"><span class="price-label"><a href="/en/bleeding-hamulcow-shimano">Hydraulic brake bleeding</a></span><span class="price-val">from 100 zł</span></div>
       <div class="price-row"><span class="price-label">Bike assembly (from a box / from parts)</span><span class="price-val">from 120 zł</span></div>
       <div class="price-row"><span class="price-label">Custom bike build</span><span class="price-val">from 500 zł</span></div>
     </div>
@@ -2656,6 +2645,8 @@
 
   if (!scrollGround || !riderPos || !riderRot || !groundLine) return;
 
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduceMotion) return;
   scene.classList.add('game-mode');
 
   // ── Sample ground path for fast Y(x) lookup ──
@@ -2687,27 +2678,33 @@
 
   // ── Items on the route ──
   const items = [
-    { x: 380,  s: 5,    m: '+5 zł' },
-    { x: 550,  s: 10,   m: '+10 zł' },
-    { x: 750,  s: 20,   m: 'HEY GRAVEL!' },
-    { x: 1500, s: 15,   m: 'YUM!' },
-    { x: 1700, s: -10,  m: 'EW!' },
-    { x: 1900, s: 15,   m: 'YUM!' },
-    { x: 2150, s: 20,   m: '+20 zł' },
-    { x: 2350, s: 10,   m: '+10 zł' },
-    { x: 2750, s: 5,    m: 'YO!' },
-    { x: 2900, s: -15,  m: 'EW!' },
-    { x: 3000, s: 20,   m: '+20 zł' },
-    { x: 3370, s: 20,   m: '+20 zł' },
-    { x: 3920, s: 10,   m: 'YUM!' },
-    { x: 4200, s: 50,   m: '+50 zł' },
-    { x: 4480, s: 25,   m: 'HEY JIBBER!' },
-    { x: 4760, s: 5,    m: 'YO!' },
-    { x: 4900, s: -10,  m: 'EW!' },
-    { x: 5500, s: 100,  m: '+100 zł!' },
-    { x: 5950, s: 15,   m: 'TASTY!' },
+    { x: 380,  s: 5,    m: '+5 zł',       id: 'item-380' },
+    { x: 550,  s: 10,   m: '+10 zł',      id: 'item-550' },
+    { x: 750,  s: 20,   m: 'HEY GRAVEL!', id: 'item-750' },
+    { x: 1500, s: 15,   m: 'TENSION!',    id: 'item-1500' },
+    { x: 1700, s: -10,  m: 'EW!',         id: 'item-1700' },
+    { x: 1900, s: 15,   m: 'TENSION!',    id: 'item-1900' },
+    { x: 2150, s: 20,   m: '+20 zł',      id: 'item-2150' },
+    { x: 2350, s: 10,   m: '+10 zł',      id: 'item-2350' },
+    { x: 2750, s: 5,    m: 'YO!',         id: 'item-2750' },
+    { x: 2900, s: -15,  m: 'EW!',         id: 'item-2900' },
+    { x: 3000, s: 20,   m: '+20 zł',      id: 'item-3000' },
+    { x: 3370, s: 20,   m: '+20 zł',      id: 'item-3370' },
+    { x: 3920, s: 10,   m: 'TENSION!',    id: 'item-3920' },
+    { x: 4200, s: 50,   m: '+50 zł',      id: 'item-4200' },
+    { x: 4480, s: 25,   m: 'HEY JIBBER!', id: 'item-4480' },
+    { x: 4760, s: 5,    m: 'YO!',         id: 'item-4760' },
+    { x: 4900, s: -10,  m: 'EW!',         id: 'item-4900' },
+    { x: 5500, s: 100,  m: '+100 zł!',    id: 'item-5500' },
+    { x: 5950, s: 15,   m: 'TENSION!',    id: 'item-5950' },
   ];
-  items.forEach(i => { i.collected = false; });
+  items.forEach(i => {
+    i.collected = false;
+    i.el = svg.querySelector('#' + i.id);
+  });
+  function setItemVisible(item, visible) {
+    if (item.el) item.el.style.visibility = visible ? '' : 'hidden';
+  }
 
   // ── Lips (takeoff points) ──
   const lips = [
@@ -2776,12 +2773,16 @@
       items.forEach(item => {
         if (!item.collected && passedForward(prevX, currX, item.x)) {
           item.collected = true;
+          setItemVisible(item, false);
           score += item.s;
           if (scoreNum) scoreNum.textContent = score + ' PTS';
           showBonus(item.m);
         }
       });
-      if (currX < prevX) items.forEach(i => { i.collected = false; });
+      if (currX < prevX) items.forEach(i => {
+        i.collected = false;
+        setItemVisible(i, true);
+      });
     }
 
     // Takeoff detection
