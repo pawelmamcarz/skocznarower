@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Bike game online: Skoczna Rider | skocznarower.pl</title>
+  <meta name="description" content="Free bike game in the browser. A rabbit on a bike, eight tracks, four bikes to unlock and a records table. Works on mobile and installs like an app.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://www.skocznarower.pl/en/gra">
+  <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM index (llms.txt)">
+  <link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/gra">
+  <link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/gra">
+  <link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/gra">
+  <link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/gra">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.skocznarower.pl/en/gra">
+  <meta property="og:title" content="Skoczna Rider, a bike game online">
+  <meta property="og:description" content="A rabbit on a bike, eight tracks and four bikes. Play in the browser or install it on your phone.">
+  <meta property="og:image" content="https://www.skocznarower.pl/uploads/photo-1778431658856.jpeg">
+  <meta property="og:image:alt" content="skocznarower.pl bike workshop">
+  <meta property="og:locale" content="en_GB">
+  <link rel="icon" type="image/png" sizes="32x32" href="/uploads/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/uploads/favicon-192.png">
+  <link rel="manifest" href="/en/gra.webmanifest">
+  <meta name="theme-color" content="#080808">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Skoczna Rider">
+  <link rel="apple-touch-icon" href="/uploads/favicon-192.png">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Skoczna Rider",
+    "url": "https://www.skocznarower.pl/en/gra",
+    "description": "Browser bike arcade game. A rabbit on a bike rides eight tracks, collects coins and carrots and unlocks new bikes.",
+    "genre": ["Arcade", "Sport"],
+    "gamePlatform": ["Web browser", "Android", "iOS"],
+    "applicationCategory": "GameApplication",
+    "operatingSystem": "Any",
+    "inLanguage": "en",
+    "isAccessibleForFree": true,
+    "playMode": "SinglePlayer",
+    "offers": {"@type": "Offer", "price": "0", "priceCurrency": "PLN", "availability": "https://schema.org/InStock"},
+    "publisher": {
+      "@type": "LocalBusiness",
+      "@id": "https://www.skocznarower.pl/#business",
+      "name": "skocznarower.pl - Bike Service",
+      "url": "https://www.skocznarower.pl",
+      "telephone": "+48600370810",
+      "hasMap": "https://maps.google.com/?cid=6298905504059882234",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Jesionowa 18",
+        "addressLocality": "Grodzisk Mazowiecki",
+        "postalCode": "05-825",
+        "addressCountry": "PL"
+      }
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.skocznarower.pl/en/"},
+      {"@type": "ListItem", "position": 2, "name": "Bike game", "item": "https://www.skocznarower.pl/en/gra"}
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {"@type": "Question", "name": "Is the game free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Skoczna Rider runs in the browser for free, with no sign-up and no ads. Coins earned in the game only unlock new bikes."}},
+      {"@type": "Question", "name": "Does the game work on a phone?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. On a phone you steer with two on-screen buttons: the right side cranks, the left one brakes. On a computer the arrow keys and the A and D keys work."}},
+      {"@type": "Question", "name": "Can the game be installed like an app?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. On Android an install button shows up in the game menu, and on iPhone you use Share, then Add to Home Screen. Once installed the game opens full screen and runs without internet."}},
+      {"@type": "Question", "name": "Where are the records stored?", "acceptedAnswer": {"@type": "Answer", "text": "Scores, coins and unlocked bikes are stored locally in your browser, so they stay on this device. The global ranking needs a phone number confirmed by SMS."}}
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+  <style>
+    :root { --bg:#080808; --bg2:#101010; --bg3:#1c1c1c; --accent:#9fe22e; --accent-dim:rgba(159,226,46,.10); --white:#f0f0f0; --muted:#969696; --border:rgba(255,255,255,.07); --accent-hi:#b5f040; --radius:2px; --fd:'Bebas Neue',sans-serif; --fb:'DM Sans',sans-serif; }
+    *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { background:var(--bg); color:var(--white); font-family:var(--fb); -webkit-font-smoothing:antialiased; min-height:100vh; padding-top:90px; }
+    .nav { position:fixed; inset-block-start:0; inset-inline:0; z-index:200; display:flex; align-items:center; justify-content:space-between; padding:18px 48px; background:rgba(8,8,8,.94); backdrop-filter:blur(16px); border-bottom:1px solid var(--border); }
+    .logo { display:flex; align-items:center; text-decoration:none; }
+    .logo-icon { height:44px; width:auto; }
+    .nav-links { display:flex; gap:34px; list-style:none; align-items:center; }
+    .nav-links a { color:var(--white); text-decoration:none; font-size:14px; font-weight:500; }
+    .nav-links a:hover,.seo-section a,footer a { color:var(--accent); }
+    .nav-cta { background:var(--accent); color:var(--bg)!important; padding:9px 18px; border-radius:var(--radius); font-weight:700; }
+    .nav-cta:hover,.btn-green:hover { background:var(--accent-hi); }
+    .nav-toggle { display:none; background:none; border:0; color:var(--white); cursor:pointer; padding:8px; line-height:0; }
+    .nav-toggle svg { width:26px; height:26px; }
+    .nav-toggle:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+    .container { max-width:980px; margin:0 auto; padding:0 32px; }
+    .hero { padding:56px 0 28px; }
+    .breadcrumb { color:var(--muted); font-size:13px; margin-bottom:16px; }
+    .breadcrumb a { color:var(--accent); text-decoration:none; }
+    .eyebrow { color:var(--accent); font-size:12px; letter-spacing:.25em; text-transform:uppercase; margin-bottom:18px; }
+    h1.display { font-family:var(--fd); font-size:clamp(44px,7vw,84px); line-height:.96; letter-spacing:.01em; margin-bottom:20px; }
+    h1.display em,.seo-section h2 em { color:var(--accent); font-style:normal; }
+    .lead { color:#ccc; font-size:18px; line-height:1.6; max-width:720px; }
+    .seo-section { padding:40px 0; border-top:1px solid var(--border); }
+    .seo-section h2 { font-family:var(--fd); font-size:clamp(28px,4vw,42px); letter-spacing:.02em; margin-bottom:20px; }
+    .seo-section h3 { color:var(--accent); font-family:var(--fd); font-size:22px; letter-spacing:.03em; margin:24px 0 10px; }
+    .seo-section p,.seo-section li { color:#d8d8d8; font-size:16px; line-height:1.65; }
+    .seo-section p { margin-bottom:14px; }
+    .seo-section ul,.seo-section ol { margin:12px 0 18px 22px; }
+    .seo-section li { margin-bottom:7px; }
+    .seo-section a,footer a { text-decoration:none; }
+    .seo-section strong { color:var(--white); }
+    .cta-box { background:var(--bg2); border:1px solid var(--border); border-top:2px solid var(--accent); padding:32px; margin:32px 0; }
+    .cta-box h2 { font-family:var(--fd); font-size:30px; margin-bottom:12px; }
+    .cta-box p { color:#ccc; line-height:1.6; margin-bottom:18px; }
+    .btn-green { display:inline-block; background:var(--accent); color:var(--bg); padding:14px 32px; border-radius:var(--radius); font-weight:700; letter-spacing:.07em; text-transform:uppercase; text-decoration:none; font-size:14px; }
+    footer { border-top:1px solid var(--border); padding:30px 32px; text-align:center; color:var(--muted); font-size:13px; max-width:980px; margin:0 auto; }
+
+    /* ─── gra ─── */
+    #game { position:relative; width:100%; aspect-ratio:16/9; max-height:74vh; min-height:360px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; user-select:none; }
+    .game-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; }
+    .game-hud { position:absolute; inset-block-start:10px; inset-inline:10px; display:flex; gap:8px; flex-wrap:wrap; pointer-events:none; }
+    .hud-box { background:rgba(8,8,8,.62); border:1px solid var(--border); border-radius:var(--radius); padding:6px 11px; min-width:74px; }
+    .hud-label { display:block; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); }
+    .hud-val { font-family:var(--fd); font-size:21px; letter-spacing:.04em; line-height:1.1; }
+    .fuel-bar { display:block; width:86px; height:8px; background:#2a2a2a; margin-top:7px; border-radius:var(--radius); overflow:hidden; }
+    .fuel-fill { display:block; height:100%; width:100%; background:#f2913d; }
+    .game-touch { position:absolute; inset-inline:0; inset-block-end:0; display:flex; justify-content:space-between; gap:12px; padding:14px; pointer-events:none; }
+    .g-btn { pointer-events:auto; flex:0 0 32%; max-width:170px; padding:18px 0; background:rgba(8,8,8,.62); border:1px solid var(--border); border-radius:var(--radius); color:var(--white); font-family:var(--fd); font-size:20px; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; touch-action:none; }
+    .g-btn:active { background:var(--accent); color:var(--bg); }
+    .g-gas { border-color:rgba(159,226,46,.5); }
+    .game-panel { position:absolute; inset:0; overflow-y:auto; background:rgba(8,8,8,.88); backdrop-filter:blur(3px); padding:22px; }
+    .panel-head { display:flex; align-items:baseline; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+    .panel-title { font-family:var(--fd); font-size:clamp(30px,5vw,46px); letter-spacing:.03em; }
+    .wallet { color:var(--accent); font-family:var(--fd); font-size:20px; letter-spacing:.06em; }
+    .panel-lead { color:#ccc; font-size:15px; line-height:1.55; margin:8px 0 14px; max-width:640px; }
+    .panel-hint { color:var(--muted); font-size:13px; line-height:1.5; margin-top:12px; }
+    .panel-tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+    .tab { background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); color:var(--white); font-family:var(--fd); font-size:17px; letter-spacing:.08em; text-transform:uppercase; padding:9px 18px; cursor:pointer; }
+    .tab.active { background:var(--accent); color:var(--bg); border-color:var(--accent); }
+    .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(212px,1fr)); gap:12px; }
+    .card { text-align:left; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; color:var(--white); cursor:pointer; font-family:var(--fb); }
+    .card:hover:not(.locked) { border-color:var(--accent); }
+    .card.locked { opacity:.5; cursor:not-allowed; }
+    .card.active { border-color:var(--accent); }
+    .card-title { font-family:var(--fd); font-size:22px; letter-spacing:.04em; margin-bottom:4px; }
+    .card-desc { color:#bdbdbd; font-size:13px; line-height:1.45; margin-bottom:10px; }
+    .card-meta { display:flex; gap:6px; flex-wrap:wrap; }
+    .chip { font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); border:1px solid var(--border); border-radius:var(--radius); padding:3px 7px; }
+    .chip-lock { color:#e2542e; border-color:rgba(226,84,46,.4); }
+    .card-hint { color:var(--muted); font-size:12px; margin-top:8px; }
+    .stat { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .stat-label { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); flex:0 0 92px; }
+    .stat-track { flex:1; height:6px; background:#2a2a2a; border-radius:var(--radius); overflow:hidden; }
+    .stat-fill { display:block; height:100%; background:var(--accent); }
+    .g-btn-sm { margin-top:10px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); color:var(--white); font-weight:700; font-size:13px; letter-spacing:.06em; text-transform:uppercase; padding:10px 16px; cursor:pointer; }
+    .g-btn-sm:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); }
+    .g-btn-sm:disabled { opacity:.55; cursor:default; }
+    .g-btn-main { background:var(--accent); color:var(--bg); border:0; border-radius:var(--radius); font-weight:700; font-size:14px; letter-spacing:.07em; text-transform:uppercase; padding:14px 28px; cursor:pointer; }
+    .g-btn-main:hover { background:var(--accent-hi); }
+    .g-install { margin:2px 0 6px; background:transparent; border:1px solid var(--accent); border-radius:var(--radius); color:var(--accent); font-weight:700; font-size:13px; letter-spacing:.06em; text-transform:uppercase; padding:10px 18px; cursor:pointer; }
+    .g-install:hover { background:var(--accent); color:var(--bg); }
+    .score-select { background:var(--bg3); color:var(--white); border:1px solid var(--border); border-radius:var(--radius); padding:10px 12px; font-family:var(--fb); font-size:14px; width:100%; max-width:280px; }
+    .score-list { list-style:none; margin-top:12px; }
+    .score-row { display:flex; justify-content:space-between; gap:12px; padding:9px 2px; border-bottom:1px solid var(--border); font-size:14px; }
+    .score-val { color:var(--accent); font-weight:700; }
+    .score-empty { color:var(--muted); font-size:14px; padding:10px 2px; }
+    .account-box { background:var(--bg2); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:var(--radius); padding:16px; margin-bottom:16px; }
+    .account-form { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0; }
+    .account-form .nick-input { flex:1 1 180px; }
+    .check-row { display:flex; gap:9px; align-items:flex-start; color:#c8c8c8; font-size:13px; line-height:1.45; margin:8px 0; cursor:pointer; }
+    .check-row input { margin-top:2px; accent-color:var(--accent); width:17px; height:17px; flex:0 0 auto; }
+    .share-box { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; width:100%; }
+    .share-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    .share-row .g-btn-sm { margin-top:0; }
+    .game-over { display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-start; gap:14px; }
+    .over-stats { display:flex; gap:10px; flex-wrap:wrap; }
+    .over-stat { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:10px 14px; min-width:96px; }
+    .over-stat strong { font-family:var(--fd); font-size:24px; letter-spacing:.04em; }
+    .over-unlock { color:var(--accent); font-size:14px; }
+    .save-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .nick-input { background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); color:var(--white); padding:11px 13px; font-family:var(--fb); font-size:14px; min-width:180px; }
+    .nick-input:focus { outline:2px solid var(--accent); outline-offset:1px; }
+    .save-row .g-btn-sm { margin-top:0; }
+    .over-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    #game [hidden] { display:none!important; }
+    .rotate-hint { display:none; color:var(--muted); font-size:13px; text-align:center; margin-top:10px; }
+    @media(max-width:820px) and (orientation:portrait) { .rotate-hint { display:block; } }
+    @media(max-width:820px) { #game { aspect-ratio:auto; height:66vh; min-height:380px; max-height:none; } .game-panel { padding:16px; } .cards { grid-template-columns:1fr; } }
+    @media(max-width:720px) { body{padding-top:70px}.nav{padding:14px 20px}.nav-toggle{display:inline-flex}.nav-links{position:absolute;inset-block-start:100%;inset-inline:0;flex-direction:column;align-items:stretch;gap:0;background:rgba(8,8,8,.98);border-bottom:1px solid var(--border);padding:4px 20px 14px;display:none}.nav-links.open{display:flex}.nav-links a{display:block;padding:15px 2px;border-bottom:1px solid var(--border)}.nav-cta{text-align:center;margin-top:12px}.container{padding:0 20px}.hero{padding-top:40px}.cta-box{padding:24px} }
+    @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a class="logo" href="/en/"><img class="logo-icon" src="/uploads/logo-icon.png" alt="Skocz na Rower" width="44" height="48"></a>
+  <button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg></button>
+  <ul class="nav-links" id="nav-links">
+    <li><a href="/en/#uslugi">Services</a></li><li><a href="/en/#cennik">Prices</a></li><li><a href="/en/#kontakt">Contact</a></li>
+    <li class="lang-sw"><a href="/gra" hreflang="pl" lang="pl">PL</a><span aria-hidden="true"> · </span><a href="/ua/gra" hreflang="uk" lang="uk">УКР</a></li>
+    <li><a class="nav-cta" href="/en/umow">Book a visit</a></li>
+  </ul>
+</nav>
+<main class="container">
+  <header class="hero">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/en/">Home</a> › Game</nav>
+    <p class="eyebrow">Bike game</p>
+    <h1 class="display">Skoczna<br><em>Rider</em></h1>
+    <p class="lead">A rabbit jumps on a bike and rides eight tracks: from the pumptrack through forest roots and dirt jumps to dunes, snow and the night shift. Collect coins, grab carrots to keep going, spin flips and unlock new bikes. The game is free, runs in the browser and installs on your phone.</p>
+  </header>
+
+  <div id="game" aria-label="Skoczna Rider bike game"></div>
+  <p class="rotate-hint">Turn the phone sideways to see more of the track.</p>
+
+  <section class="seo-section">
+    <h2>How to <em>play</em></h2>
+    <p>Two buttons run the whole game, the way classic hill climbing games do. On a phone tap the right half of the screen to crank and the left half to brake. On a computer use the arrow keys or A and D, and press Escape to get back to the menu.</p>
+    <ul>
+      <li><strong>Crank</strong> speeds you up on the ground and rotates the bike backwards in the air.</li>
+      <li><strong>Brake</strong> slows you down and rotates the bike forwards in the air.</li>
+      <li><strong>Carrots</strong> are your energy. When the bar runs out, the crank stops working.</li>
+      <li><strong>Coins</strong> stay in your wallet after every ride and buy new bikes.</li>
+      <li><strong>Flips</strong> pay extra coins, but you have to land on the wheels.</li>
+    </ul>
+  </section>
+
+  <section class="seo-section">
+    <h2>Four <em>bikes</em></h2>
+    <p>Every bike rides differently, so pick the right one for the harder tracks, exactly like in the real world.</p>
+    <ul>
+      <li><strong>BMX</strong> starts unlocked. Light, best in the air, slow on the flats.</li>
+      <li><strong>Dirt</strong> is the all-rounder, sticks to the ground and forgives hard landings.</li>
+      <li><strong>Gravel</strong> is quick on loose surfaces and handles long tracks best.</li>
+      <li><strong>Road bike</strong> has the highest top speed, but gets twitchy over jumps and loose ground.</li>
+    </ul>
+  </section>
+
+  <section class="seo-section">
+    <h2>Eight <em>tracks</em></h2>
+    <p>Tracks unlock one by one: reach the finish and the next scenery opens up. Each one has different terrain, light and obstacles.</p>
+    <ol>
+      <li><strong>Pumptrack</strong>, soft rollers to warm up.</li>
+      <li><strong>Forest trail</strong>, roots, bumps and long climbs.</li>
+      <li><strong>Dirt jumps</strong>, kickers and gaps to clear.</li>
+      <li><strong>Gravel road</strong>, long rolling fields for the gravel bike.</li>
+      <li><strong>Rocky slope</strong>, steep climbs and very little grip.</li>
+      <li><strong>Dunes</strong>, sand by the sea and soft landings.</li>
+      <li><strong>Winter trail</strong>, snow, ice and zero traction.</li>
+      <li><strong>Night shift</strong>, riding on lights over the longest distance.</li>
+    </ol>
+  </section>
+
+  <section class="seo-section">
+    <h2>Install it <em>on your phone</em></h2>
+    <p>The game works as a web app, so you do not need an app store. Once installed it opens full screen and lets you ride without an internet connection.</p>
+    <h3>Android</h3>
+    <p>An install button appears in the game menu. If you cannot see it, open the Chrome menu and choose Install app.</p>
+    <h3>iPhone and iPad</h3>
+    <p>In Safari tap the Share icon, scroll the list and choose Add to Home Screen.</p>
+  </section>
+
+  <div class="cta-box">
+    <h2>The bike from the game is in our workshop stand</h2>
+    <p>Keep the flips in the game and let us sort out the real bike in Grodzisk Mazowiecki. Inspection, brakes, drivetrain and wheels.</p>
+    <a class="btn-green" href="/en/umow">Book a visit</a>
+  </div>
+
+  <section class="seo-section">
+    <h2>Questions <em>about the game</em></h2>
+    <h3>Is the game free?</h3>
+    <p>Yes, it runs in the browser for free, with no sign-up and no ads. Coins earned in the game only unlock new bikes.</p>
+    <h3>Does it work on a phone?</h3>
+    <p>Yes. On a phone you steer with two on-screen buttons, and on a computer with the arrow keys or A and D.</p>
+    <h3>Where are the records stored?</h3>
+    <p>Scores, coins and unlocked bikes stay in your browser on this device. The global ranking needs a phone number confirmed by SMS.</p>
+    <h3>What do you do besides the game?</h3>
+    <p>We run a bike workshop in Grodzisk Mazowiecki and prepare <a href="/en/warsztaty">dirt riding courses for teenagers</a>. Prices and the scope of work are on the <a href="/en/">home page</a>.</p>
+  </section>
+</main>
+<footer><p>skocznarower.pl · Jesionowa 18, Grodzisk Mazowiecki · <a href="tel:+48600370810">600 370 810</a></p><p>Mateusz Mamcarz / xPyszczek</p></footer>
+<script>
+  const navToggle = document.getElementById('nav-toggle');
+  const navLinks = document.getElementById('nav-links');
+  if (navToggle && navLinks) {
+    const setMenu = (open) => { navLinks.classList.toggle('open', open); navToggle.setAttribute('aria-expanded', open ? 'true' : 'false'); };
+    navToggle.addEventListener('click', () => setMenu(!navLinks.classList.contains('open')));
+    navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setMenu(false)));
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setMenu(false); });
+  }
+</script>
+<script>
+window.GAME_I18N = {
+  title: 'Skoczna Rider',
+  tagline: 'A rabbit on a bike, eight tracks and a pile of coins. Right side cranks, left one brakes.',
+  tabs: { play: 'Tracks', bikes: 'Bikes', scores: 'Records' },
+  wallet: 'Coins',
+  start: 'Start',
+  locked: 'Locked',
+  unlockHint: 'Finish the previous track',
+  best: 'Best',
+  noRecord: 'no score yet',
+  meters: 'm',
+  owned: 'Owned', selected: 'Selected', select: 'Select', buy: 'Buy for', notEnough: 'Not enough coins',
+  stats: { speed: 'Speed', grip: 'Grip', air: 'Air' },
+  hud: { dist: 'Distance', coins: 'Coins', fuel: 'Carrots', flips: 'Flips' },
+  controls: { gas: 'Crank', brake: 'Brake', hint: 'Arrow keys, A and D, or tap the left or right half of the screen.' },
+  flip: 'Flip',
+  install: { button: 'Install the game', ios: 'On iPhone: Share, then Add to Home Screen.', done: 'Game installed' },
+  over: {
+    crash: 'Wipeout!', fuel: 'Out of carrots', finish: 'Finish!',
+    score: 'Score', dist: 'Distance', coins: 'Coins', flips: 'Flips',
+    unlocked: 'New track unlocked:', nick: 'Your nickname', save: 'Save score',
+    saved: 'Saved to records', retry: 'Ride again', menu: 'Menu'
+  },
+  scores: { empty: 'Nobody has ridden here yet.', local: 'Scores from this browser', global: 'Global ranking' },
+  account: {
+    title: 'Global ranking',
+    intro: 'Confirm your number by SMS and your score joins the shared table. We keep the number in the skocznarower.pl database and delete it on request at 600 370 810.',
+    nick: 'Ranking nickname', phone: 'Phone number',
+    consent: 'I agree to have my phone number processed for the game ranking.',
+    marketing: 'Send me SMS about the workshop, free slots and courses.',
+    send: 'Send SMS code', sending: 'Sending...', code: 'Code from SMS', confirm: 'Confirm',
+    sent: 'The code is on its way. Type it below.', ok: 'Number confirmed. Scores go to the ranking.',
+    playingAs: 'Playing as', change: 'Change number', error: 'Something went wrong. Try again.',
+    rank: 'Ranking position:'
+  },
+  share: {
+    title: 'Show off your score', button: 'Share', download: 'Save image', copy: 'Copy text',
+    copied: 'Copied', fb: 'Facebook',
+    hint: 'Instagram and TikTok: save the image, post it to your story and tag skocznarower.pl',
+    caption: 'points in Skoczna Rider', play: 'Play: skocznarower.pl/en/gra'
+  },
+  bikes: {
+    bmx: { name: 'BMX', desc: 'Light and nimble. King of the air, slow on the flats.' },
+    dirt: { name: 'Dirt', desc: 'The all-rounder. Sticks to the ground and forgives hard landings.' },
+    gravel: { name: 'Gravel', desc: 'Fast on loose surfaces, calm in the air. Made for long tracks.' },
+    kolarka: { name: 'Road bike', desc: 'Highest top speed, twitchy over jumps.' }
+  },
+  levels: {
+    pumptrack: { name: 'Pumptrack', desc: 'Soft rollers to warm up.' },
+    las: { name: 'Forest trail', desc: 'Roots, bumps and long climbs.' },
+    hopki: { name: 'Dirt jumps', desc: 'Kickers and gaps. This is where you fly.' },
+    szutrowka: { name: 'Gravel road', desc: 'Long rolling fields, gravel country.' },
+    kamieniec: { name: 'Rocky slope', desc: 'Steep climbs and very little grip.' },
+    wydmy: { name: 'Dunes', desc: 'Sand by the sea and soft landings.' },
+    zima: { name: 'Winter trail', desc: 'Snow, ice and zero traction.' },
+    noc: { name: 'Night shift', desc: 'Dark, cold and the longest track.' }
+  }
+};
+</script>
+<script src="/game.js" defer></script>
+</body>
+</html>

@@ -123,6 +123,9 @@ const PUBLIC_POST_LIMITS = {
   '/api/bookings': { limit: 8, windowMs: 10 * 60_000 },
   '/api/warsztaty': { limit: 8, windowMs: 10 * 60_000 },
   '/api/reminders': { limit: 5, windowMs: 60 * 60_000 },
+  '/api/game/register': { limit: 5, windowMs: 60 * 60_000 },
+  '/api/game/verify': { limit: 15, windowMs: 60 * 60_000 },
+  '/api/game/score': { limit: 60, windowMs: 60 * 60_000 },
 };
 
 async function consumeRateLimit(request, env, endpoint, limit, windowMs) {
@@ -332,6 +335,18 @@ async function handleApi(request, env, url, ctx) {
   }
   if (url.pathname === '/api/reviews' && request.method === 'GET') {
     return await apiReviews(env);
+  }
+  if (url.pathname === '/api/game/register' && request.method === 'POST') {
+    return await apiGameRegister(request, env);
+  }
+  if (url.pathname === '/api/game/verify' && request.method === 'POST') {
+    return await apiGameVerify(request, env);
+  }
+  if (url.pathname === '/api/game/score' && request.method === 'POST') {
+    return await apiGameScore(request, env);
+  }
+  if (url.pathname === '/api/game/leaderboard' && request.method === 'GET') {
+    return await apiGameLeaderboard(env, url.searchParams.get('level'));
   }
   return json({ error: 'Not found' }, 404);
 }
@@ -1436,6 +1451,9 @@ async function handleAdmin(request, env, url) {
   }
   if (path === '/admin/warsztaty' && request.method === 'POST') {
     return await adminUpdateWorkshopSignup(request, env);
+  }
+  if (path === '/admin/gracze' && request.method === 'GET') {
+    return await adminGamePlayers(env, url);
   }
   if (path === '/admin/warsztaty/grupy' && request.method === 'GET') {
     return await adminWorkshopOperations(env, url);
@@ -3772,6 +3790,65 @@ async function buildTimeline(env, b) {
 }
 
 // Wspólna powłoka HTML dla podstron panelu (ciemny motyw, te same style co dashboard).
+
+// Baza graczy z gry /gra: numery potwierdzone SMS-em wraz ze zgodami.
+// Widok read-only plus eksport CSV (?format=csv) do wysyłek i kontaktu.
+async function adminGamePlayers(env, url) {
+  const onlyMarketing = url.searchParams.get('zgoda') === 'marketing';
+  const where = onlyMarketing ? 'WHERE consent_marketing = 1' : '';
+  const rows = (await env.DB.prepare(
+    `SELECT id, phone_key, nick, consent_marketing, runs, best_score, created_at, last_seen_at
+     FROM game_players ${where} ORDER BY created_at DESC LIMIT 500`
+  ).all()).results || [];
+  const totals = await env.DB.prepare(
+    'SELECT COUNT(*) AS all_players, SUM(consent_marketing) AS marketing FROM game_players'
+  ).first();
+
+  if (url.searchParams.get('format') === 'csv') {
+    const head = 'numer,nick,zgoda_marketingowa,przejazdy,najlepszy_wynik,zapisany,ostatnio\n';
+    const csv = rows.map(r => [
+      r.phone_key, String(r.nick || '').replace(/[",;\n]/g, ' '),
+      Number(r.consent_marketing) ? 'tak' : 'nie',
+      r.runs, r.best_score,
+      new Date(Number(r.created_at)).toISOString().slice(0, 10),
+      r.last_seen_at ? new Date(Number(r.last_seen_at)).toISOString().slice(0, 10) : '',
+    ].join(',')).join('\n');
+    return new Response(head + csv, {
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="gracze.csv"',
+        'Cache-Control': 'no-store',
+      },
+    });
+  }
+
+  const lines = rows.map(r => `<tr>
+    <td data-label="Gracz"><div class="date">${escapeHtml(r.nick || '')}</div><div class="muted">${escapeHtml(r.phone_key)}</div></td>
+    <td data-label="Marketing">${Number(r.consent_marketing) ? 'tak' : '<span class="muted">nie</span>'}</td>
+    <td data-label="Przejazdy">${Number(r.runs || 0)}</td>
+    <td data-label="Rekord">${Number(r.best_score || 0)}</td>
+    <td data-label="Zapisany">${escapeHtml(new Date(Number(r.created_at)).toISOString().slice(0, 10))}</td>
+    <td data-label="Ostatnio">${r.last_seen_at ? escapeHtml(new Date(Number(r.last_seen_at)).toISOString().slice(0, 10)) : '<span class="muted">-</span>'}</td>
+  </tr>`).join('');
+
+  const body = `
+<section class="card">
+  <h2>Gracze z gry ${onlyMarketing ? '(tylko zgoda marketingowa)' : ''}</h2>
+  <nav class="tabs" style="margin-bottom:12px">
+    <a href="/admin/gracze" class="${onlyMarketing ? '' : 'active'}">Wszyscy (${Number(totals?.all_players || 0)})</a>
+    <a href="/admin/gracze?zgoda=marketing" class="${onlyMarketing ? 'active' : ''}">Zgoda marketingowa (${Number(totals?.marketing || 0)})</a>
+    <a href="/admin/gracze?format=csv${onlyMarketing ? '&zgoda=marketing' : ''}">Pobierz CSV</a>
+  </nav>
+  ${rows.length === 0 ? '<p class="muted">Nikt jeszcze nie potwierdził numeru w grze.</p>' : `
+  <table class="cards">
+    <thead><tr><th>Gracz</th><th>Marketing</th><th>Przejazdy</th><th>Rekord</th><th>Zapisany</th><th>Ostatnio</th></tr></thead>
+    <tbody>${lines}</tbody>
+  </table>`}
+  <p class="muted" style="margin-top:10px">Numer trafia tu dopiero po potwierdzeniu kodem SMS. Zgoda marketingowa jest dobrowolna, więc wysyłki handlowe rób tylko do drugiej zakładki.</p>
+</section>`;
+  return adminShell('Gracze', body);
+}
+
 function adminShell(title, bodyHtml) {
   return html(`<!doctype html><html lang="pl"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -3785,6 +3862,7 @@ ${ADMIN_STYLES}
     <a href="/admin" class="logout">← Rezerwacje</a>
     <a href="/admin/warsztaty" class="logout">Zgłoszenia</a>
     <a href="/admin/warsztaty/grupy" class="logout">Grupy</a>
+    <a href="/admin/gracze" class="logout">Gracze</a>
     <!-- <a href="/admin/rozliczenie" class="logout">Rozliczenie</a> tymczasowo ukryte -->
     <a href="/admin/logout" class="logout">Wyloguj</a>
   </div>
@@ -4356,6 +4434,7 @@ ${ADMIN_STYLES}
     <!-- <a href="/admin/rozliczenie" class="logout">Rozliczenie</a> tymczasowo ukryte -->
     <a href="/admin/warsztaty" class="logout">Warsztaty</a>
     <a href="/admin/warsztaty/grupy" class="logout">Grupy</a>
+    <a href="/admin/gracze" class="logout">Gracze</a>
     <a href="#outreach" class="logout">Współpraca</a>
     <a href="/admin/logout" class="logout">Wyloguj</a>
   </div>
@@ -4879,6 +4958,223 @@ async function hmac(secret, data) {
 }
 
 // HMAC-SHA256 w hex, do weryfikacji podpisu webhooka WhatsApp (X-Hub-Signature-256: sha256=<hex>).
+
+// ─── GRA "SKOCZNA RIDER" (/gra) ────────────────────────────────────────────
+// Ranking globalny wymaga potwierdzenia numeru SMS-em, bo inaczej tabela wyników
+// zamienia się w listę anonimowych wpisów. Numer + zgody trafiają do game_players
+// (baza graczy: zgoda na przetwarzanie jest wymagana, marketingowa dobrowolna),
+// kody jednorazowe żyją w game_verifications i są trzymane wyłącznie jako HMAC.
+const GAME_LEVELS = ['pumptrack', 'las', 'hopki', 'szutrowka', 'kamieniec', 'wydmy', 'zima', 'noc'];
+const GAME_BIKES = ['bmx', 'dirt', 'gravel', 'kolarka'];
+const GAME_NICK_RE = /^[\p{L}0-9][\p{L}0-9 ._-]{1,13}$/u;
+const GAME_CODE_TTL_MS = 10 * 60_000;
+const GAME_CODE_RESEND_MS = 60_000;
+const GAME_CODE_DAILY_LIMIT = 4;
+const GAME_CODE_MAX_ATTEMPTS = 5;
+// Twardy dzienny sufit na kody SMS w skali całego serwisu. Limity per IP i per numer
+// zatrzymują pojedynczego natręta, ten licznik ogranicza rachunek za SMS przy rozproszonym ataku.
+const GAME_SMS_DAILY_BUDGET = 150;
+
+async function gameSmsBudgetLeft(env) {
+  const secret = gameSecret(env);
+  if (!secret) return false;
+  const windowMs = 24 * 60 * 60_000;
+  const now = Date.now();
+  const windowStart = Math.floor(now / windowMs) * windowMs;
+  const keyHash = await hmacHex(secret, 'game:sms:global');
+  const row = await env.DB.prepare(
+    `INSERT INTO request_rate_limits (key_hash, endpoint, window_start, count, updated_at)
+     VALUES (?1, 'game_sms_global', ?2, 1, ?3)
+     ON CONFLICT(key_hash, endpoint, window_start) DO UPDATE SET
+       count = request_rate_limits.count + 1,
+       updated_at = excluded.updated_at
+     RETURNING count`
+  ).bind(keyHash, windowStart, now).first();
+  return Number(row?.count || 0) <= GAME_SMS_DAILY_BUDGET;
+}
+
+function gameSecret(env) {
+  return env.SESSION_SECRET || env.ADMIN_PASSWORD || '';
+}
+
+function gamePhoneKey(raw) {
+  const key = waPhoneKey(raw);
+  return /^48[0-9]{9}$/.test(key) ? key : '';
+}
+
+function gameNick(raw) {
+  const nick = String(raw || '').replace(/\s+/g, ' ').trim().slice(0, 14);
+  return GAME_NICK_RE.test(nick) ? nick : '';
+}
+
+async function gameToken(env, playerId) {
+  const sig = await hmacHex(gameSecret(env), 'game:player:' + playerId);
+  return playerId + '.' + sig.slice(0, 32);
+}
+
+async function gamePlayerFromToken(env, token) {
+  const raw = String(token || '');
+  const dot = raw.indexOf('.');
+  if (dot < 1) return null;
+  const id = Number(raw.slice(0, dot));
+  const sig = raw.slice(dot + 1);
+  if (!Number.isInteger(id) || id <= 0 || sig.length !== 32) return null;
+  const expected = (await hmacHex(gameSecret(env), 'game:player:' + id)).slice(0, 32);
+  if (!timingSafeEqual(sig, expected)) return null;
+  return await env.DB.prepare('SELECT id, nick FROM game_players WHERE id = ?1 AND verified_at IS NOT NULL').bind(id).first();
+}
+
+async function apiGameRegister(request, env) {
+  if (!gameSecret(env)) return json({ error: 'Ranking chwilowo niedostępny.' }, 503);
+  const parsed = await readJsonRequest(request);
+  if (parsed.error) return json({ error: parsed.error }, parsed.status);
+  const body = parsed.body || {};
+
+  const phoneKey = gamePhoneKey(body.phone);
+  const nick = gameNick(body.nick);
+  if (!phoneKey) return json({ error: 'Podaj polski numer telefonu.' }, 400);
+  if (!nick) return json({ error: 'Nick ma mieć od 2 do 14 znaków.' }, 400);
+  if (body.consent !== true) return json({ error: 'Zgoda na przetwarzanie numeru jest wymagana.' }, 400);
+
+  const now = Date.now();
+  const existing = await env.DB.prepare(
+    'SELECT sent_count, window_start, last_sent_at FROM game_verifications WHERE phone_key = ?1'
+  ).bind(phoneKey).first();
+  if (existing) {
+    if (now - Number(existing.last_sent_at || 0) < GAME_CODE_RESEND_MS) {
+      return json({ error: 'Kod już poszedł. Poczekaj minutę i spróbuj ponownie.' }, 429);
+    }
+    const sameDay = now - Number(existing.window_start || 0) < 24 * 60 * 60_000;
+    if (sameDay && Number(existing.sent_count || 0) >= GAME_CODE_DAILY_LIMIT) {
+      return json({ error: 'Limit kodów na dziś wyczerpany.' }, 429);
+    }
+  }
+
+  if (!await gameSmsBudgetLeft(env)) {
+    return json({ error: 'Dzienny limit kodów wyczerpany. Spróbuj jutro.' }, 429);
+  }
+
+  const digits = new Uint32Array(1);
+  crypto.getRandomValues(digits);
+  const code = String(100000 + (digits[0] % 900000));
+  const codeHash = await hmacHex(gameSecret(env), 'game:code:' + phoneKey + ':' + code);
+  const sameDay = existing && now - Number(existing.window_start || 0) < 24 * 60 * 60_000;
+
+  await env.DB.prepare(
+    `INSERT INTO game_verifications (phone_key, code_hash, nick, consent_marketing, expires_at, attempts, sent_count, window_start, last_sent_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, 0, 1, ?6, ?6)
+     ON CONFLICT(phone_key) DO UPDATE SET
+       code_hash = excluded.code_hash,
+       nick = excluded.nick,
+       consent_marketing = excluded.consent_marketing,
+       expires_at = excluded.expires_at,
+       attempts = 0,
+       sent_count = CASE WHEN ?7 = 1 THEN game_verifications.sent_count + 1 ELSE 1 END,
+       window_start = CASE WHEN ?7 = 1 THEN game_verifications.window_start ELSE ?6 END,
+       last_sent_at = ?6`
+  ).bind(phoneKey, codeHash, nick, body.marketing === true ? 1 : 0, now + GAME_CODE_TTL_MS, now, sameDay ? 1 : 0).run();
+
+  const sent = await sendSms(env, phoneKey, 'Kod do gry Skoczna Rider: ' + code + '. Wazny 10 minut.');
+  if (!sent) return json({ error: 'Nie udało się wysłać SMS. Spróbuj za chwilę.' }, 502);
+  return json({ ok: true, ttl: GAME_CODE_TTL_MS / 1000 });
+}
+
+async function apiGameVerify(request, env) {
+  if (!gameSecret(env)) return json({ error: 'Ranking chwilowo niedostępny.' }, 503);
+  const parsed = await readJsonRequest(request);
+  if (parsed.error) return json({ error: parsed.error }, parsed.status);
+  const body = parsed.body || {};
+
+  const phoneKey = gamePhoneKey(body.phone);
+  const code = String(body.code || '').replace(/[^0-9]/g, '');
+  if (!phoneKey || code.length !== 6) return json({ error: 'Podaj sześciocyfrowy kod z SMS.' }, 400);
+
+  const row = await env.DB.prepare(
+    'SELECT code_hash, nick, consent_marketing, expires_at, attempts FROM game_verifications WHERE phone_key = ?1'
+  ).bind(phoneKey).first();
+  if (!row) return json({ error: 'Najpierw poproś o kod.' }, 400);
+  if (Number(row.expires_at) < Date.now()) return json({ error: 'Kod wygasł. Poproś o nowy.' }, 400);
+  if (Number(row.attempts) >= GAME_CODE_MAX_ATTEMPTS) return json({ error: 'Za dużo prób. Poproś o nowy kod.' }, 429);
+
+  const expected = await hmacHex(gameSecret(env), 'game:code:' + phoneKey + ':' + code);
+  if (!timingSafeEqual(expected, String(row.code_hash))) {
+    await env.DB.prepare('UPDATE game_verifications SET attempts = attempts + 1 WHERE phone_key = ?1').bind(phoneKey).run();
+    return json({ error: 'Kod się nie zgadza.' }, 400);
+  }
+
+  const now = Date.now();
+  const nick = gameNick(row.nick) || 'Rider';
+  const player = await env.DB.prepare(
+    `INSERT INTO game_players (phone_key, nick, verified_at, consent_data, consent_marketing, consent_version, source, created_at, last_seen_at)
+     VALUES (?1, ?2, ?3, 1, ?4, ?5, 'gra', ?3, ?3)
+     ON CONFLICT(phone_key) DO UPDATE SET
+       nick = excluded.nick,
+       verified_at = excluded.verified_at,
+       consent_data = 1,
+       consent_marketing = MAX(game_players.consent_marketing, excluded.consent_marketing),
+       consent_version = excluded.consent_version,
+       last_seen_at = excluded.last_seen_at
+     RETURNING id, nick`
+  ).bind(phoneKey, nick, now, Number(row.consent_marketing) ? 1 : 0, CONSENT_VERSION).first();
+  await env.DB.prepare('DELETE FROM game_verifications WHERE phone_key = ?1').bind(phoneKey).run();
+
+  return json({ ok: true, token: await gameToken(env, player.id), nick: player.nick });
+}
+
+function gameInt(value, max) {
+  const n = Math.floor(Number(value));
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return Math.min(n, max);
+}
+
+async function apiGameScore(request, env) {
+  if (!gameSecret(env)) return json({ error: 'Ranking chwilowo niedostępny.' }, 503);
+  const parsed = await readJsonRequest(request);
+  if (parsed.error) return json({ error: parsed.error }, parsed.status);
+  const body = parsed.body || {};
+
+  const player = await gamePlayerFromToken(env, body.token);
+  if (!player) return json({ error: 'Potwierdź numer, żeby wysyłać wyniki.' }, 401);
+  const level = GAME_LEVELS.includes(body.level) ? body.level : '';
+  if (!level) return json({ error: 'Nieznana trasa.' }, 400);
+  const bike = GAME_BIKES.includes(body.bike) ? body.bike : null;
+
+  const score = gameInt(body.score, 200000);
+  const dist = gameInt(body.dist, 20000);
+  const coins = gameInt(body.coins, 50000);
+  const flips = gameInt(body.flips, 2000);
+  const now = Date.now();
+
+  await env.DB.prepare(
+    'INSERT INTO game_scores (player_id, level, score, dist, coins, flips, bike, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)'
+  ).bind(player.id, level, score, dist, coins, flips, bike, now).run();
+  await env.DB.prepare(
+    'UPDATE game_players SET runs = runs + 1, best_score = MAX(best_score, ?2), last_seen_at = ?3 WHERE id = ?1'
+  ).bind(player.id, score, now).run();
+
+  const rank = await env.DB.prepare(
+    `SELECT COUNT(*) + 1 AS pos FROM (
+       SELECT player_id, MAX(score) AS best FROM game_scores WHERE level = ?1 GROUP BY player_id
+     ) WHERE best > ?2`
+  ).bind(level, score).first();
+
+  return json({ ok: true, rank: Number(rank?.pos || 1) });
+}
+
+async function apiGameLeaderboard(env, levelRaw) {
+  const level = GAME_LEVELS.includes(levelRaw) ? levelRaw : '';
+  if (!level) return json({ error: 'Nieznana trasa.' }, 400);
+  const rows = await env.DB.prepare(
+    `SELECT p.nick AS name, MAX(s.score) AS score
+     FROM game_scores s JOIN game_players p ON p.id = s.player_id
+     WHERE s.level = ?1
+     GROUP BY s.player_id
+     ORDER BY score DESC, MIN(s.created_at) ASC
+     LIMIT 10`
+  ).bind(level).all();
+  return json({ level, scores: (rows.results || []).map(r => ({ name: r.name, score: Number(r.score) })) });
+}
+
 async function hmacHex(secret, data) {
   const key = await crypto.subtle.importKey(
     'raw', new TextEncoder().encode(secret),

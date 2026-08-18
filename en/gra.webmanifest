@@ -1,0 +1,19 @@
+{
+  "name": "Skoczna Rider",
+  "short_name": "Skoczna Rider",
+  "description": "Bike arcade game by skocznarower.pl. A rabbit on a bike, eight tracks and four bikes to unlock.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "/en/gra?mode=pwa",
+  "scope": "/",
+  "id": "/en/gra",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "categories": ["games", "sports"],
+  "icons": [
+    { "src": "/uploads/favicon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/uploads/favicon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

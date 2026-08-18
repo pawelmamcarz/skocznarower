@@ -750,6 +750,21 @@
       color: var(--white);
       border-bottom-color: var(--accent);
     }
+    .dirt-cta {
+      display: block;
+      width: max-content;
+      margin: 22px auto 0;
+      padding: 13px 30px;
+      background: var(--accent);
+      color: var(--bg);
+      border-radius: var(--radius);
+      font-weight: 700;
+      font-size: 13.5px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      text-decoration: none;
+    }
+    .dirt-cta:hover { background: var(--accent-hi); }
     .dirt-hint {
       text-align: center;
       color: var(--muted);
@@ -1974,6 +1989,7 @@
     <button class="game-btn game-btn-brake" type="button" aria-label="Hamulec">STOP</button>
     <button class="game-btn game-btn-gas" type="button" aria-label="Korba">KORBA!</button>
   </div>
+  <a class="dirt-cta reveal" data-delay="3" href="/gra">Zagraj w pełną wersję</a>
 </section>
 
 

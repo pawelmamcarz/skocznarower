@@ -129,6 +129,22 @@ Planowane zasady bezpieczeństwa obejmują obowiązkowy kask na każdych zajęci
 
 Formularz na https://www.skocznarower.pl/warsztaty służy wyłącznie do zgłoszenia zainteresowania i dobrania potencjalnych grup. Nie jest rezerwacją, umową, zamówieniem ani wezwaniem do zapłaty. Kontakt jest możliwy również przez WhatsApp (https://wa.me/48600370810) lub telefonicznie (+48 600 370 810). Formularz https://www.skocznarower.pl/umow służy tylko do umawiania serwisu roweru.
 
+## Gra rowerowa Skoczna Rider (/gra)
+
+Darmowa gra zręcznościowa w przeglądarce, utrzymana w stylu gier o wspinaniu się na wzgórza. Królik jedzie na rowerze przez osiem tras: pumptrack, leśna ścieżka, hopki, szutrówka, kamieniste zbocze, wydmy, zimowy szlak i nocna zmiana. Kolejna trasa odblokowuje się po dojechaniu do mety poprzedniej.
+
+Do wyboru są cztery rowery o różnych parametrach: BMX (dostępny od startu), dirt, gravel i kolarka. Rowery kupuje się za monety zebrane w grze. Marchewki działają jak zapas sił: gdy pasek się skończy, korba przestaje działać. Salta dają dodatkowe monety.
+
+Sterowanie jest dwuprzyciskowe: na telefonie prawa połowa ekranu to korba, lewa to hamulec, na komputerze działają strzałki oraz klawisze A i D.
+
+Gra działa jako aplikacja webowa (PWA), więc można ją zainstalować na Androidzie (przycisk instalacji w menu gry) oraz na iPhonie i iPadzie (Udostępnij, potem Do ekranu początkowego). Po instalacji uruchamia się na pełnym ekranie i działa bez internetu.
+
+Wyniki, monety i odblokowane rowery zapisują się lokalnie w przeglądarce. Ranking globalny jest opcjonalny i wymaga potwierdzenia numeru telefonu kodem SMS wraz ze zgodą na przetwarzanie numeru; zgoda marketingowa jest osobna i dobrowolna. Po każdym przejeździe można pobrać obrazek z wynikiem i udostępnić go w social mediach.
+
+Gra jest rozrywką, a nie usługą serwisową: nie ma jej w cenniku ani w formularzu rezerwacji.
+
+Wersje językowe: https://www.skocznarower.pl/gra, https://www.skocznarower.pl/en/gra, https://www.skocznarower.pl/ua/gra
+
 ## FAQ: typowe pytania użytkowników
 
 ### Czy serwis przyjmuje bez umówienia?

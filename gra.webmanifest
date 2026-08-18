@@ -1,0 +1,19 @@
+{
+  "name": "Skoczna Rider",
+  "short_name": "Skoczna Rider",
+  "description": "Rowerowa gra zręcznościowa skocznarower.pl. Królik na rowerze, osiem tras i cztery rowery do odblokowania.",
+  "lang": "pl",
+  "dir": "ltr",
+  "start_url": "/gra?tryb=pwa",
+  "scope": "/",
+  "id": "/gra",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "categories": ["games", "sports"],
+  "icons": [
+    { "src": "/uploads/favicon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/uploads/favicon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

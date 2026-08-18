@@ -161,6 +161,9 @@ beforeEach(async () => {
     env.DB.prepare('DELETE FROM notification_outbox'),
     env.DB.prepare('DELETE FROM audit_events'),
     env.DB.prepare('DELETE FROM request_rate_limits'),
+    env.DB.prepare('DELETE FROM game_scores'),
+    env.DB.prepare('DELETE FROM game_players'),
+    env.DB.prepare('DELETE FROM game_verifications'),
   ]);
 });
 
@@ -1870,17 +1873,18 @@ describe('static asset fallback', () => {
     await expect(response.text()).resolves.toContain('User-agent:');
   });
 
-  it('publishes a unique 27-URL sitemap with the new multilingual clusters', async () => {
+  it('publishes a unique 30-URL sitemap with the new multilingual clusters', async () => {
     const response = await workerExports.default.fetch(`${BASE_URL}/sitemap.xml`);
     expect(response.status).toBe(200);
     const xml = await response.text();
     const locations = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]);
-    expect(locations).toHaveLength(27);
-    expect(new Set(locations).size).toBe(27);
+    expect(locations).toHaveLength(30);
+    expect(new Set(locations).size).toBe(30);
     for (const slug of [
       'pumptrack-grodzisk-mazowiecki',
       'centrowanie-i-zaplatanie-kol',
       'serwis-rowerow-elektrycznych',
+      'gra',
     ]) {
       expect(locations).toContain(`${BASE_URL}/${slug}`);
       expect(locations).toContain(`${BASE_URL}/en/${slug}`);
@@ -1923,5 +1927,136 @@ describe('static asset fallback', () => {
       expect(html, path).toContain('mateusz-trening-rowerowy-2.webp');
       expect(html, path).toContain('<figure class="ride-photo">');
     }
+  });
+});
+
+describe('gra Skoczna Rider', () => {
+  function smsCapture() {
+    const sent = [];
+    vi.stubGlobal('fetch', vi.fn(async (input, init) => {
+      const url = typeof input === 'string' ? input : input.url;
+      if (url === 'https://api.smsapi.pl/sms.do') {
+        sent.push(String(init?.body || ''));
+        return new Response(JSON.stringify({ list: [{ id: 'sms-game-1' }] }), {
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response('{}', { headers: { 'Content-Type': 'application/json' } });
+    }));
+    return sent;
+  }
+
+  async function registerAndVerify(phone = '600100200', nick = 'Zbyszek', marketing = true) {
+    const sent = smsCapture();
+    const register = await directPostJson('/api/game/register', {
+      phone, nick, consent: true, marketing,
+    }, { SMSAPI_TOKEN: 'smsapi-test-token' });
+    expect(register.status).toBe(200);
+    const code = new URLSearchParams(sent[0]).get('message').match(/(\d{6})/)[1];
+    const verify = await directPostJson('/api/game/verify', { phone, code });
+    expect(verify.status).toBe(200);
+    return { body: await verify.json(), code };
+  }
+
+  it('serves the game page, engine and manifest in all three languages', async () => {
+    for (const path of ['/gra', '/en/gra', '/ua/gra']) {
+      const response = await workerExports.default.fetch(`${BASE_URL}${path}`);
+      expect(response.status, path).toBe(200);
+      const html = await response.text();
+      expect(html, path).toContain('src="/game.js"');
+      expect(html, path).toContain('rel="manifest"');
+      expect(html, path).toContain('id="game"');
+    }
+    const engine = await workerExports.default.fetch(`${BASE_URL}/game.js`);
+    expect(engine.status).toBe(200);
+    const worker_sw = await workerExports.default.fetch(`${BASE_URL}/game-sw.js`);
+    expect(worker_sw.status).toBe(200);
+    const manifest = await workerExports.default.fetch(`${BASE_URL}/gra.webmanifest`);
+    expect(manifest.status).toBe(200);
+    await expect(manifest.json()).resolves.toMatchObject({ start_url: '/gra?tryb=pwa', display: 'standalone' });
+  });
+
+  it('registers a player over SMS, then accepts a score into the global ranking', async () => {
+    const { body } = await registerAndVerify();
+    expect(body).toMatchObject({ ok: true, nick: 'Zbyszek' });
+    expect(body.token).toMatch(/^\d+\.[0-9a-f]{32}$/);
+
+    const player = await env.DB.prepare('SELECT phone_key, consent_data, consent_marketing FROM game_players').first();
+    expect(player).toMatchObject({ phone_key: '48600100200', consent_data: 1, consent_marketing: 1 });
+    const leftovers = await env.DB.prepare('SELECT COUNT(*) AS n FROM game_verifications').first();
+    expect(Number(leftovers.n)).toBe(0);
+
+    const score = await directPostJson('/api/game/score', {
+      token: body.token, level: 'hopki', score: 1500, dist: 900, coins: 120, flips: 4, bike: 'dirt',
+    });
+    expect(score.status).toBe(200);
+    await expect(score.json()).resolves.toMatchObject({ ok: true, rank: 1 });
+
+    const board = await workerExports.default.fetch(`${BASE_URL}/api/game/leaderboard?level=hopki`);
+    expect(board.status).toBe(200);
+    await expect(board.json()).resolves.toEqual({
+      level: 'hopki',
+      scores: [{ name: 'Zbyszek', score: 1500 }],
+    });
+  });
+
+  it('refuses registration without consent, a bad phone or a wrong code', async () => {
+    const sent = smsCapture();
+    const noConsent = await directPostJson('/api/game/register', {
+      phone: '600100200', nick: 'Zbyszek', consent: false,
+    }, { SMSAPI_TOKEN: 'smsapi-test-token' });
+    expect(noConsent.status).toBe(400);
+
+    const badPhone = await directPostJson('/api/game/register', {
+      phone: '12', nick: 'Zbyszek', consent: true,
+    }, { SMSAPI_TOKEN: 'smsapi-test-token' });
+    expect(badPhone.status).toBe(400);
+
+    const shortNick = await directPostJson('/api/game/register', {
+      phone: '600100200', nick: 'x', consent: true,
+    }, { SMSAPI_TOKEN: 'smsapi-test-token' });
+    expect(shortNick.status).toBe(400);
+    expect(sent).toHaveLength(0);
+
+    const ok = await directPostJson('/api/game/register', {
+      phone: '600100200', nick: 'Zbyszek', consent: true,
+    }, { SMSAPI_TOKEN: 'smsapi-test-token' });
+    expect(ok.status).toBe(200);
+    const wrong = await directPostJson('/api/game/verify', { phone: '600100200', code: '000000' });
+    expect(wrong.status).toBe(400);
+    const attempts = await env.DB.prepare('SELECT attempts FROM game_verifications').first();
+    expect(Number(attempts.attempts)).toBe(1);
+  });
+
+  it('rejects scores without a valid player token and unknown levels', async () => {
+    const forged = await directPostJson('/api/game/score', {
+      token: '1.' + 'a'.repeat(32), level: 'hopki', score: 10,
+    });
+    expect(forged.status).toBe(401);
+
+    const { body } = await registerAndVerify('600100201', 'Ola', false);
+    const badLevel = await directPostJson('/api/game/score', {
+      token: body.token, level: 'kosmos', score: 10,
+    });
+    expect(badLevel.status).toBe(400);
+    const badBoard = await workerExports.default.fetch(`${BASE_URL}/api/game/leaderboard?level=kosmos`);
+    expect(badBoard.status).toBe(400);
+  });
+
+  it('lists verified players in /admin/gracze and exports them as CSV', async () => {
+    await registerAndVerify('600100202', 'Kuba', true);
+    const cookie = await adminCookie();
+    const page = await workerExports.default.fetch(`${BASE_URL}/admin/gracze`, { headers: { Cookie: cookie } });
+    expect(page.status).toBe(200);
+    const html = await page.text();
+    expect(html).toContain('Kuba');
+    expect(html).toContain('48600100202');
+
+    const csv = await workerExports.default.fetch(`${BASE_URL}/admin/gracze?format=csv`, { headers: { Cookie: cookie } });
+    expect(csv.status).toBe(200);
+    expect(csv.headers.get('Content-Type')).toContain('text/csv');
+    const text = await csv.text();
+    expect(text.split('\n')[0]).toContain('numer,nick');
+    expect(text).toContain('48600100202,Kuba,tak');
   });
 });
