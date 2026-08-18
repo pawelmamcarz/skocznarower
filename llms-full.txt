@@ -131,11 +131,11 @@ Formularz na https://www.skocznarower.pl/warsztaty służy wyłącznie do zgłos
 
 ## Gra rowerowa Skoczna Rider (/gra)
 
-Darmowa gra zręcznościowa w przeglądarce, utrzymana w stylu gier o wspinaniu się na wzgórza. Królik jedzie na rowerze przez osiem tras: pumptrack, leśna ścieżka, hopki, szutrówka, kamieniste zbocze, wydmy, zimowy szlak i nocna zmiana. Kolejna trasa odblokowuje się po dojechaniu do mety poprzedniej.
+Darmowa gra zręcznościowa w przeglądarce, utrzymana w stylu gier o wspinaniu się na wzgórza. Królik jedzie na rowerze przez osiem tras: pumptrack (same fale, bez skoczni), leśna ścieżka, hopki, szutrówka, kamieniste zbocze, wydmy, zimowy szlak i nocna zmiana. Kolejna trasa odblokowuje się po dojechaniu do mety poprzedniej.
 
-Do wyboru są cztery rowery o różnych parametrach: BMX (dostępny od startu), dirt, gravel i kolarka. Rowery kupuje się za monety zebrane w grze. Marchewki działają jak zapas sił: gdy pasek się skończy, korba przestaje działać. Salta dają dodatkowe monety.
+Do wyboru są cztery rowery o różnych parametrach: BMX (dostępny od startu), dirt, gravel i kolarka. Rowery kupuje się za monety zebrane w grze. Marchewki działają jak zapas sił: gdy pasek się skończy, korba przestaje działać. Salta dają dodatkowe monety i najłatwiej wychodzą po pompowaniu tuż przed krawędzią hopki.
 
-Sterowanie jest dwuprzyciskowe: na telefonie prawa połowa ekranu to korba, lewa to hamulec, na komputerze działają strzałki oraz klawisze A i D.
+Sterowanie ma trzy przyciski: na telefonie prawa połowa ekranu to korba, lewa to hamulec, a środkowy przycisk pompuje i wybija rower. Na komputerze działają strzałki, klawisze A i D oraz spacja. Pompowanie wciśnięte na zjeździe z fali zamienia spadek na prędkość i działa na każdej trasie.
 
 Gra działa jako aplikacja webowa (PWA), więc można ją zainstalować na Androidzie (przycisk instalacji w menu gry) oraz na iPhonie i iPadzie (Udostępnij, potem Do ekranu początkowego). Po instalacji uruchamia się na pełnym ekranie i działa bez internetu.
 

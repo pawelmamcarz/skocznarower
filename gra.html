@@ -77,7 +77,7 @@
     "@type": "FAQPage",
     "mainEntity": [
       {"@type": "Question", "name": "Czy gra jest darmowa?", "acceptedAnswer": {"@type": "Answer", "text": "Tak. Skoczna Rider działa w przeglądarce za darmo, bez rejestracji i bez reklam. Monety zdobyte w grze służą tylko do odblokowania kolejnych rowerów."}},
-      {"@type": "Question", "name": "Czy gra działa na telefonie?", "acceptedAnswer": {"@type": "Answer", "text": "Tak. Na telefonie sterujesz dwoma przyciskami na ekranie: prawa strona to korba, lewa to hamulec. Na komputerze działają strzałki oraz klawisze A i D."}},
+      {"@type": "Question", "name": "Czy gra działa na telefonie?", "acceptedAnswer": {"@type": "Answer", "text": "Tak. Na telefonie sterujesz trzema przyciskami na ekranie: prawa strona to korba, lewa to hamulec, a środkowy przycisk pompuje i wybija rower. Na komputerze działają strzałki, klawisze A i D oraz spacja."}},
       {"@type": "Question", "name": "Czy grę można zainstalować jak aplikację?", "acceptedAnswer": {"@type": "Answer", "text": "Tak. Na Androidzie pojawia się przycisk instalacji w menu gry, a na iPhonie wystarczy Udostępnij, a potem Do ekranu początkowego. Po instalacji gra uruchamia się na pełnym ekranie i działa też bez internetu."}},
       {"@type": "Question", "name": "Gdzie zapisują się rekordy?", "acceptedAnswer": {"@type": "Answer", "text": "Wyniki, monety i odblokowane rowery zapisują się lokalnie w Twojej przeglądarce, więc zostają na tym urządzeniu. Ranking globalny wymaga numeru telefonu potwierdzonego SMS-em."}}
     ]
@@ -136,9 +136,11 @@
     .fuel-bar { display:block; width:86px; height:8px; background:#2a2a2a; margin-top:7px; border-radius:var(--radius); overflow:hidden; }
     .fuel-fill { display:block; height:100%; width:100%; background:#f2913d; }
     .game-touch { position:absolute; inset-inline:0; inset-block-end:0; display:flex; justify-content:space-between; gap:12px; padding:14px; pointer-events:none; }
-    .g-btn { pointer-events:auto; flex:0 0 32%; max-width:170px; padding:18px 0; background:rgba(8,8,8,.62); border:1px solid var(--border); border-radius:var(--radius); color:var(--white); font-family:var(--fd); font-size:20px; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; touch-action:none; }
+    .g-btn { pointer-events:auto; flex:1 1 0; max-width:170px; padding:18px 0; background:rgba(8,8,8,.62); border:1px solid var(--border); border-radius:var(--radius); color:var(--white); font-family:var(--fd); font-size:20px; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; touch-action:none; }
     .g-btn:active { background:var(--accent); color:var(--bg); }
     .g-gas { border-color:rgba(159,226,46,.5); }
+    .g-pump { border-color:rgba(255,210,63,.5); }
+    .g-pump:active { background:#ffd23f; color:var(--bg); }
     .game-panel { position:absolute; inset:0; overflow-y:auto; background:rgba(8,8,8,.88); backdrop-filter:blur(3px); padding:22px; }
     .panel-head { display:flex; align-items:baseline; justify-content:space-between; gap:14px; flex-wrap:wrap; }
     .panel-title { font-family:var(--fd); font-size:clamp(30px,5vw,46px); letter-spacing:.03em; }
@@ -225,13 +227,14 @@
 
   <section class="seo-section">
     <h2>Jak <em>grać</em></h2>
-    <p>Sterowanie jest dwuprzyciskowe, jak w klasycznych grach o wspinaniu się na wzgórza. Na telefonie dotknij prawej połowy ekranu, aby kręcić korbą, i lewej, aby hamować. Na komputerze działają strzałki oraz klawisze A i D, a klawisz Escape wraca do menu.</p>
+    <p>Sterowanie ma trzy przyciski, jak w klasycznych grach o wspinaniu się na wzgórza, plus pompowanie. Na telefonie dotknij prawej połowy ekranu, aby kręcić korbą, i lewej, aby hamować, a środkowym przyciskiem pompujesz i wybijasz się. Na komputerze działają strzałki oraz klawisze A i D, spacja to wybicie, a Escape wraca do menu.</p>
     <ul>
       <li><strong>Korba</strong> przyspiesza na ziemi, a w powietrzu obraca rower do tyłu.</li>
       <li><strong>Hamulec</strong> zwalnia i cofa, a w powietrzu obraca rower do przodu.</li>
       <li><strong>Marchewki</strong> to zapas sił. Kiedy pasek się skończy, korba przestaje działać.</li>
       <li><strong>Monety</strong> zostają na koncie po każdym przejeździe i kupują kolejne rowery.</li>
-      <li><strong>Salta</strong> dają dodatkowe monety, ale wylądować trzeba na kołach.</li>
+      <li><strong>Pompowanie</strong> podbija rower do góry, a wciśnięte na zjeździe z fali zamienia spadek na prędkość. Działa na każdej trasie i pozwala wybić się nawet na płaskim.</li>
+      <li><strong>Salta</strong> dają dodatkowe monety. Najłatwiej wychodzą, gdy pompujesz tuż przed krawędzią hopki i trzymasz korbę w locie, ale wylądować trzeba na kołach.</li>
     </ul>
   </section>
 
@@ -250,7 +253,7 @@
     <h2>Osiem <em>tras</em></h2>
     <p>Trasy odblokowują się po kolei: dojedź do mety, a otworzy się następna sceneria. Każda ma inny teren, inne światło i inne przeszkody.</p>
     <ol>
-      <li><strong>Pumptrack</strong>, miękkie fale na rozgrzewkę.</li>
+      <li><strong>Pumptrack</strong>, same miękkie fale, bez skoczni. Tor do nauki pompowania.</li>
       <li><strong>Leśna ścieżka</strong>, korzenie, garby i długie podjazdy.</li>
       <li><strong>Hopki</strong>, kickery i dziury do przeskoczenia.</li>
       <li><strong>Szutrówka</strong>, długie faliste pola dla gravela.</li>
@@ -281,7 +284,7 @@
     <h3>Czy gra jest darmowa?</h3>
     <p>Tak, gra działa w przeglądarce za darmo, bez rejestracji i bez reklam. Monety zdobyte w grze służą tylko do odblokowania kolejnych rowerów.</p>
     <h3>Czy gra działa na telefonie?</h3>
-    <p>Tak. Na telefonie sterujesz dwoma przyciskami na ekranie, a na komputerze strzałkami albo klawiszami A i D.</p>
+    <p>Tak. Na telefonie sterujesz trzema przyciskami na ekranie, a na komputerze strzałkami, klawiszami A i D oraz spacją do wybicia.</p>
     <h3>Gdzie zapisują się rekordy?</h3>
     <p>Wyniki, monety i odblokowane rowery zapisują się lokalnie w Twojej przeglądarce, więc zostają na tym urządzeniu. Ranking globalny wymaga numeru telefonu potwierdzonego SMS-em, a numer trafia tylko do bazy serwisu.</p>
     <h3>Co jeszcze robimy poza grą?</h3>

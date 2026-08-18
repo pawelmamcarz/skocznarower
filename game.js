@@ -36,8 +36,9 @@
     notEnough: 'Za mało monet',
     stats: { speed: 'Prędkość', grip: 'Przyczepność', air: 'Powietrze' },
     hud: { dist: 'Dystans', coins: 'Monety', fuel: 'Marchewki', flips: 'Salta' },
-    controls: { gas: 'Korba', brake: 'Hamulec', hint: 'Strzałki, A i D albo dotknij lewej lub prawej połowy ekranu.' },
+    controls: { gas: 'Korba', brake: 'Hamulec', pump: 'Pompuj', hint: 'Strzałki albo A i D, spacja to wybicie. Na telefonie: lewa połowa hamuje, prawa kręci korbą, środkowy przycisk pompuje.' },
     flip: 'Salto',
+    pump: 'Pompa!',
     install: { button: 'Zainstaluj grę', ios: 'Na iPhonie: Udostępnij, potem Do ekranu początkowego.', done: 'Gra zainstalowana' },
     over: {
       crash: 'Gleba!',
@@ -91,7 +92,7 @@
       kolarka: { name: 'Kolarka', desc: 'Najszybsza na płaskim, nerwowa na hopkach.' },
     },
     levels: {
-      pumptrack: { name: 'Pumptrack', desc: 'Miękkie fale na rozgrzewkę.' },
+      pumptrack: { name: 'Pumptrack', desc: 'Same fale, bez skoczni. Tu uczysz się pompować.' },
       las: { name: 'Leśna ścieżka', desc: 'Korzenie, garby i długie podjazdy.' },
       hopki: { name: 'Hopki', desc: 'Kickery i dziury. Tu się lata.' },
       szutrowka: { name: 'Szutrówka', desc: 'Długie faliste pola, teren dla gravela.' },
@@ -129,8 +130,9 @@
   const LEVELS = [
     {
       id: 'pumptrack', seed: 10723, meters: 620,
-      waves: [{ w: 210, a: 16 }, { w: 92, a: 7 }, { w: 41, a: 2.5 }],
-      kickers: 2, pits: 0, grip: 1.0, decor: 'pine', decorRate: 0.5, rockRate: 0.3,
+      // Pumptrack to fale do pompowania, nie hopki: zero kickerow i zero dziur.
+      waves: [{ w: 186, a: 21 }, { w: 84, a: 9 }, { w: 38, a: 2.5 }],
+      kickers: 0, pits: 0, grip: 1.0, decor: 'pine', decorRate: 0.5, rockRate: 0.3,
       coinRate: 1.0, carrotEvery: 150,
       sky: ['#1b2a3c', '#54708a'], hillFar: '#31465a', hillMid: '#243543',
       ground: '#2f2a22', crust: '#9fe22e', decorColor: '#3c5a30', night: false, weather: null,
@@ -310,14 +312,26 @@
       }
     }
 
+    // Wygladzenie szumu falowego PRZED dolozeniem kickerow i dziur: zmarszczki
+    // krotsze niz kolo dzialaly jak progi i rower na nich buksowal, ale krawedz
+    // hopki ma zostac ostra, bo to ona wybija rower w powietrze.
+    for (let pass = 0; pass < 2; pass++) {
+      let prev = hs[0];
+      for (let i = 1; i < n - 1; i++) {
+        const cur = hs[i];
+        hs[i] = prev * 0.25 + cur * 0.5 + hs[i + 1] * 0.25;
+        prev = cur;
+      }
+    }
+
     const spanA = START_X + 320;
     const spanB = finishX - 260;
     const place = (idx, count) => spanA + (spanB - spanA) * ((idx + 0.5 + (rnd() - 0.5) * 0.5) / count);
 
     for (let k = 0; k < level.kickers; k++) {
       const cx = place(k, level.kickers);
-      const w = 70 + rnd() * 45;
-      const h = 44 + rnd() * 40;
+      const w = 54 + rnd() * 34;
+      const h = 78 + rnd() * 46;
       const i0 = Math.max(0, Math.floor((cx - w) / DX));
       const i1 = Math.min(n - 1, Math.floor(cx / DX));
       for (let i = i0; i <= i1; i++) {
@@ -397,6 +411,7 @@
   const FUEL_GAS = 0.036;
   const FUEL_IDLE = 0.005;
   const input = { gas: false, brake: false };
+  const queuePump = () => { if (run && !run.preview && !run.over) run.pumpQueued = true; };
   let run = null;
 
   function startRun(level, bikeCfg) {
@@ -407,7 +422,7 @@
       rear: { x: START_X, y: y0, vx: 0, vy: 0, on: false },
       front: { x: START_X + bikeCfg.length, y: world.terrain.y(START_X + bikeCfg.length) - bikeCfg.radius, vx: 0, vy: 0, on: false },
       wheelSpin: 0, fuel: 1, coins: 0, flips: 0, dist: 0, maxX: START_X,
-      airTime: 0, airRot: 0, lastAngle: 0, flipsInAir: 0,
+      airTime: 0, airRot: 0, lastAngle: 0, flipsInAir: 0, pumpQueued: false, pumpCooldown: 0, pumpAir: 0,
       over: null, particles: [], pops: [], flakes: [], time: 0, headSafe: 0,
     };
     if (level.weather === 'snow') {
@@ -425,10 +440,11 @@
     const pen = (w.y + radius) - gy;
     w.on = false;
     if (pen <= 0) return;
-    const s = run.world.terrain.slope(w.x);
+    const t = run.world.terrain;
+    const s = Math.max(-3.2, Math.min(3.2, (t.y(w.x + radius) - t.y(w.x - radius)) / (2 * radius)));
     const inv = 1 / Math.hypot(1, s);
     const tx = inv, ty = s * inv;        // styczna do gruntu
-    const nx = -s * inv, ny = -inv;      // normalna w gore
+    const nx = s * inv, ny = -inv;       // normalna w gore (prostopadla do stycznej)
     w.y -= pen;
     w.on = true;
     const vn = w.vx * nx + w.vy * ny;
@@ -471,24 +487,86 @@
     const ux = Math.cos(ang), uy = Math.sin(ang);
     const px = -uy, py = ux;
 
+    // Wybicie i pompowanie: jeden impuls na nacisniecie, dziala na kazdej trasie.
+    // Na zjezdzie (dodatnie nachylenie) zamienia czesc spadku na predkosc,
+    // czyli robi to, co pompowanie na prawdziwym pumptracku.
+    if (run.pumpCooldown > 0) run.pumpCooldown -= dt;
+    if (run.pumpQueued) {
+      run.pumpQueued = false;
+      // Pompowac mozna tylko z obu kol na ziemi, tak jak na prawdziwym torze.
+      // Bez tego wybicie z wheelie dokladalo obrot i konczylo sie gleba.
+      if (r.on && f.on && run.pumpCooldown <= 0) {
+        run.pumpCooldown = 0.34;
+        run.pumpAir = 0.34;   // czyste wybicie: przez chwile korba nie obraca roweru
+        const sl = (run.world.terrain.y(r.x + b.radius) - run.world.terrain.y(r.x - b.radius)) / (2 * b.radius);
+        const inv = 1 / Math.hypot(1, sl);
+        const tx = inv, ty = sl * inv;
+        // Wybicie idzie pionowo w gore, nie wzdluz normalnej gruntu. Na zjezdzie
+        // normalna ma skladowa do tylu i pompowanie wyhamowywalo rower zamiast go
+        // rozpedzac (na wydmach potrafilo zatrzymac przejazd w miejscu).
+        // Pompowanie na wznoszeniu (podjazd, najazd na hopke) daje wyzsze wybicie,
+        // dokladnie jak wypchniecie roweru na krawedzi. To jest droga do salt.
+        const ramp = sl < -0.15 ? 1 + Math.min(0.85, (-sl - 0.15) * 1.6) : 1;
+        const hop = 300 * ramp * (b.id === 'bmx' ? 1.12 : b.id === 'kolarka' ? 0.82 : 1);
+        r.vy -= hop * 0.94;
+        f.vy -= hop * 1.06;
+        if (sl > 0.12) {
+          const gain = Math.min(1, sl) * 190 * b.grip;
+          r.vx += tx * gain; r.vy += ty * gain;
+          f.vx += tx * gain; f.vy += ty * gain;
+          pop(T.pump, '#ffd23f');
+        }
+        // Wybicie kasuje biezacy obrot, wiec hop jest przewidywalny,
+        // a salto zaczyna sie dopiero od swiadomego trzymania korby.
+        const relx = f.vx - r.vx, rely = f.vy - r.vy;
+        const spin = relx * px + rely * py;
+        r.vx += px * spin * 0.5; r.vy += py * spin * 0.5;
+        f.vx -= px * spin * 0.5; f.vy -= py * spin * 0.5;
+        for (let i = 0; i < 5; i++) {
+          run.particles.push({
+            x: r.x, y: r.y + b.radius - 2,
+            vx: (Math.random() - 0.5) * 90, vy: 20 + Math.random() * 60,
+            life: 0.35 + Math.random() * 0.25, color: lvl.crust,
+          });
+        }
+      }
+    }
+
     if (grounded) {
-      const speed = r.vx * ux + r.vy * uy;
+      // Sila napedu idzie wzdluz gruntu, nie wzdluz ramy. Przy zadartym przodzie
+      // wersja "wzdluz ramy" podbijala przod jeszcze wyzej i rower dachowal.
+      const sl = run.world.terrain.slope(r.on ? r.x : f.x);
+      const ginv = 1 / Math.hypot(1, sl);
+      const gx = ginv, gy = sl * ginv;
+      const speed = r.vx * gx + r.vy * gy;
       const maxSpeed = 520 * b.top;
+      let tilt = ang;
+      while (tilt > Math.PI) tilt -= Math.PI * 2;
+      while (tilt < -Math.PI) tilt += Math.PI * 2;
       if (gas && speed < maxSpeed) {
-        const accel = 900 * b.power * b.grip * lvl.grip;
-        r.vx += ux * accel * dt;
-        r.vy += uy * accel * dt;
-        f.vx += ux * accel * 0.25 * dt;
-        f.vy += uy * accel * 0.25 * dt;
-        // moment reakcji: przod idzie do gory (wheelie)
-        f.vy -= 210 * b.air * dt;
-        r.vy += 120 * dt;
+        const accel = 1080 * b.power * b.grip * lvl.grip;
+        r.vx += gx * accel * dt;
+        r.vy += gy * accel * dt;
+        f.vx += gx * accel * 0.25 * dt;
+        f.vy += gy * accel * 0.25 * dt;
+        // Moment reakcji: przod idzie do gory (wheelie). Slabnie, im bardziej rower
+        // jest juz zadarty, zeby trzymana korba nie przewracala go na plecy.
+        const upright = Math.max(0, 1 - Math.abs(Math.min(0, tilt)) / 0.7);
+        f.vy -= 210 * b.air * upright * dt;
+        r.vy += 120 * upright * dt;
       }
       if (brake) {
         const decel = speed > 0 ? -820 : 380;
-        r.vx += ux * decel * dt; r.vy += uy * decel * dt;
-        f.vx += ux * decel * dt; f.vy += uy * decel * dt;
+        r.vx += gx * decel * dt; r.vy += gy * decel * dt;
+        f.vx += gx * decel * dt; f.vy += gy * decel * dt;
         f.vy += 150 * dt;
+      }
+      // Ratunek przed dachowaniem: przy mocno zadartym przodzie na samym tylnym kole
+      // kierowca przenosi ciezar do przodu i rower wraca do poziomu.
+      if (tilt < -0.8) {
+        const save = Math.min(1, (-tilt - 0.8) / 0.5) * 520 * dt;
+        r.vx -= px * save; r.vy -= py * save;
+        f.vx += px * save; f.vy += py * save;
       }
       if (!gas && !brake) {
         const keep = Math.max(0, 1 - 0.35 * dt);
@@ -499,9 +577,22 @@
       run.flipsInAir = 0;
     } else {
       run.airTime += dt;
-      const torque = (run.airTime > 0.12 ? 520 : 0) * b.air * dt;
+      // Martwa strefa na krotkie wybicia: przy pompowaniu na falach rower nie ma
+      // sie obracac od samego trzymania korby, salta wymagaja dluzszego lotu.
+      if (run.pumpAir > 0) run.pumpAir -= dt;
+      const torque = (run.airTime > 0.22 && run.pumpAir <= 0 ? 520 : 0) * b.air * dt;
       if (gas) { r.vx += px * torque; r.vy += py * torque; f.vx -= px * torque; f.vy -= py * torque; }
       if (brake) { r.vx -= px * torque; r.vy -= py * torque; f.vx += px * torque; f.vy += py * torque; }
+      if (!gas && !brake) {
+        // Bez wcisnietego przycisku rower sam wraca do poziomu, zeby przypadkowy
+        // hop nie konczyl sie gleba. Swiadome salto dalej wymaga trzymania korby.
+        let tilt = ang;
+        while (tilt > Math.PI) tilt -= Math.PI * 2;
+        while (tilt < -Math.PI) tilt += Math.PI * 2;
+        const level = Math.max(-1, Math.min(1, tilt / 0.9)) * 190 * dt;
+        r.vx += px * level; r.vy += py * level;
+        f.vx -= px * level; f.vy -= py * level;
+      }
     }
 
     r.vy += GRAV * dt; f.vy += GRAV * dt;
@@ -1015,9 +1106,15 @@
 
     ui.touch = el('div', 'game-touch');
     ui.btnBrake = el('button', 'g-btn g-brake', T.controls.brake);
+    ui.btnPump = el('button', 'g-btn g-pump', T.controls.pump);
     ui.btnGas = el('button', 'g-btn g-gas', T.controls.gas);
-    ui.btnBrake.type = 'button'; ui.btnGas.type = 'button';
+    ui.btnBrake.type = 'button'; ui.btnPump.type = 'button'; ui.btnGas.type = 'button';
+    // Sterowanie z klawiatury zapewniaja strzalki, A/D i spacja, wiec przyciski dotykowe
+    // zostaja poza porzadkiem taba (inaczej sa fokusowalne, a Enterem nic nie robia).
+    ui.touch.setAttribute('aria-hidden', 'true');
+    ui.btnBrake.tabIndex = -1; ui.btnPump.tabIndex = -1; ui.btnGas.tabIndex = -1;
     ui.touch.appendChild(ui.btnBrake);
+    ui.touch.appendChild(ui.btnPump);
     ui.touch.appendChild(ui.btnGas);
     root.appendChild(ui.touch);
 
@@ -1595,6 +1692,8 @@
   function bindInput() {
     bindHold(ui.btnGas, 'gas');
     bindHold(ui.btnBrake, 'brake');
+    ui.btnPump.addEventListener('pointerdown', (e) => { e.preventDefault(); queuePump(); });
+    ui.btnPump.addEventListener('contextmenu', (e) => e.preventDefault());
     canvas.addEventListener('pointerdown', (e) => {
       if (!run || run.over) return;
       const rect = canvas.getBoundingClientRect();
@@ -1605,13 +1704,27 @@
     canvas.addEventListener('pointercancel', release);
     canvas.addEventListener('pointerleave', release);
     window.addEventListener('keydown', (e) => {
-      if (!run || run.over) return;
-      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D' || e.key === ' ') { input.gas = true; e.preventDefault(); }
+      // Nigdy nie przechwytuj klawiszy podczas pisania w polach (nick, telefon, kod SMS)
+      // ani gdy gra stoi w menu: inaczej litery a/d/w i spacja nie wchodza do formularza,
+      // a strona z opisem gry przestaje sie przewijac spacja.
+      const node = e.target;
+      if (node && node.closest && node.closest('input, textarea, select')) return;
+      if (e.key === 'Escape') {
+        if (run && !run.preview && !run.over) openMenu();
+        return;
+      }
+      if (!run || run.preview || run.over) return;
+      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { input.gas = true; e.preventDefault(); }
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { input.brake = true; e.preventDefault(); }
-      if (e.key === 'Escape') openMenu();
+      if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+        if (!e.repeat) queuePump();
+        e.preventDefault();
+      }
     });
     window.addEventListener('keyup', (e) => {
-      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D' || e.key === ' ') input.gas = false;
+      const node = e.target;
+      if (node && node.closest && node.closest('input, textarea, select')) return;
+      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') input.gas = false;
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') input.brake = false;
     });
     document.addEventListener('visibilitychange', release);
@@ -1677,7 +1790,7 @@
     window.__skocznaRider = {
       get run() { return run; }, LEVELS, BIKES, save,
       launch: (id) => launch(LEVELS.find(l => l.id === id) || LEVELS[0]),
-      buildShareCanvas, finish: (reason) => finishRun(reason),
+      buildShareCanvas, finish: (reason) => finishRun(reason), input, cfg,
     };
   }
 

@@ -13,7 +13,7 @@ No-build static site + bookings app, deployed as one Cloudflare Worker. Polish p
 | `pumptrack-grodzisk-mazowiecki.html` | Pumptrack guide (`Article` JSON-LD) |
 | `centrowanie-i-zaplatanie-kol.html` | Wheel trueing / building landing |
 | `serwis-rowerow-elektrycznych.html` | E-bike landing: **mechanical only** |
-| `gra.html` + `game.js` + `game-sw.js` + `gra.webmanifest` | Game "Skoczna Rider" (`/gra`), shared engine, PWA service worker and manifest |
+| `gra.html` + `game.js` + `game-sw.js` + `gra.webmanifest` | Game "Skoczna Rider" (`/gra`), shared engine, PWA service worker and manifest. Controls are Korba / Hamulec / Pompuj; bump `CACHE` in `game-sw.js` on every engine change |
 | `src/index.js` | `/api/*`, `/admin*`, `/r`, `/warsztaty/potwierdz`, cron, static fallback |
 | `migrations/` | Ordered D1 schema (`NNNN_description.sql`); never edit an applied file |
 | `uploads/` | Public media (`/uploads/<name>`) |

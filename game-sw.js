@@ -3,7 +3,7 @@
    nawigacje do stron gry idą network-first z fallbackiem do cache (tryb offline),
    statyki gry stale-while-revalidate. Każde inne żądanie przechodzi do sieci
    bez respondWith, więc /api, /admin i strony serwisu działają jak dotąd. */
-const CACHE = 'skoczna-rider-v1';
+const CACHE = 'skoczna-rider-v2';
 
 const PAGES = ['/gra', '/en/gra', '/ua/gra'];
 const STATIC = [
@@ -58,12 +58,29 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Silnik gry: network-first, zeby poprawka fizyki dochodzila do gracza od razu,
+  // a nie dopiero po kolejnym wejsciu. Offline dalej dziala z cache.
+  if (url.pathname === '/game.js') {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE);
+      try {
+        const fresh = await fetch(request);
+        if (fresh && fresh.ok) event.waitUntil(cache.put(url.pathname, fresh.clone()));
+        return fresh;
+      } catch (_) {
+        const cached = await cache.match(url.pathname);
+        return cached || Response.error();
+      }
+    })());
+    return;
+  }
+
   if (STATIC.includes(url.pathname)) {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE);
       const cached = await cache.match(url.pathname);
       const network = fetch(request).then((res) => {
-        if (res && res.ok) cache.put(url.pathname, res.clone());
+        if (res && res.ok) event.waitUntil(cache.put(url.pathname, res.clone()));
         return res;
       }).catch(() => cached);
       return cached || network;

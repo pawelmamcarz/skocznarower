@@ -2043,6 +2043,44 @@ describe('gra Skoczna Rider', () => {
     expect(badBoard.status).toBe(400);
   });
 
+  it('rejects cross-site game POSTs so nobody can spend the SMS budget from another page', async () => {
+    const sent = smsCapture();
+    const forged = await workerExports.default.fetch(`${BASE_URL}/api/game/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain', Origin: 'https://zlosliwa-strona.example' },
+      body: JSON.stringify({ phone: '600100300', nick: 'Ofiara', consent: true }),
+    });
+    expect(forged.status).toBe(403);
+    expect(sent).toHaveLength(0);
+
+    const sameSite = await workerExports.default.fetch(`${BASE_URL}/api/game/score`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Origin: 'https://evil.example' },
+      body: JSON.stringify({ token: 'x.y', level: 'hopki', score: 1 }),
+    });
+    expect(sameSite.status).toBe(403);
+  });
+
+  it('caps SMS codes per device per day, below the global daily budget', async () => {
+    const sent = smsCapture();
+    const bindings = { SMSAPI_TOKEN: 'smsapi-test-token' };
+    const ip = '203.0.113.77';
+    let lastStatus = 0;
+    for (let i = 0; i < 11; i += 1) {
+      const response = await directFetch('/api/game/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': ip },
+        body: JSON.stringify({ phone: `6001004${String(i).padStart(2, '0')}`, nick: 'Spamer', consent: true }),
+      }, bindings);
+      lastStatus = response.status;
+      if (response.status === 429) break;
+      // kolejne kody dla innego numeru nie czekaja na okno 60 s, wiec limit dobowy jest jedyna bariera
+      await env.DB.prepare('DELETE FROM game_verifications').run();
+    }
+    expect(lastStatus).toBe(429);
+    expect(sent.length).toBeLessThanOrEqual(10);
+  });
+
   it('lists verified players in /admin/gracze and exports them as CSV', async () => {
     await registerAndVerify('600100202', 'Kuba', true);
     const cookie = await adminCookie();

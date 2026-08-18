@@ -77,7 +77,7 @@
     "@type": "FAQPage",
     "mainEntity": [
       {"@type": "Question", "name": "Is the game free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Skoczna Rider runs in the browser for free, with no sign-up and no ads. Coins earned in the game only unlock new bikes."}},
-      {"@type": "Question", "name": "Does the game work on a phone?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. On a phone you steer with two on-screen buttons: the right side cranks, the left one brakes. On a computer the arrow keys and the A and D keys work."}},
+      {"@type": "Question", "name": "Does it work on a phone?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. On a phone you steer with three on-screen buttons: the right side cranks, the left one brakes, and the middle button pumps and hops the bike. On a computer the arrow keys, the A and D keys and the space bar work."}},
       {"@type": "Question", "name": "Can the game be installed like an app?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. On Android an install button shows up in the game menu, and on iPhone you use Share, then Add to Home Screen. Once installed the game opens full screen and runs without internet."}},
       {"@type": "Question", "name": "Where are the records stored?", "acceptedAnswer": {"@type": "Answer", "text": "Scores, coins and unlocked bikes are stored locally in your browser, so they stay on this device. The global ranking needs a phone number confirmed by SMS."}}
     ]
@@ -136,9 +136,11 @@
     .fuel-bar { display:block; width:86px; height:8px; background:#2a2a2a; margin-top:7px; border-radius:var(--radius); overflow:hidden; }
     .fuel-fill { display:block; height:100%; width:100%; background:#f2913d; }
     .game-touch { position:absolute; inset-inline:0; inset-block-end:0; display:flex; justify-content:space-between; gap:12px; padding:14px; pointer-events:none; }
-    .g-btn { pointer-events:auto; flex:0 0 32%; max-width:170px; padding:18px 0; background:rgba(8,8,8,.62); border:1px solid var(--border); border-radius:var(--radius); color:var(--white); font-family:var(--fd); font-size:20px; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; touch-action:none; }
+    .g-btn { pointer-events:auto; flex:1 1 0; max-width:170px; padding:18px 0; background:rgba(8,8,8,.62); border:1px solid var(--border); border-radius:var(--radius); color:var(--white); font-family:var(--fd); font-size:20px; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; touch-action:none; }
     .g-btn:active { background:var(--accent); color:var(--bg); }
     .g-gas { border-color:rgba(159,226,46,.5); }
+    .g-pump { border-color:rgba(255,210,63,.5); }
+    .g-pump:active { background:#ffd23f; color:var(--bg); }
     .game-panel { position:absolute; inset:0; overflow-y:auto; background:rgba(8,8,8,.88); backdrop-filter:blur(3px); padding:22px; }
     .panel-head { display:flex; align-items:baseline; justify-content:space-between; gap:14px; flex-wrap:wrap; }
     .panel-title { font-family:var(--fd); font-size:clamp(30px,5vw,46px); letter-spacing:.03em; }
@@ -225,13 +227,14 @@
 
   <section class="seo-section">
     <h2>How to <em>play</em></h2>
-    <p>Two buttons run the whole game, the way classic hill climbing games do. On a phone tap the right half of the screen to crank and the left half to brake. On a computer use the arrow keys or A and D, and press Escape to get back to the menu.</p>
+    <p>Three buttons run the whole game, the way classic hill climbing games do, plus pumping. On a phone tap the right half of the screen to crank and the left half to brake, and use the middle button to pump and hop. On a computer use the arrow keys or A and D, the space bar to hop, and press Escape to get back to the menu.</p>
     <ul>
       <li><strong>Crank</strong> speeds you up on the ground and rotates the bike backwards in the air.</li>
       <li><strong>Brake</strong> slows you down and rotates the bike forwards in the air.</li>
       <li><strong>Carrots</strong> are your energy. When the bar runs out, the crank stops working.</li>
       <li><strong>Coins</strong> stay in your wallet after every ride and buy new bikes.</li>
-      <li><strong>Flips</strong> pay extra coins, but you have to land on the wheels.</li>
+      <li><strong>Pumping</strong> lifts the bike, and pressed on the downside of a roller it turns the drop into speed. It works on every track and lets you hop even on the flat.</li>
+      <li><strong>Flips</strong> pay extra coins. The easiest way into one is to pump right before the lip of a jump and hold the crank in the air, but you still have to land on the wheels.</li>
     </ul>
   </section>
 
@@ -250,7 +253,7 @@
     <h2>Eight <em>tracks</em></h2>
     <p>Tracks unlock one by one: reach the finish and the next scenery opens up. Each one has different terrain, light and obstacles.</p>
     <ol>
-      <li><strong>Pumptrack</strong>, soft rollers to warm up.</li>
+      <li><strong>Pumptrack</strong>, soft rollers only, no jumps. The track for learning to pump.</li>
       <li><strong>Forest trail</strong>, roots, bumps and long climbs.</li>
       <li><strong>Dirt jumps</strong>, kickers and gaps to clear.</li>
       <li><strong>Gravel road</strong>, long rolling fields for the gravel bike.</li>
@@ -281,7 +284,7 @@
     <h3>Is the game free?</h3>
     <p>Yes, it runs in the browser for free, with no sign-up and no ads. Coins earned in the game only unlock new bikes.</p>
     <h3>Does it work on a phone?</h3>
-    <p>Yes. On a phone you steer with two on-screen buttons, and on a computer with the arrow keys or A and D.</p>
+    <p>Yes. On a phone you steer with three on-screen buttons, and on a computer with the arrow keys, A and D, and the space bar to hop.</p>
     <h3>Where are the records stored?</h3>
     <p>Scores, coins and unlocked bikes stay in your browser on this device. The global ranking needs a phone number confirmed by SMS.</p>
     <h3>What do you do besides the game?</h3>
@@ -314,8 +317,9 @@ window.GAME_I18N = {
   owned: 'Owned', selected: 'Selected', select: 'Select', buy: 'Buy for', notEnough: 'Not enough coins',
   stats: { speed: 'Speed', grip: 'Grip', air: 'Air' },
   hud: { dist: 'Distance', coins: 'Coins', fuel: 'Carrots', flips: 'Flips' },
-  controls: { gas: 'Crank', brake: 'Brake', hint: 'Arrow keys, A and D, or tap the left or right half of the screen.' },
+  controls: { gas: 'Crank', brake: 'Brake', pump: 'Pump', hint: 'Arrow keys or A and D, space bar to hop. On a phone: left half brakes, right half cranks, the middle button pumps.' },
   flip: 'Flip',
+  pump: 'Pump!',
   install: { button: 'Install the game', ios: 'On iPhone: Share, then Add to Home Screen.', done: 'Game installed' },
   over: {
     crash: 'Wipeout!', fuel: 'Out of carrots', finish: 'Finish!',
@@ -348,7 +352,7 @@ window.GAME_I18N = {
     kolarka: { name: 'Road bike', desc: 'Highest top speed, twitchy over jumps.' }
   },
   levels: {
-    pumptrack: { name: 'Pumptrack', desc: 'Soft rollers to warm up.' },
+    pumptrack: { name: 'Pumptrack', desc: 'Rollers only, no jumps. This is where you learn to pump.' },
     las: { name: 'Forest trail', desc: 'Roots, bumps and long climbs.' },
     hopki: { name: 'Dirt jumps', desc: 'Kickers and gaps. This is where you fly.' },
     szutrowka: { name: 'Gravel road', desc: 'Long rolling fields, gravel country.' },

@@ -336,6 +336,13 @@ async function handleApi(request, env, url, ctx) {
   if (url.pathname === '/api/reviews' && request.method === 'GET') {
     return await apiReviews(env);
   }
+  // Cross-site POST bez preflightu potrafi wystrzelic SMS na cudzy numer z rachunku
+  // warsztatu (formularz enctype=text/plain generuje poprawny JSON). Ta sama bramka
+  // co przy /admin: zadanie musi pochodzic z wlasnej domeny.
+  if (url.pathname.startsWith('/api/game/') && request.method === 'POST'
+      && !isSafeBrowserMutation(request)) {
+    return json({ error: 'Forbidden' }, 403);
+  }
   if (url.pathname === '/api/game/register' && request.method === 'POST') {
     return await apiGameRegister(request, env);
   }
@@ -5050,6 +5057,11 @@ async function apiGameRegister(request, env) {
     }
   }
 
+  // Limit godzinowy z PUBLIC_POST_LIMITS chroni przed seria, ale 5/h to 120 kodow
+  // na dobe z jednego adresu, czyli wiecej niz caly dzienny budzet serwisu.
+  if (!await consumeRateLimit(request, env, '/api/game/register:doba', 10, 24 * 60 * 60_000)) {
+    return json({ error: 'Za dużo prób z tego urządzenia. Spróbuj jutro.' }, 429);
+  }
   if (!await gameSmsBudgetLeft(env)) {
     return json({ error: 'Dzienny limit kodów wyczerpany. Spróbuj jutro.' }, 429);
   }
