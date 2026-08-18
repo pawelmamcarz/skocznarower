@@ -1599,6 +1599,33 @@
       .mobile-bar { display: flex; gap: 8px; }
       .dirt-section { padding: 60px 20px 40px; }
     }
+    /* Nav zwija sie wczesniej niz reszta ukladu: po dodaniu pozycji Gra
+       pelne menu nie miesci sie ponizej ~980px i lamalo sie na dwie linie. */
+    @media (max-width: 980px) {
+      .nav-toggle { display: inline-flex; }
+      .nav-links {
+        position: absolute;
+        inset-block-start: 100%; inset-inline: 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        background: rgba(8,8,8,.98);
+        backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--border);
+        padding: 4px 20px 14px;
+        display: none;
+      }
+      .nav-links.open { display: flex; }
+      .nav-links li { width: 100%; }
+      .nav-links a {
+        display: block;
+        padding: 15px 2px;
+        font-size: 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .nav-links li:last-child a { border-bottom: none; }
+      .nav-links .cta { text-align: center; margin-top: 12px; padding: 14px 20px; }
+    }
     @media (max-width: 560px) {
       .price-grid { grid-template-columns: 1fr; }
     }
@@ -1627,6 +1654,7 @@
     <!-- Warsztaty: link ukryty na razie, strona /warsztaty dalej dziala -->
     <!-- <li><a href="/warsztaty">Warsztaty</a></li> -->
     <li><a href="#kontakt">Kontakt</a></li>
+    <li><a href="/gra">Gra</a></li>
     <li class="lang-sw"><a href="/en/" hreflang="en" lang="en">EN</a><span aria-hidden="true"> · </span><a href="/ua/" hreflang="uk" lang="uk">УКР</a></li>
     <li><a class="cta" href="/umow">Umów wizytę</a></li>
   </ul>
