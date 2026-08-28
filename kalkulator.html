@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kalkulator oporów rowerowych · Bieżnik | skocznarower.pl</title>
+  <meta name="description" content="Darmowy kalkulator oporów jazdy: szosa, gravel, MTB, downhill, dirt jump i BMX. Waty, ciśnienie opon i co zmienić na rowerze. Grodzisk Mazowiecki.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://www.skocznarower.pl/kalkulator">
+  <link rel="alternate" type="text/plain" href="/llms.txt" title="Indeks dla LLM (llms.txt)">
+  <link rel="alternate" hreflang="pl" href="https://www.skocznarower.pl/kalkulator">
+  <link rel="alternate" hreflang="en" href="https://www.skocznarower.pl/en/kalkulator">
+  <link rel="alternate" hreflang="uk" href="https://www.skocznarower.pl/ua/kalkulator">
+  <link rel="alternate" hreflang="x-default" href="https://www.skocznarower.pl/kalkulator">
+  <link rel="icon" type="image/png" sizes="32x32" href="/uploads/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/uploads/favicon-192.png">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.skocznarower.pl/kalkulator">
+  <meta property="og:title" content="Kalkulator oporów rowerowych · Bieżnik">
+  <meta property="og:description" content="Szosa, gravel, MTB, DH, dirt i BMX. Gdzie uciekają waty i jakie ciśnienie w oponach.">
+  <meta property="og:image" content="https://www.skocznarower.pl/uploads/photo-1778431658856.jpeg">
+  <meta property="og:locale" content="pl_PL">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Bieżnik — kalkulator oporów rowerowych",
+    "url": "https://www.skocznarower.pl/kalkulator",
+    "applicationCategory": "SportsApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "PLN" },
+    "provider": { "@type": "LocalBusiness", "@id": "https://www.skocznarower.pl/#business" },
+    "inLanguage": "pl-PL"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Strona główna", "item": "https://www.skocznarower.pl/" },
+      { "@type": "ListItem", "position": 2, "name": "Kalkulator oporów", "item": "https://www.skocznarower.pl/kalkulator" }
+    ]
+  }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&amp;family=Red+Hat+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/kalkulator-assets/app.css">
+  <style>
+    :root { --bg:#080808; --bg2:#101010; --bg3:#1c1c1c; --accent:#9fe22e; --accent-dim:rgba(159,226,46,.10); --white:#f0f0f0; --muted:#969696; --border:rgba(255,255,255,.07); --accent-hi:#b5f040; --radius:2px; --fd:'Bebas Neue',sans-serif; --fb:'DM Sans',sans-serif; }
+    *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { background:var(--bg); color:var(--white); font-family:var(--fb); -webkit-font-smoothing:antialiased; min-height:100vh; padding-top:90px; }
+    .nav { position:fixed; inset-block-start:0; inset-inline:0; z-index:200; display:flex; align-items:center; justify-content:space-between; padding:18px 48px; background:rgba(8,8,8,.94); backdrop-filter:blur(16px); border-bottom:1px solid var(--border); }
+    .logo { display:flex; align-items:center; text-decoration:none; }
+    .logo-icon { height:44px; width:auto; }
+    .nav-links { display:flex; gap:28px; list-style:none; align-items:center; }
+    .nav-links a { color:var(--white); text-decoration:none; font-size:14px; font-weight:500; }
+    .nav-links a:hover, footer a { color:var(--accent); }
+    .nav-links a[aria-current="page"] { color: var(--accent); }
+    .nav-cta { background:var(--accent); color:var(--bg)!important; padding:9px 18px; border-radius:var(--radius); font-weight:700; }
+    .nav-cta:hover { background:var(--accent-hi); }
+    .nav-toggle { display:none; background:none; border:0; color:var(--white); cursor:pointer; padding:8px; line-height:0; }
+    .nav-toggle svg { width:26px; height:26px; }
+    .nav-toggle:focus-visible, a:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+    .kalk-wrap { max-width:1280px; margin:0 auto; padding:0 32px 72px; }
+    .page-hero { padding:36px 0 12px; }
+    .breadcrumb { color:var(--muted); font-size:13px; margin-bottom:16px; }
+    .breadcrumb a { color:var(--accent); text-decoration:none; }
+    .eyebrow { color:var(--accent); font-size:12px; letter-spacing:.25em; text-transform:uppercase; margin-bottom:14px; }
+    h1.display { font-family:var(--fd); font-size:clamp(44px,7vw,84px); line-height:.96; letter-spacing:.01em; margin-bottom:16px; }
+    h1.display em { color:var(--accent); font-style:normal; }
+    .page-lead { color:#ccc; font-size:18px; line-height:1.6; max-width:62ch; margin-bottom:8px; overflow-wrap:break-word; }
+    .cta-box { background:var(--bg2); border:1px solid var(--border); border-top:2px solid var(--accent); padding:28px; margin:36px 0 0; }
+    .cta-box h2 { font-family:var(--fd); font-size:30px; margin-bottom:10px; }
+    .cta-box p { color:#ccc; line-height:1.6; margin-bottom:16px; }
+    .btn-green { display:inline-block; background:var(--accent); color:var(--bg); padding:14px 32px; border-radius:var(--radius); font-weight:700; letter-spacing:.07em; text-transform:uppercase; text-decoration:none; font-size:14px; }
+    .btn-green:hover { background:var(--accent-hi); }
+    footer { border-top:1px solid var(--border); padding:30px 32px; text-align:center; color:var(--muted); font-size:13px; max-width:1280px; margin:0 auto; }
+    @media(max-width:720px) {
+      body{padding-top:70px}
+      .nav{padding:14px 20px}
+      .nav-toggle{display:inline-flex}
+      .nav-links{position:absolute;inset-block-start:100%;inset-inline:0;flex-direction:column;align-items:stretch;gap:0;background:rgba(8,8,8,.98);border-bottom:1px solid var(--border);padding:4px 20px 14px;display:none}
+      .nav-links.open{display:flex}
+      .nav-links a{display:block;padding:15px 2px;border-bottom:1px solid var(--border)}
+      .nav-cta{text-align:center;margin-top:12px}
+      .kalk-wrap{padding:0 20px 56px; min-width:0}
+      .page-hero{padding-top:28px}
+      .page-lead{font-size:16px}
+      .cta-box{padding:24px}
+    }
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a class="logo" href="/"><img class="logo-icon" src="/uploads/logo-icon.png" alt="Skocz na Rower" width="44" height="48"></a>
+  <button class="nav-toggle" id="nav-toggle" aria-label="Otwórz menu" aria-expanded="false" aria-controls="nav-links"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg></button>
+  <ul class="nav-links" id="nav-links">
+    <li><a href="/#uslugi">Usługi</a></li>
+    <li><a href="/#cennik">Cennik</a></li>
+    <li><a href="/kalkulator" aria-current="page">Kalkulator</a></li>
+    <li><a href="/#kontakt">Kontakt</a></li>
+    <li><a href="/gra">Gra</a></li>
+    <li class="lang-sw"><a href="/en/kalkulator" hreflang="en" lang="en">EN</a><span aria-hidden="true"> · </span><a href="/ua/kalkulator" hreflang="uk" lang="uk">УКР</a></li>
+    <li><a class="nav-cta" href="/umow">Umów wizytę</a></li>
+  </ul>
+</nav>
+<div class="kalk-wrap">
+  <header class="page-hero">
+    <nav class="breadcrumb" aria-label="Okruszki"><a href="/">Strona główna</a> › Kalkulator oporów</nav>
+    <p class="eyebrow">Bieżnik · narzędzie warsztatu</p>
+    <h1 class="display">Kalkulator<br><em>oporów</em></h1>
+    <p class="page-lead">Powietrze, opona, grawitacja, zrywy i łańcuch. Szosa, gravel, MTB, DH, dirt i BMX. Wpisz sprzęt i zobacz, gdzie uciekają waty.</p>
+  </header>
+  <div id="app" data-embed="1"></div>
+  <div class="cta-box">
+    <h2>Chcesz to ogarnąć w warsztacie?</h2>
+    <p>Ciśnienie, opony i hamulce ustawiam na miejscu. Umów przegląd albo konkretną robotę — Grodzisk Mazowiecki, Jesionowa 18.</p>
+    <a class="btn-green" href="/umow">Umów wizytę</a>
+  </div>
+</div>
+<footer><p>skocznarower.pl · Jesionowa 18, Grodzisk Mazowiecki · <a href="tel:+48600370810">600 370 810</a></p><p>Mateusz Mamcarz / xPyszczek</p></footer>
+<script src="/kalkulator-assets/physics.js"></script>
+<script src="/kalkulator-assets/tires.js"></script>
+<script src="/kalkulator-assets/parse.js"></script>
+<script src="/kalkulator-assets/i18n.js"></script>
+<script src="/kalkulator-assets/app.js"></script>
+<script>
+  const navToggle = document.getElementById('nav-toggle');
+  const navLinks = document.getElementById('nav-links');
+  if (navToggle && navLinks) {
+    const setMenu = (open) => { navLinks.classList.toggle('open', open); navToggle.setAttribute('aria-expanded', open ? 'true' : 'false'); };
+    navToggle.addEventListener('click', () => setMenu(!navLinks.classList.contains('open')));
+    navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setMenu(false)));
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setMenu(false); });
+  }
+</script>
+</body>
+</html>

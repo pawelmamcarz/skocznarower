@@ -1873,18 +1873,19 @@ describe('static asset fallback', () => {
     await expect(response.text()).resolves.toContain('User-agent:');
   });
 
-  it('publishes a unique 30-URL sitemap with the new multilingual clusters', async () => {
+  it('publishes a unique 33-URL sitemap with the new multilingual clusters', async () => {
     const response = await workerExports.default.fetch(`${BASE_URL}/sitemap.xml`);
     expect(response.status).toBe(200);
     const xml = await response.text();
     const locations = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]);
-    expect(locations).toHaveLength(30);
-    expect(new Set(locations).size).toBe(30);
+    expect(locations).toHaveLength(33);
+    expect(new Set(locations).size).toBe(33);
     for (const slug of [
       'pumptrack-grodzisk-mazowiecki',
       'centrowanie-i-zaplatanie-kol',
       'serwis-rowerow-elektrycznych',
       'gra',
+      'kalkulator',
     ]) {
       expect(locations).toContain(`${BASE_URL}/${slug}`);
       expect(locations).toContain(`${BASE_URL}/en/${slug}`);

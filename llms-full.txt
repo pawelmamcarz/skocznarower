@@ -61,6 +61,14 @@ Lokalny poradnik opisuje przygotowanie dziecka, dorosłego i roweru, pierwsze ok
 - EN: https://www.skocznarower.pl/en/pumptrack-grodzisk-mazowiecki
 - UA: https://www.skocznarower.pl/ua/pumptrack-grodzisk-mazowiecki
 
+### Kalkulator oporów (Bieżnik)
+
+Darmowe narzędzie na stronie serwisu. Liczy, ile watów idzie w powietrze, opony, grawitację, zrywy i napęd, oraz podaje orientacyjne ciśnienie przód/tył. Obsługuje szosę, gravel, MTB, downhill, dirt jump i BMX. Wynik jest szacunkiem fizycznym, nie diagnozą. Nie zastępuje przeglądu w warsztacie.
+
+- PL: https://www.skocznarower.pl/kalkulator
+- EN: https://www.skocznarower.pl/en/kalkulator
+- UA: https://www.skocznarower.pl/ua/kalkulator
+
 ## Cennik (od)
 
 Wszystkie ceny są wyjściowe (od), ostateczna wycena jest podawana po oględzinach przed wykonaniem pracy. Stawki są jednakowe niezależnie od miejscowości klienta.
