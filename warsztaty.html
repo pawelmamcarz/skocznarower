@@ -198,8 +198,8 @@
     .logo { display:flex; align-items:center; gap:11px; text-decoration:none; }
     .logo-icon { height: 44px; width:auto; }
     .nav-links { display:flex; gap:34px; list-style:none; align-items:center; }
-    .nav-links a { color:var(--white); text-decoration:none; font-size:14px; font-weight:500; letter-spacing:.02em; }
-    .nav-links a:hover { color: var(--accent); }
+    .nav-links a, .nav-more-btn { color:var(--white); text-decoration:none; font-size:14px; font-weight:500; letter-spacing:.02em; }
+    .nav-links a:hover, .nav-more-btn:hover { color: var(--accent); }
     .nav-cta { background: var(--accent); color: var(--bg) !important; padding: 9px 18px; border-radius: var(--radius); font-weight: 700; }
     .nav-cta:hover { background: var(--accent-hi); }
     .nav-toggle { display: none; background: none; border: none; color: var(--white); cursor: pointer; padding: 8px; margin: -8px -8px -8px 0; line-height: 0; }
@@ -213,7 +213,7 @@
       .nav-links { position: absolute; inset-block-start: 100%; inset-inline: 0; flex-direction: column; align-items: stretch; gap: 0; background: rgba(8,8,8,.98); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 4px 20px 14px; display: none; }
       .nav-links.open { display: flex; }
       .nav-links li { width: 100%; }
-      .nav-links a { display: block; padding: 15px 2px; font-size: 14px; border-bottom: 1px solid var(--border); }
+      .nav-links a, .nav-more-btn { display: block; padding: 15px 2px; font-size: 14px; border-bottom: 1px solid var(--border); }
       .nav-links li:last-child a { border-bottom: none; }
       .nav-cta { text-align: center; margin-top: 12px; padding: 14px 20px; }
     }
@@ -355,6 +355,50 @@
       max-width: 880px; margin: 0 auto;
     }
     footer a { color: var(--accent); text-decoration: none; }
+
+    /* Rozwijane "Więcej" w nawigacji: Gra i Kalkulator poza glownym menu,
+       ale wciaz w zasiegu jednego klikniecia. Typografia przycisku jedzie
+       z reguly .nav-links a, do ktorej dopisany jest .nav-more-btn. */
+    .nav-more { position: relative; }
+    .nav-more-btn {
+      background: none;
+      border: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .nav-more-btn svg { width: 11px; height: 11px; transition: transform .2s; }
+    .nav-more-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
+    .nav-more-menu {
+      position: absolute;
+      inset-block-start: calc(100% + 14px);
+      inset-inline-end: 0;
+      min-width: 168px;
+      margin: 0;
+      padding: 6px 0;
+      list-style: none;
+      background: rgba(8,8,8,.98);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      z-index: 210;
+    }
+    .nav-more-menu li { width: 100%; }
+    .nav-more-menu a { display: block; padding: 11px 18px; white-space: nowrap; }
+    @media (max-width: 720px) {
+      /* W menu hamburgerowym druga warstwa nie ma sensu: przycisk znika,
+         a obie pozycje sa od razu widoczne. Ta regula bije atrybut hidden. */
+      .nav-more-btn { display: none; }
+      .nav-more-menu {
+        display: block;
+        position: static;
+        min-width: 0;
+        padding: 0;
+        background: none;
+        border: 0;
+      }
+      .nav-more-menu a { padding: 15px 2px; }
+    }
   </style>
   <script src="/turnstile.js" defer></script>
 </head>
@@ -371,6 +415,13 @@
     <li><a href="/#cennik">Cennik</a></li>
     <li><a href="#vouchery">Vouchery</a></li>
     <li><a href="/#kontakt">Kontakt</a></li>
+    <li class="nav-more">
+      <button class="nav-more-btn" id="nav-more-btn" type="button" aria-expanded="false" aria-controls="nav-more-menu">Więcej<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+      <ul class="nav-more-menu" id="nav-more-menu" hidden>
+        <li><a href="/kalkulator">Kalkulator</a></li>
+        <li><a href="/gra">Gra</a></li>
+      </ul>
+    </li>
     <li class="lang-sw"><a href="/en/warsztaty" hreflang="en" lang="en">EN</a><span aria-hidden="true"> · </span><a href="/ua/warsztaty" hreflang="uk" lang="uk">УКР</a></li>
     <li><a class="nav-cta" href="#zapisy">Lista zainteresowanych</a></li>
   </ul>
@@ -646,6 +697,25 @@
 </script>
 <script>
 (function(){
+  // --- Nawigacja: rozwijane "Więcej" (Gra, Kalkulator). Ponizej breakpointu
+  //     przycisk jest ukryty w CSS, a obie pozycje widac od razu. ---
+  const navMoreBtn = document.getElementById('nav-more-btn');
+  const navMoreMenu = document.getElementById('nav-more-menu');
+  if (navMoreBtn && navMoreMenu) {
+    const setMore = (open) => {
+      navMoreMenu.hidden = !open;
+      navMoreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+    navMoreBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setMore(navMoreBtn.getAttribute('aria-expanded') !== 'true');
+    });
+    document.addEventListener('click', (e) => {
+      if (!navMoreMenu.contains(e.target) && e.target !== navMoreBtn) setMore(false);
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMore(false); });
+  }
+
   var navToggle = document.getElementById('nav-toggle');
   var navLinks = document.getElementById('nav-links');
   if (navToggle && navLinks) {
