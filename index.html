@@ -1313,12 +1313,30 @@
     }
 
     /* ─── FAQ ─────────────────────────────────────────────── */
-    .faq-list { margin-top: 56px; }
+    /* Kreski na .faq-list + dolna krawedz kazdego wiersza, zeby lista domykala
+       sie tak samo przy czterech widocznych pytaniach, jak przy dwunastu. */
+    .faq-list { margin-top: 56px; border-top: 1px solid var(--border); }
     .faq-item {
-      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
       padding: 0;
     }
-    .faq-item:last-child { border-bottom: 1px solid var(--border); }
+    .faq-more-toggle {
+      margin-top: 24px;
+      padding: 13px 28px;
+      background: transparent;
+      border: 1.5px solid rgba(255,255,255,.25);
+      border-radius: var(--radius);
+      font-family: var(--fb);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--white);
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .faq-more-toggle:hover { border-color: var(--accent); color: var(--accent); }
+    .faq-more-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
     .faq-q {
       width: 100%;
       background: none;
@@ -1379,6 +1397,40 @@
       justify-content: center;
       width: 100%;
       white-space: nowrap;
+    }
+
+    /* ─── SPECJALIZACJE: trzy karty nad kompaktowa lista uslug ───── */
+    .services-top {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 2px;
+      margin-top: 56px;
+    }
+    .service-card {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 32px 28px;
+      background: var(--bg2);
+      border: 1px solid rgba(159,226,46,.28);
+      border-radius: var(--radius);
+    }
+    .service-card .service-icon { width: 30px; height: 30px; }
+    .service-card .service-desc { padding-top: 0; }
+    .service-go {
+      margin-top: auto;
+      padding-top: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .service-go:hover, .service-go:focus-visible { color: var(--accent-hi); }
+    .service-row .service-go { margin-top: 8px; padding-top: 0; display: inline-block; }
+    @media (max-width: 820px) {
+      .services-top { grid-template-columns: 1fr; margin-top: 40px; }
     }
 
     /* ─── DIRT ANIMATION ───────────────────────────────── */
@@ -1702,35 +1754,12 @@
       .mobile-bar { display: flex; gap: 8px; }
       .dirt-section { padding: 60px 20px 40px; }
     }
-    /* Nav zwija sie wczesniej niz reszta ukladu: po dodaniu pozycji Gra
-       pelne menu nie miesci sie ponizej ~980px i lamalo sie na dwie linie. */
-    @media (max-width: 980px) {
-      .nav-toggle { display: inline-flex; }
-      .nav-links {
-        position: absolute;
-        inset-block-start: 100%; inset-inline: 0;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0;
-        background: rgba(8,8,8,.98);
-        backdrop-filter: blur(16px);
-        border-bottom: 1px solid var(--border);
-        padding: 4px 20px 14px;
-        display: none;
-      }
-      .nav-links.open { display: flex; }
-      .nav-links li { width: 100%; }
-      .nav-links a {
-        display: block;
-        padding: 15px 2px;
-        font-size: 14px;
-        border-bottom: 1px solid var(--border);
-      }
-      .nav-links li:last-child a { border-bottom: none; }
-      .nav-links .cta { text-align: center; margin-top: 12px; padding: 14px 20px; }
-    }
     @media (max-width: 560px) {
       .price-grid { grid-template-columns: 1fr; }
+      /* Przy jednej kolumnie dluga pozycja ("Wymiana klockow hamulcowych" plus
+         "od 50 zl + klocki") wypychala kwote poza ekran, gdzie scinal ja
+         overflow-x: hidden. minmax(0, auto) pozwala etykiecie sie zawinac. */
+      .price-row { grid-template-columns: minmax(0, auto) 1fr auto; }
     }
   </style>
   <script src="/turnstile.js" defer></script>
@@ -1756,9 +1785,7 @@
     <li><a href="#faq">FAQ</a></li>
     <!-- Warsztaty: link ukryty na razie, strona /warsztaty dalej dziala -->
     <!-- <li><a href="/warsztaty">Warsztaty</a></li> -->
-    <li><a href="/kalkulator">Kalkulator</a></li>
     <li><a href="#kontakt">Kontakt</a></li>
-    <li><a href="/gra">Gra</a></li>
     <li class="lang-sw"><a href="/en/" hreflang="en" lang="en">EN</a><span aria-hidden="true"> · </span><a href="/ua/" hreflang="uk" lang="uk">УКР</a></li>
     <li><a class="cta" href="/umow">Umów wizytę</a></li>
   </ul>
@@ -1887,6 +1914,42 @@
   <h2 class="display reveal" data-delay="1">CO<br>NAPRAWIAM</h2>
   <p class="about-body reveal" data-delay="2" style="max-width:640px; margin-top:12px; margin-bottom:0;">Serwis rowerów i hulajnóg w Grodzisku Mazowieckim. Dirt Jump, BMX, MTB, e-bike, rowery miejskie. Przyjeżdżają do mnie z Pruszkowa, Milanówka i całej Warszawy zachodniej.</p>
 
+  <div class="services-top">
+
+    <div class="service-card reveal" data-delay="1">
+      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M2 20c5 0 7-8 12-10h8"/>
+          <circle cx="15" cy="8" r="2"/>
+          <path d="M14 10l-2 4 4 1"/>
+        </svg>
+      <div class="service-name">DIRT JUMP</div>
+      <div class="service-desc">Sam jeżdżę na dirtcie. Wiem co się klepie na rampie, jak ustawić hamulec pod tail whip i czemu Twoja korba luzuje się co dwa weekendy. <a href="/pumptrack-grodzisk-mazowiecki" style="color:var(--accent)">Pumptrack w Grodzisku</a>.</div>
+      <a class="service-go" href="/umow">Umów pod tę usługę <span aria-hidden="true">&rarr;</span></a>
+    </div>
+
+    <div class="service-card reveal" data-delay="2">
+      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 9h16M7 9V6M17 9V6"/>
+          <rect x="8" y="13" width="8" height="6" rx="0.5"/>
+        </svg>
+      <div class="service-name">BMX</div>
+      <div class="service-desc">Park, street, dirt. Ustawiam pod Twoją jazdę, nie pod katalog. Gyro, u-brake, łożyska sterów i piast, wiem, gdzie się chowają stuki i luzy.</div>
+      <a class="service-go" href="/umow">Umów pod tę usługę <span aria-hidden="true">&rarr;</span></a>
+    </div>
+
+    <div class="service-card reveal" data-delay="3">
+      <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/>
+          <circle cx="12" cy="12" r="2"/>
+          <path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/>
+        </svg>
+      <a class="service-name" href="/centrowanie-i-zaplatanie-kol">ZAPLATANIE KÓŁ</a>
+      <div class="service-desc">Centrowanie, zaplatanie od zera, wymiana szprych. Pracuję na centrownicy z miernikiem wybierania, mierzę odchyłkę do dziesiątych milimetra, nie zgaduję. Koło wytrzyma to, co chcesz po nim odpalić.</div>
+      <a class="service-go" href="/umow?service=kolo-centrowanie">Umów pod tę usługę <span aria-hidden="true">&rarr;</span></a>
+    </div>
+
+  </div>
+
   <div class="services-list">
 
     <div class="service-row reveal" data-delay="1">
@@ -1900,7 +1963,9 @@
         </svg>
         <div class="service-name">PRZEGLĄD</div>
       </div>
-      <div class="service-desc">Sprawdzam cały rower punkt po punkcie i pokazuję, co realnie wymaga ręki, a co jeszcze pojeździ.</div>
+      <div class="service-desc">Sprawdzam cały rower punkt po punkcie i pokazuję, co realnie wymaga ręki, a co jeszcze pojeździ.
+        <a class="service-go" href="/umow?service=przeglad-podstawowy">Umów pod tę usługę <span aria-hidden="true">&rarr;</span></a>
+      </div>
     </div>
 
     <div class="service-row reveal" data-delay="1">
@@ -1913,24 +1978,13 @@
         </svg>
         <div class="service-name">SERWIS</div>
       </div>
-      <div class="service-desc">Wymiana części, smarowanie, regulacje. Tyle ile trzeba, żeby rower jeździł jak powinien.</div>
-    </div>
-
-    <div class="service-row reveal" data-delay="2">
-      <span class="sr-no">03</span>
-      <div class="sr-head">
-        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="9"/>
-          <circle cx="12" cy="12" r="2"/>
-          <path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/>
-        </svg>
-        <a class="service-name" href="/centrowanie-i-zaplatanie-kol">ZAPLATANIE KÓŁ</a>
+      <div class="service-desc">Wymiana części, smarowanie, regulacje. Tyle ile trzeba, żeby rower jeździł jak powinien.
+        <a class="service-go" href="/umow?service=wymiana-czesci">Umów pod tę usługę <span aria-hidden="true">&rarr;</span></a>
       </div>
-      <div class="service-desc">Centrowanie, zaplatanie od zera, wymiana szprych. Pracuję na centrownicy z miernikiem wybierania, mierzę odchyłkę do dziesiątych milimetra, nie zgaduję. Koło wytrzyma to, co chcesz po nim odpalić.</div>
     </div>
 
-    <div class="service-row reveal" data-delay="2">
-      <span class="sr-no">04</span>
+    <div class="service-row reveal" data-delay="1">
+      <span class="sr-no">03</span>
       <div class="sr-head">
         <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="8" cy="15" r="6"/>
@@ -1940,36 +1994,13 @@
         </svg>
         <div class="service-name">OSPRZĘT</div>
       </div>
-      <div class="service-desc">Hamulce, przerzutki, manetki, ustawione tak jak lubisz. Shimano, SRAM, TRP, Magura, dla mnie bez różnicy.</div>
-    </div>
-
-    <div class="service-row reveal" data-delay="3">
-      <span class="sr-no">05</span>
-      <div class="sr-head">
-        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M2 20c5 0 7-8 12-10h8"/>
-          <circle cx="15" cy="8" r="2"/>
-          <path d="M14 10l-2 4 4 1"/>
-        </svg>
-        <div class="service-name">DIRT JUMP</div>
+      <div class="service-desc">Hamulce, przerzutki, manetki, ustawione tak jak lubisz. Shimano, SRAM, TRP, Magura, dla mnie bez różnicy.
+        <a class="service-go" href="/umow?service=regulacja">Umów pod tę usługę <span aria-hidden="true">&rarr;</span></a>
       </div>
-      <div class="service-desc">Sam jeżdżę na dirtcie. Wiem co się klepie na rampie, jak ustawić hamulec pod tail whip i czemu Twoja korba luzuje się co dwa weekendy. <a href="/pumptrack-grodzisk-mazowiecki" style="color:var(--accent)">Pumptrack w Grodzisku</a>.</div>
     </div>
 
-    <div class="service-row reveal" data-delay="3">
-      <span class="sr-no">06</span>
-      <div class="sr-head">
-        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M4 9h16M7 9V6M17 9V6"/>
-          <rect x="8" y="13" width="8" height="6" rx="0.5"/>
-        </svg>
-        <div class="service-name">BMX</div>
-      </div>
-      <div class="service-desc">Park, street, dirt. Ustawiam pod Twoją jazdę, nie pod katalog. Gyro, u-brake, łożyska sterów i piast, wiem, gdzie się chowają stuki i luzy.</div>
-    </div>
-
-    <div class="service-row reveal" data-delay="4">
-      <span class="sr-no">07</span>
+    <div class="service-row reveal" data-delay="2">
+      <span class="sr-no">04</span>
       <div class="sr-head">
         <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="10" cy="14" r="7"/>
@@ -1978,11 +2009,13 @@
         </svg>
         <a class="service-name" href="/serwis-rowerow-elektrycznych">E-BIKE</a>
       </div>
-      <div class="service-desc">Mechanika e-bike to normalny serwis rowerowy. Robię hamulce, koła, osprzęt. Elektroniki i silnika nie ruszam.</div>
+      <div class="service-desc">Mechanika e-bike to normalny serwis rowerowy. Robię hamulce, koła, osprzęt. Elektroniki i silnika nie ruszam.
+        <a class="service-go" href="/umow?service=przeglad-podstawowy">Umów pod tę usługę <span aria-hidden="true">&rarr;</span></a>
+      </div>
     </div>
 
-    <div class="service-row reveal" data-delay="4">
-      <span class="sr-no">08</span>
+    <div class="service-row reveal" data-delay="2">
+      <span class="sr-no">05</span>
       <div class="sr-head">
         <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="6" cy="18" r="3"/>
@@ -1992,11 +2025,13 @@
         </svg>
         <div class="service-name">HULAJNOGI</div>
       </div>
-      <div class="service-desc">Naprawa hulajnóg mechanicznych, elektrycznych i spalinowych. Hamulce, koła, łożyska, mechanika składania.</div>
+      <div class="service-desc">Naprawa hulajnóg mechanicznych, elektrycznych i spalinowych. Hamulce, koła, łożyska, mechanika składania.
+        <a class="service-go" href="/umow?service=hulajnoga">Umów pod tę usługę <span aria-hidden="true">&rarr;</span></a>
+      </div>
     </div>
 
-    <div class="service-row reveal" data-delay="4">
-      <span class="sr-no">09</span>
+    <div class="service-row reveal" data-delay="2">
+      <span class="sr-no">06</span>
       <div class="sr-head">
         <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="6" cy="17" r="3"/>
@@ -2007,145 +2042,16 @@
         </svg>
         <div class="service-name">ROWERY MIEJSKIE</div>
       </div>
-      <div class="service-desc">Przegląd, regulacje, wymiana części. Ten sam stojak, ten sam zestaw narzędzi, niższe ceny niż w sezonowych pop-upach.</div>
+      <div class="service-desc">Przegląd, regulacje, wymiana części. Ten sam stojak, ten sam zestaw narzędzi, niższe ceny niż w sezonowych pop-upach.
+        <a class="service-go" href="/umow?service=przeglad-podstawowy">Umów pod tę usługę <span aria-hidden="true">&rarr;</span></a>
+      </div>
     </div>
 
   </div>
+
 </section>
 
 
-<!-- ═══════════════════════════════════════════════
-     DIRT ANIMATION
-════════════════════════════════════════════════ -->
-<section class="dirt-section">
-  <p class="eyebrow reveal" style="text-align:center;">Dirt</p>
-  <h2 class="display reveal" data-delay="1" style="text-align:center;">SALTA<br>I WHIPY</h2>
-  <p class="dirt-hint reveal" data-delay="2">Korba i hamulec. Zbieraj części, omijaj dętki.</p>
-  <div class="dirt-scene">
-    <svg viewBox="0 -30 1500 350" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
-      <defs>
-        <path id="hopki-line" d="M 0 280 C 120 274 240 270 360 273 C 440 280 560 282 680 280 L 800 280 C 900 280 1000 250 1120 222 L 1240 220 C 1280 220 1328 280 1360 280 L 1520 280 C 1560 280 1600 224 1620 222 L 1740 222 C 1768 222 1800 268 1840 280 L 1880 280 C 2040 282 2240 295 2440 310 C 2560 315 2680 315 2800 315 L 2880 315 C 2920 313 2960 314 3000 315 L 3080 315 C 3120 315 3180 290 3240 285 L 3320 285 C 3340 285 3368 315 3380 315 L 3460 315 C 3480 315 3500 290 3520 285 L 3620 285 C 3648 285 3672 315 3680 315 C 3780 308 3920 280 4000 240 C 4040 215 4052 205 4060 200 L 4200 200 C 4280 200 4340 200 4400 200 C 4480 200 4600 280 4680 280 L 4840 280 C 4940 280 5080 180 5160 145 L 5320 142 C 5360 142 5420 280 5440 280 L 5680 280 C 5720 280 5768 150 5800 145 L 5920 145 C 5960 145 5992 280 6000 280"/>
-        <path id="hopki-fill" d="M 0 280 C 120 274 240 270 360 273 C 440 280 560 282 680 280 L 800 280 C 900 280 1000 250 1120 222 L 1240 220 C 1280 220 1328 280 1360 280 L 1520 280 C 1560 280 1600 224 1620 222 L 1740 222 C 1768 222 1800 268 1840 280 L 1880 280 C 2040 282 2240 295 2440 310 C 2560 315 2680 315 2800 315 L 2880 315 C 2920 313 2960 314 3000 315 L 3080 315 C 3120 315 3180 290 3240 285 L 3320 285 C 3340 285 3368 315 3380 315 L 3460 315 C 3480 315 3500 290 3520 285 L 3620 285 C 3648 285 3672 315 3680 315 C 3780 308 3920 280 4000 240 C 4040 215 4052 205 4060 200 L 4200 200 C 4280 200 4340 200 4400 200 C 4480 200 4600 280 4680 280 L 4840 280 C 4940 280 5080 180 5160 145 L 5320 142 C 5360 142 5420 280 5440 280 L 5680 280 C 5720 280 5768 150 5800 145 L 5920 145 C 5960 145 5992 280 6000 280 L 6000 350 L 0 350 Z"/>
-        <g id="sym-rotor" fill="none" stroke="#9fe22e" stroke-width="2" stroke-linecap="round">
-          <circle r="14"/>
-          <circle r="3.5"/>
-          <path d="M0 -14v5M0 9v5M-14 0h5M9 0h5M-10-10  -6.5-6.5M6.5 6.5 10 10M10-10 6.5-6.5M-6.5 6.5-10 10"/>
-        </g>
-        <g id="sym-valve" fill="none" stroke="#9fe22e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="-4" y="-2" width="8" height="12" rx="1"/>
-          <path d="M0 -2v-10M-3 -12h6"/>
-          <circle cx="0" cy="4" r="1.4"/>
-        </g>
-        <g id="sym-tube" fill="none" stroke="#9fe22e" stroke-width="2" stroke-linecap="round">
-          <ellipse cx="0" cy="2" rx="16" ry="6"/>
-          <path d="M-6 -4l12 12M6 -4L-6 8"/>
-        </g>
-        <g id="sym-plate" fill="none" stroke="#9fe22e" stroke-width="2" stroke-linejoin="round">
-          <rect x="-12" y="-9" width="24" height="16" rx="1"/>
-          <path d="M-5 -3v8M0 -3v8M5 -3v8"/>
-        </g>
-        <g id="sym-dj" fill="none" stroke="#9fe22e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="-22" cy="0" r="14"/>
-          <circle cx="22" cy="0" r="14"/>
-          <path d="M-22 0L-4-14 16-4 22 0M-4-14L4 0 16-4"/>
-          <path d="M-4-14l2-12M-8-26h14"/>
-        </g>
-        <g id="sym-bmx" fill="none" stroke="#9fe22e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="-20" cy="4" r="13"/>
-          <circle cx="22" cy="4" r="13"/>
-          <path d="M-20 4l10-16h16L22 4M-10-12 4 4 18-12"/>
-          <path d="M18-12v-10M8-22h18"/>
-          <rect x="4" y="-36" width="16" height="10" rx="1"/>
-        </g>
-        <g id="extras">
-          <g id="item-380" transform="translate(380, 258) scale(0.85)"><use href="#sym-rotor"/></g>
-          <g id="item-550" transform="translate(550, 252)"><use href="#sym-rotor"/></g>
-          <g id="item-750" transform="translate(750, 258) scale(0.95)"><use href="#sym-dj"/></g>
-          <g id="item-1500" transform="translate(1500, 218) scale(1.15)"><use href="#sym-valve"/></g>
-          <g id="item-1700" transform="translate(1700, 272)"><use href="#sym-tube"/></g>
-          <g id="item-1900" transform="translate(1900, 250)"><use href="#sym-valve"/></g>
-          <g id="item-2150" transform="translate(2150, 278) scale(1.15)"><use href="#sym-rotor"/></g>
-          <g id="item-2350" transform="translate(2350, 280)"><use href="#sym-rotor"/></g>
-          <g id="item-2750" transform="translate(2750, 298)"><use href="#sym-plate"/></g>
-          <g id="item-2900" transform="translate(2900, 304)"><use href="#sym-tube"/></g>
-          <g id="item-3000" transform="translate(3000, 288)"><use href="#sym-rotor"/></g>
-          <g id="item-3370" transform="translate(3370, 278) scale(1.15)"><use href="#sym-rotor"/></g>
-          <g id="item-3920" transform="translate(3920, 258)"><use href="#sym-valve"/></g>
-          <g id="item-4200" transform="translate(4200, 172)"><use href="#sym-rotor"/></g>
-          <g id="item-4480" transform="translate(4480, 188) scale(0.9)"><use href="#sym-bmx"/></g>
-          <g id="item-4760" transform="translate(4760, 258)"><use href="#sym-plate"/></g>
-          <g id="item-4900" transform="translate(4900, 274)"><use href="#sym-tube"/></g>
-          <g id="item-5500" transform="translate(5500, 216)"><use href="#sym-rotor"/></g>
-          <g id="item-5950" transform="translate(5950, 254)"><use href="#sym-valve"/></g>
-        </g>
-      </defs>
-
-      <g class="scroll-ground">
-        <use href="#hopki-fill" x="0" fill="#9fe22e" opacity="0.12"/>
-        <use href="#hopki-fill" x="6000" fill="#9fe22e" opacity="0.12"/>
-        <use href="#hopki-line" x="0" stroke="#9fe22e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        <use href="#hopki-line" x="6000" stroke="#9fe22e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        <use href="#extras" x="0"/>
-        <use href="#extras" x="6000"/>
-      </g>
-
-      <g class="rider-pos">
-        <g class="rider-rot">
-          <g class="rider-tilt">
-            <g class="rider-flip">
-              <g class="rider-sprite" fill="none" stroke="#9fe22e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="-26" cy="0" r="15"/>
-                <circle cx="26" cy="0" r="15"/>
-                <circle cx="-26" cy="0" r="2.2"/>
-                <circle cx="26" cy="0" r="2.2"/>
-                <path d="M-26 0L-8-16 18-6 26 0"/>
-                <path d="M-8-16L4 0 18-6"/>
-                <path d="M-8-16l1-14M-14-30h16"/>
-                <circle cx="-4" cy="-44" r="7"/>
-                <path d="M-4-37l4 16 12 4"/>
-                <path d="M0-21l-16 14M0-21l12 16"/>
-                <path d="M-4-32l-12 8"/>
-              </g>
-            </g>
-          </g>
-        </g>
-      </g>
-
-      <g class="bonuses" aria-hidden="true">
-        <text class="bonus bonus-gravel" x="600" y="50" text-anchor="middle">EJ GRAVEL!</text>
-        <text class="bonus bonus-apple1" x="600" y="50" text-anchor="middle">MNIAM!</text>
-        <text class="bonus bonus-coin2" x="600" y="50" text-anchor="middle">+10 zł</text>
-        <text class="bonus bonus-poo" x="600" y="50" text-anchor="middle">FUJ!</text>
-        <text class="bonus bonus-coin3" x="600" y="50" text-anchor="middle">+20 zł</text>
-        <text class="bonus bonus-coin4" x="600" y="50" text-anchor="middle">+50 zł</text>
-        <text class="bonus bonus-jibber" x="600" y="50" text-anchor="middle">EJ JIBBER!</text>
-        <text class="bonus bonus-buddy" x="600" y="50" text-anchor="middle">SIEMA!</text>
-        <text class="bonus bonus-coin5" x="600" y="50" text-anchor="middle">+100 zł</text>
-        <text class="bonus bonus-apple2" x="600" y="50" text-anchor="middle">PYCHA!</text>
-        <text class="bonus bonus-coin1" x="600" y="50" text-anchor="middle">+5 zł</text>
-      </g>
-
-      <g class="game-ui" aria-hidden="true">
-        <rect x="50" y="-22" width="1100" height="14" rx="7" fill="rgba(0,0,0,0.55)" stroke="#9fe22e" stroke-width="1.5"/>
-        <rect class="progress-fill" x="51" y="-21" width="1098" height="12" rx="6" fill="#9fe22e" opacity="0.85"/>
-        <text id="score-num" x="1170" y="-9" font-size="20" font-weight="800" fill="#9fe22e" letter-spacing="0.04em">0 PKT</text>
-        <g class="svg-btn svg-btn-brake" transform="translate(75, 295)">
-          <circle r="32" fill="rgba(0,0,0,0.7)" stroke="#ef4444" stroke-width="2.5"/>
-          <text x="0" y="6" text-anchor="middle" font-size="14" font-weight="900" fill="#ef4444" letter-spacing="0.05em">STOP</text>
-        </g>
-        <g class="svg-btn svg-btn-gas" transform="translate(1425, 295)">
-          <circle r="32" fill="rgba(0,0,0,0.7)" stroke="#9fe22e" stroke-width="2.5"/>
-          <path d="M -9 -13 L 13 0 L -9 13 Z" fill="#9fe22e"/>
-        </g>
-      </g>
-
-      <text id="bonus-display" x="600" y="50" text-anchor="middle"></text>
-    </svg>
-    <button class="game-btn game-btn-brake" type="button" aria-label="Hamulec">STOP</button>
-    <button class="game-btn game-btn-gas" type="button" aria-label="Korba">KORBA!</button>
-  </div>
-  <a class="dirt-cta reveal" data-delay="3" href="/gra">Zagraj w pełną wersję</a>
-</section>
 
 
 <!-- ═══════════════════════════════════════════════
@@ -2311,7 +2217,7 @@
       <div class="faq-a">Tak. Robię serwis mechaniczny, więc hamulce, koła i osprzęt bez problemu. Elektroniką ani silnikiem się nie zajmuję, ale część mechaniczna to normalny rower.</div>
     </div>
 
-    <div class="faq-item">
+    <div class="faq-item" data-faq-extra hidden>
       <button class="faq-q">
         <span class="faq-no">Q.05</span>
         <span class="faq-t">Czy dojadę do serwisu z Pruszkowa lub Milanówka?</span>
@@ -2320,7 +2226,7 @@
       <div class="faq-a">Tak, bez problemu. Z <a href="/serwis-rowerow-pruszkow" style="color:var(--accent)">Pruszkowa</a> ok. 15 min samochodem, z <a href="/serwis-rowerow-milanowek" style="color:var(--accent)">Milanówka</a> minuta, warsztat stoi na granicy. Z zachodnich dzielnic Warszawy wychodzi ok. 30 minut. Umów się, nie bój się jechać dalej.</div>
     </div>
 
-    <div class="faq-item">
+    <div class="faq-item" data-faq-extra hidden>
       <button class="faq-q">
         <span class="faq-no">Q.06</span>
         <span class="faq-t">Czy serwis jest profesjonalnie wyposażony?</span>
@@ -2329,7 +2235,7 @@
       <div class="faq-a">Tak. Mam stojak serwisowy, <strong>profesjonalną centrownicę do kół z miernikiem wybierania</strong>, klucz dynamometryczny, zestaw do odpowietrzania hydrauliki, przyrząd do prostowania haków i tarcz, skuwacz, klucze do konusów, bacik, klucze do kaset i suportów. Dzięki centrownicy z miernikiem zaplatanie i centrowanie koła robię z milimetrową precyzją. Każda naprawa jest robiona właściwym narzędziem, nie kombinuję na skróty.</div>
     </div>
 
-    <div class="faq-item">
+    <div class="faq-item" data-faq-extra hidden>
       <button class="faq-q">
         <span class="faq-no">Q.07</span>
         <span class="faq-t">Jak często serwisować rower dirt jump?</span>
@@ -2338,7 +2244,7 @@
       <div class="faq-a">Przy regularnej jeździe na torze polecam podstawowy przegląd co sezon, czyli wiosną przed startem. Jeśli jeździsz mocno kilka razy w tygodniu, warto zajrzeć do roweru też w połowie lata. Łańcuch, hamulce i centralnie ustawione koła to trzy rzeczy, które robią największą różnicę w jeździe.</div>
     </div>
 
-    <div class="faq-item">
+    <div class="faq-item" data-faq-extra hidden>
       <button class="faq-q">
         <span class="faq-no">Q.08</span>
         <span class="faq-t">Co to jest centrownica z miernikiem i dlaczego to ważne?</span>
@@ -2347,7 +2253,7 @@
       <div class="faq-a">Centrownica to stojak do centrowania i zaplatania kół. Tania wersja to dwa kawałki metalu i oko mechanika. Profesjonalna centrownica z miernikiem (dial indicator) to precyzyjny przyrząd, który mierzy odchylenie koła z dokładnością do dziesiątych części milimetra, zarówno na boki jak i na górę/dół. Dzięki temu zaplatam i centruję koła tak blisko idealnego jak to możliwe fizycznie, a nie "na oko i prawie dobrze". Dla kół do dirt jumpa, BMX czy MTB, gdzie koło dostaje mocne uderzenia, precyzja szprychowania robi realną różnicę w trwałości.</div>
     </div>
 
-    <div class="faq-item">
+    <div class="faq-item" data-faq-extra hidden>
       <button class="faq-q">
         <span class="faq-no">Q.09</span>
         <span class="faq-t">Jaka różnica między zaplataniem koła a centrowaniem?</span>
@@ -2356,7 +2262,7 @@
       <div class="faq-a">Centrowanie to regulacja naciągu szprych w gotowym kole, żeby nie biło na boki. Zaplatanie to składanie koła od zera: obręcz, piasta, szprychy, nyple. Zaplatanie robi się przy nowej piaście albo obręczy, albo kiedy szprychy są zbyt zużyte żeby je ratować. Centrowanie wystarczy, jeśli koło samo w sobie jest sprawne. Oba robię na profesjonalnej centrownicy z miernikiem.</div>
     </div>
 
-    <div class="faq-item">
+    <div class="faq-item" data-faq-extra hidden>
       <button class="faq-q">
         <span class="faq-no">Q.10</span>
         <span class="faq-t">Kiedy wymienić łańcuch rowerowy?</span>
@@ -2365,7 +2271,7 @@
       <div class="faq-a">Najprościej sprawdzić przymiarem zużycia łańcucha. Przy 0,75 warto wymienić, bo zaoszczędzisz na kasecie. Jak poczekasz do 1,0 to kaseta idzie razem z łańcuchem i płacisz kilka razy więcej. Przy serwisie zawsze sprawdzam łańcuch i powiem Ci czy już czas.</div>
     </div>
 
-    <div class="faq-item">
+    <div class="faq-item" data-faq-extra hidden>
       <button class="faq-q">
         <span class="faq-no">Q.11</span>
         <span class="faq-t">Robisz serwis hydraulicznych hamulców rowerowych?</span>
@@ -2374,7 +2280,7 @@
       <div class="faq-a">Tak, bleeding to jedna z częstszych rzeczy. Robię dla <a href="/bleeding-hamulcow-shimano" style="color:var(--accent)">Shimano</a>, SRAM, TRP, Hope i Magury. Odpowietrzanie, wymiana oleju, regulacja punktu chwytu. Jak masz gąbczasty chwyt albo manetka cofa się do kierownicy, czas na serwis hydrauliki. Cena od 100 zł za obwód, zależy od modelu i stanu.</div>
     </div>
 
-    <div class="faq-item">
+    <div class="faq-item" data-faq-extra hidden>
       <button class="faq-q">
         <span class="faq-no">Q.12</span>
         <span class="faq-t">Jakie marki osprzętu obsługujesz?</span>
@@ -2384,6 +2290,8 @@
     </div>
 
   </div>
+
+  <button class="faq-more-toggle" id="faq-more-toggle" type="button" aria-expanded="false">Więcej pytań (8)</button>
 </section>
 
 
@@ -2448,27 +2356,6 @@
 </section>
 
 
-<!-- ═══════════════════════════════════════════════
-     STICKER
-════════════════════════════════════════════════ -->
-<section class="section section-tilt" style="text-align:center;">
-  <p class="eyebrow reveal">Naklejka</p>
-  <h2 class="display reveal" data-delay="1">WKLEJ<br>GDZIE CHCESZ</h2>
-  <p class="social-sub reveal" data-delay="2" style="margin:16px auto 40px;">Pobierz naklejkę i wrzuć gdzie chcesz. Na rower, kask, laptop, co tam masz.</p>
-
-  <div class="reveal" data-delay="3" style="display:inline-block; position:relative;">
-    <img src="uploads/logo.png" alt="skocznarower.pl naklejka"
-         width="784" height="1168" loading="lazy"
-         style="width: min(320px, 70vw); height: auto; filter: drop-shadow(0 0 32px rgba(159,226,46,.35));">
-  </div>
-
-  <div class="reveal" data-delay="4" style="margin-top:36px;">
-    <a href="uploads/logo.png" download="skocznarower-nalepka.png" class="btn btn-green">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 16l-6-6h4V4h4v6h4l-6 6zm-7 4h14v-2H5v2z"/></svg>
-      Pobierz naklejkę (PNG)
-    </a>
-  </div>
-</section>
 
 
 <!-- ═══════════════════════════════════════════════
@@ -2531,11 +2418,167 @@
 
 
 <!-- ═══════════════════════════════════════════════
+     DIRT ANIMATION
+════════════════════════════════════════════════ -->
+<section class="dirt-section">
+  <p class="eyebrow reveal" style="text-align:center;">Dirt</p>
+  <h2 class="display reveal" data-delay="1" style="text-align:center;">SALTA<br>I WHIPY</h2>
+  <p class="dirt-hint reveal" data-delay="2">Korba i hamulec. Zbieraj części, omijaj dętki.</p>
+  <div class="dirt-scene">
+    <svg viewBox="0 -30 1500 350" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
+      <defs>
+        <path id="hopki-line" d="M 0 280 C 120 274 240 270 360 273 C 440 280 560 282 680 280 L 800 280 C 900 280 1000 250 1120 222 L 1240 220 C 1280 220 1328 280 1360 280 L 1520 280 C 1560 280 1600 224 1620 222 L 1740 222 C 1768 222 1800 268 1840 280 L 1880 280 C 2040 282 2240 295 2440 310 C 2560 315 2680 315 2800 315 L 2880 315 C 2920 313 2960 314 3000 315 L 3080 315 C 3120 315 3180 290 3240 285 L 3320 285 C 3340 285 3368 315 3380 315 L 3460 315 C 3480 315 3500 290 3520 285 L 3620 285 C 3648 285 3672 315 3680 315 C 3780 308 3920 280 4000 240 C 4040 215 4052 205 4060 200 L 4200 200 C 4280 200 4340 200 4400 200 C 4480 200 4600 280 4680 280 L 4840 280 C 4940 280 5080 180 5160 145 L 5320 142 C 5360 142 5420 280 5440 280 L 5680 280 C 5720 280 5768 150 5800 145 L 5920 145 C 5960 145 5992 280 6000 280"/>
+        <path id="hopki-fill" d="M 0 280 C 120 274 240 270 360 273 C 440 280 560 282 680 280 L 800 280 C 900 280 1000 250 1120 222 L 1240 220 C 1280 220 1328 280 1360 280 L 1520 280 C 1560 280 1600 224 1620 222 L 1740 222 C 1768 222 1800 268 1840 280 L 1880 280 C 2040 282 2240 295 2440 310 C 2560 315 2680 315 2800 315 L 2880 315 C 2920 313 2960 314 3000 315 L 3080 315 C 3120 315 3180 290 3240 285 L 3320 285 C 3340 285 3368 315 3380 315 L 3460 315 C 3480 315 3500 290 3520 285 L 3620 285 C 3648 285 3672 315 3680 315 C 3780 308 3920 280 4000 240 C 4040 215 4052 205 4060 200 L 4200 200 C 4280 200 4340 200 4400 200 C 4480 200 4600 280 4680 280 L 4840 280 C 4940 280 5080 180 5160 145 L 5320 142 C 5360 142 5420 280 5440 280 L 5680 280 C 5720 280 5768 150 5800 145 L 5920 145 C 5960 145 5992 280 6000 280 L 6000 350 L 0 350 Z"/>
+        <g id="sym-rotor" fill="none" stroke="#9fe22e" stroke-width="2" stroke-linecap="round">
+          <circle r="14"/>
+          <circle r="3.5"/>
+          <path d="M0 -14v5M0 9v5M-14 0h5M9 0h5M-10-10  -6.5-6.5M6.5 6.5 10 10M10-10 6.5-6.5M-6.5 6.5-10 10"/>
+        </g>
+        <g id="sym-valve" fill="none" stroke="#9fe22e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="-4" y="-2" width="8" height="12" rx="1"/>
+          <path d="M0 -2v-10M-3 -12h6"/>
+          <circle cx="0" cy="4" r="1.4"/>
+        </g>
+        <g id="sym-tube" fill="none" stroke="#9fe22e" stroke-width="2" stroke-linecap="round">
+          <ellipse cx="0" cy="2" rx="16" ry="6"/>
+          <path d="M-6 -4l12 12M6 -4L-6 8"/>
+        </g>
+        <g id="sym-plate" fill="none" stroke="#9fe22e" stroke-width="2" stroke-linejoin="round">
+          <rect x="-12" y="-9" width="24" height="16" rx="1"/>
+          <path d="M-5 -3v8M0 -3v8M5 -3v8"/>
+        </g>
+        <g id="sym-dj" fill="none" stroke="#9fe22e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="-22" cy="0" r="14"/>
+          <circle cx="22" cy="0" r="14"/>
+          <path d="M-22 0L-4-14 16-4 22 0M-4-14L4 0 16-4"/>
+          <path d="M-4-14l2-12M-8-26h14"/>
+        </g>
+        <g id="sym-bmx" fill="none" stroke="#9fe22e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="-20" cy="4" r="13"/>
+          <circle cx="22" cy="4" r="13"/>
+          <path d="M-20 4l10-16h16L22 4M-10-12 4 4 18-12"/>
+          <path d="M18-12v-10M8-22h18"/>
+          <rect x="4" y="-36" width="16" height="10" rx="1"/>
+        </g>
+        <g id="extras">
+          <g id="item-380" transform="translate(380, 258) scale(0.85)"><use href="#sym-rotor"/></g>
+          <g id="item-550" transform="translate(550, 252)"><use href="#sym-rotor"/></g>
+          <g id="item-750" transform="translate(750, 258) scale(0.95)"><use href="#sym-dj"/></g>
+          <g id="item-1500" transform="translate(1500, 218) scale(1.15)"><use href="#sym-valve"/></g>
+          <g id="item-1700" transform="translate(1700, 272)"><use href="#sym-tube"/></g>
+          <g id="item-1900" transform="translate(1900, 250)"><use href="#sym-valve"/></g>
+          <g id="item-2150" transform="translate(2150, 278) scale(1.15)"><use href="#sym-rotor"/></g>
+          <g id="item-2350" transform="translate(2350, 280)"><use href="#sym-rotor"/></g>
+          <g id="item-2750" transform="translate(2750, 298)"><use href="#sym-plate"/></g>
+          <g id="item-2900" transform="translate(2900, 304)"><use href="#sym-tube"/></g>
+          <g id="item-3000" transform="translate(3000, 288)"><use href="#sym-rotor"/></g>
+          <g id="item-3370" transform="translate(3370, 278) scale(1.15)"><use href="#sym-rotor"/></g>
+          <g id="item-3920" transform="translate(3920, 258)"><use href="#sym-valve"/></g>
+          <g id="item-4200" transform="translate(4200, 172)"><use href="#sym-rotor"/></g>
+          <g id="item-4480" transform="translate(4480, 188) scale(0.9)"><use href="#sym-bmx"/></g>
+          <g id="item-4760" transform="translate(4760, 258)"><use href="#sym-plate"/></g>
+          <g id="item-4900" transform="translate(4900, 274)"><use href="#sym-tube"/></g>
+          <g id="item-5500" transform="translate(5500, 216)"><use href="#sym-rotor"/></g>
+          <g id="item-5950" transform="translate(5950, 254)"><use href="#sym-valve"/></g>
+        </g>
+      </defs>
+
+      <g class="scroll-ground">
+        <use href="#hopki-fill" x="0" fill="#9fe22e" opacity="0.12"/>
+        <use href="#hopki-fill" x="6000" fill="#9fe22e" opacity="0.12"/>
+        <use href="#hopki-line" x="0" stroke="#9fe22e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <use href="#hopki-line" x="6000" stroke="#9fe22e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <use href="#extras" x="0"/>
+        <use href="#extras" x="6000"/>
+      </g>
+
+      <g class="rider-pos">
+        <g class="rider-rot">
+          <g class="rider-tilt">
+            <g class="rider-flip">
+              <g class="rider-sprite" fill="none" stroke="#9fe22e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="-26" cy="0" r="15"/>
+                <circle cx="26" cy="0" r="15"/>
+                <circle cx="-26" cy="0" r="2.2"/>
+                <circle cx="26" cy="0" r="2.2"/>
+                <path d="M-26 0L-8-16 18-6 26 0"/>
+                <path d="M-8-16L4 0 18-6"/>
+                <path d="M-8-16l1-14M-14-30h16"/>
+                <circle cx="-4" cy="-44" r="7"/>
+                <path d="M-4-37l4 16 12 4"/>
+                <path d="M0-21l-16 14M0-21l12 16"/>
+                <path d="M-4-32l-12 8"/>
+              </g>
+            </g>
+          </g>
+        </g>
+      </g>
+
+      <g class="bonuses" aria-hidden="true">
+        <text class="bonus bonus-gravel" x="600" y="50" text-anchor="middle">EJ GRAVEL!</text>
+        <text class="bonus bonus-apple1" x="600" y="50" text-anchor="middle">MNIAM!</text>
+        <text class="bonus bonus-coin2" x="600" y="50" text-anchor="middle">+10 zł</text>
+        <text class="bonus bonus-poo" x="600" y="50" text-anchor="middle">FUJ!</text>
+        <text class="bonus bonus-coin3" x="600" y="50" text-anchor="middle">+20 zł</text>
+        <text class="bonus bonus-coin4" x="600" y="50" text-anchor="middle">+50 zł</text>
+        <text class="bonus bonus-jibber" x="600" y="50" text-anchor="middle">EJ JIBBER!</text>
+        <text class="bonus bonus-buddy" x="600" y="50" text-anchor="middle">SIEMA!</text>
+        <text class="bonus bonus-coin5" x="600" y="50" text-anchor="middle">+100 zł</text>
+        <text class="bonus bonus-apple2" x="600" y="50" text-anchor="middle">PYCHA!</text>
+        <text class="bonus bonus-coin1" x="600" y="50" text-anchor="middle">+5 zł</text>
+      </g>
+
+      <g class="game-ui" aria-hidden="true">
+        <rect x="50" y="-22" width="1100" height="14" rx="7" fill="rgba(0,0,0,0.55)" stroke="#9fe22e" stroke-width="1.5"/>
+        <rect class="progress-fill" x="51" y="-21" width="1098" height="12" rx="6" fill="#9fe22e" opacity="0.85"/>
+        <text id="score-num" x="1170" y="-9" font-size="20" font-weight="800" fill="#9fe22e" letter-spacing="0.04em">0 PKT</text>
+        <g class="svg-btn svg-btn-brake" transform="translate(75, 295)">
+          <circle r="32" fill="rgba(0,0,0,0.7)" stroke="#ef4444" stroke-width="2.5"/>
+          <text x="0" y="6" text-anchor="middle" font-size="14" font-weight="900" fill="#ef4444" letter-spacing="0.05em">STOP</text>
+        </g>
+        <g class="svg-btn svg-btn-gas" transform="translate(1425, 295)">
+          <circle r="32" fill="rgba(0,0,0,0.7)" stroke="#9fe22e" stroke-width="2.5"/>
+          <path d="M -9 -13 L 13 0 L -9 13 Z" fill="#9fe22e"/>
+        </g>
+      </g>
+
+      <text id="bonus-display" x="600" y="50" text-anchor="middle"></text>
+    </svg>
+    <button class="game-btn game-btn-brake" type="button" aria-label="Hamulec">STOP</button>
+    <button class="game-btn game-btn-gas" type="button" aria-label="Korba">KORBA!</button>
+  </div>
+  <a class="dirt-cta reveal" data-delay="3" href="/gra">Zagraj w pełną wersję</a>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     STICKER
+════════════════════════════════════════════════ -->
+<section class="section section-tilt" style="text-align:center;">
+  <p class="eyebrow reveal">Naklejka</p>
+  <h2 class="display reveal" data-delay="1">WKLEJ<br>GDZIE CHCESZ</h2>
+  <p class="social-sub reveal" data-delay="2" style="margin:16px auto 40px;">Pobierz naklejkę i wrzuć gdzie chcesz. Na rower, kask, laptop, co tam masz.</p>
+
+  <div class="reveal" data-delay="3" style="display:inline-block; position:relative;">
+    <img src="uploads/logo.png" alt="skocznarower.pl naklejka"
+         width="784" height="1168" loading="lazy"
+         style="width: min(320px, 70vw); height: auto; filter: drop-shadow(0 0 32px rgba(159,226,46,.35));">
+  </div>
+
+  <div class="reveal" data-delay="4" style="margin-top:36px;">
+    <a href="uploads/logo.png" download="skocznarower-nalepka.png" class="btn btn-green">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 16l-6-6h4V4h4v6h4l-6 6zm-7 4h14v-2H5v2z"/></svg>
+      Pobierz naklejkę (PNG)
+    </a>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
      FOOTER
 ════════════════════════════════════════════════ -->
 <footer>
   <span class="footer-brand">SKOCZ<em>NAROWER</em>.PL</span>
   <p>Mateusz Mamcarz · Jesionowa 18, Grodzisk Mazowiecki · 600 370 810</p>
+  <p class="footer-links"><a href="/kalkulator">Kalkulator</a><span aria-hidden="true"> · </span><a href="/gra">Gra</a></p>
   <p>© 2026 skocznarower.pl</p>
 </footer>
 
@@ -2571,6 +2614,21 @@
   }, { passive: true });
 
   // --- Mobile menu ---
+  // --- FAQ: cztery pytania konwersyjne na wierzchu, reszta za przyciskiem.
+  //     Wszystkie dwanascie zostaje w DOM i w JSON-LD, chowa je tylko atrybut hidden. ---
+  (function faqMore() {
+    const btn = document.getElementById('faq-more-toggle');
+    if (!btn) return;
+    const extras = document.querySelectorAll('.faq-item[data-faq-extra]');
+    if (!extras.length) { btn.hidden = true; return; }
+    btn.addEventListener('click', () => {
+      const open = btn.getAttribute('aria-expanded') === 'true';
+      extras.forEach((el) => { el.hidden = open; });
+      btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+      btn.textContent = open ? 'Więcej pytań' + ' (' + extras.length + ')' : 'Mniej pytań';
+    });
+  })();
+
   const navToggle = document.getElementById('nav-toggle');
   const navLinks = document.getElementById('nav-links');
   if (navToggle && navLinks) {

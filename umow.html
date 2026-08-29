@@ -532,9 +532,7 @@
   <ul class="nav-links" id="nav-links">
     <li><a href="/#uslugi">Usługi</a></li>
     <li><a href="/#cennik">Cennik</a></li>
-        <li><a href="/kalkulator">Kalkulator</a></li>
     <li><a href="/#kontakt">Kontakt</a></li>
-    <li><a href="/gra">Gra</a></li>
     <li class="lang-sw"><a href="/en/umow" hreflang="en" lang="en">EN</a><span aria-hidden="true"> · </span><a href="/ua/umow" hreflang="uk" lang="uk">УКР</a></li>
     <li><a class="nav-cta" href="tel:+48600370810">600 370 810</a></li>
   </ul>
@@ -635,6 +633,7 @@
 
 <footer>
   <p>skocznarower.pl · Jesionowa 18, Grodzisk Mazowiecki · <a href="tel:+48600370810">600 370 810</a></p>
+  <p class="footer-links"><a href="/kalkulator">Kalkulator</a><span aria-hidden="true"> · </span><a href="/gra">Gra</a></p>
   <p>Mateusz Mamcarz / xPyszczek</p>
 </footer>
 
@@ -1067,11 +1066,23 @@ function escapeHtml(s) {
   })[c]);
 }
 
-// ─── Prefill z query params (?date=YYYY-MM-DD&slot=HH:MM) ──
+// ─── Prefill z query params (?service=ID&date=YYYY-MM-DD&slot=HH:MM) ──
 // Strona główna linkuje tu z pilla "najbliższy wolny termin".
 (function prefillFromQuery() {
   try {
     const params = new URLSearchParams(location.search);
+
+    // ?service= z kart usług na stronie głównej. Osobno od terminu: sama usługa
+    // bez daty też ma zaznaczyć krok 01, więc leci przed walidacją ?date=.
+    const qService = params.get('service');
+    if (qService && SERVICES.some(s => s.id === qService)) {
+      const radio = document.querySelector('#services input[name="service"][value="' + CSS.escape(qService) + '"]');
+      if (radio) {
+        radio.checked = true;
+        radio.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+
     const qDate = params.get('date');
     const qSlot = params.get('slot');
     if (!qDate || !DATE_RE.test(qDate)) return;
