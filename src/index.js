@@ -578,6 +578,9 @@ async function injectReviewsSSR(env, res) {
   const total = typeof profileRow?.review_count === 'number' ? profileRow.review_count : null;
   const countN = total && total > 0 ? total : rows.length;
   const countText = `${countN} ${pluralOpinie(countN)} Google`;
+  // Ta sama ocena zasila kafel w pasku zaufania pod hero, zeby crawler i czytelnik
+  // bez JS widzieli ja na pierwszym ekranie, a nie dopiero w sekcji #opinie.
+  const trustCountText = `${countN} ${pluralOpinie(countN)} w Google`;
 
   const fmtDate = (t) => {
     if (!t) return '';
@@ -633,7 +636,10 @@ async function injectReviewsSSR(env, res) {
           el.setAttribute('aria-label', avg.toFixed(1) + ' na 5');
           el.setInnerContent([0, 1, 2, 3, 4].map(i => ssrStarSvg(i < Math.round(avg))).join(''), { html: true });
         },
-      });
+      })
+      .on('#trust-rating', { element(el) { el.removeAttribute('hidden'); } })
+      .on('#trust-rating-score', { element(el) { el.setInnerContent(avg.toFixed(1).replace('.', ',')); } })
+      .on('#trust-rating-count', { element(el) { el.setInnerContent(trustCountText); } });
   } else {
     rewriter
       .on('#reviews-score', { element(el) { el.setAttribute('hidden', ''); } })

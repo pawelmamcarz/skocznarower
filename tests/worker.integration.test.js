@@ -1864,6 +1864,42 @@ describe('workshop operations', () => {
   });
 });
 
+describe('strona glowna: pasek zaufania z ocena Google', () => {
+  afterEach(async () => {
+    await env.DB.prepare('DELETE FROM google_reviews').run();
+    await env.DB.prepare('DELETE FROM google_profile').run();
+  });
+
+  it('wstrzykuje ocene Google do kafla pod hero', async () => {
+    const now = Date.now();
+    await env.DB.prepare(
+      "INSERT INTO google_profile (id, rating, review_count, fetched_at) VALUES ('profile', 4.9, 37, ?1)"
+    ).bind(now).run();
+    await env.DB.prepare(
+      `INSERT INTO google_reviews (review_id, author_name, rating, text, publish_time, fetched_at)
+       VALUES ('r-trust-1', 'Anna', 5, 'Szybko i solidnie.', ?1, ?1)`
+    ).bind(now).run();
+
+    const response = await workerExports.default.fetch(`${BASE_URL}/`);
+    expect(response.status).toBe(200);
+    const html = await response.text();
+
+    expect(html).not.toContain('id="trust-rating" hidden');
+    expect(html).toContain('id="trust-rating-score">4,9<');
+    expect(html).toContain('id="trust-rating-count">37 opinii w Google<');
+  });
+
+  it('zostawia kafel oceny schowany, gdy nie ma opinii', async () => {
+    const response = await workerExports.default.fetch(`${BASE_URL}/`);
+    expect(response.status).toBe(200);
+    const html = await response.text();
+
+    expect(html).toContain('id="trust-rating" hidden');
+    // Pigulka terminu ma statyczny fallback, wiec zostaje widoczna takze bez danych.
+    expect(html).toContain('id="next-slot-text">Codziennie 16:00 do 19:00, tylko po um\u00f3wieniu<');
+  });
+});
+
 describe('static asset fallback', () => {
   it('passes non-application routes to the ASSETS binding', async () => {
     const response = await workerExports.default.fetch(`${BASE_URL}/robots.txt`);
