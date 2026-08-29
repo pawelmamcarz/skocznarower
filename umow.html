@@ -271,6 +271,23 @@
     /* Mobile: kompaktowe wiersze zamiast wysokich kart, cena po prawej. */
     @media (max-width: 600px) {
       .choices { grid-template-columns: 1fr; gap: 6px; }
+      /* Podsumowanie jako pasek na dole ekranu: przez cztery kroki widac,
+         co juz wybrano, zamiast dowiadywac sie tego dopiero nad wysylka. */
+      .summary {
+        position: fixed;
+        inset-inline: 0;
+        inset-block-end: 0;
+        z-index: 190;
+        margin: 0;
+        padding: 12px 16px;
+        border-radius: 0;
+        border-block-end: 0;
+        border-inline-end: 0;
+        background: rgba(8,8,8,.97);
+        backdrop-filter: blur(12px);
+      }
+      #booking-form { padding-bottom: 78px; }
+
       .choice-card {
         display: flex;
         align-items: center;
@@ -563,6 +580,26 @@
       }
       .nav-more-menu a { padding: 15px 2px; }
     }
+
+    /* Krok 01: cztery najczestsze uslugi na wierzchu, pozostale dziesiec za
+       przyciskiem. Wszystkie radia siedza w DOM, chowa je tylko [hidden]. */
+    .choices-more {
+      margin-top: 10px;
+      padding: 11px 18px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: .03em;
+      color: var(--white);
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .choices-more:hover { border-color: var(--accent); color: var(--accent); }
+    .choices-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    #services-rest { margin-top: 10px; }
   </style>
   <script src="/turnstile.js" defer></script>
 </head>
@@ -604,6 +641,10 @@
     <div class="step-num"><span class="num">01</span> / Usługa</div>
     <h2 class="step-title" id="t-service">Co robimy?</h2>
     <div class="choices" id="services" role="radiogroup" aria-labelledby="t-service">
+      <!-- wypełniane JS-em -->
+    </div>
+    <button type="button" class="choices-more" id="services-more" aria-expanded="false" aria-controls="services-rest"></button>
+    <div class="choices" id="services-rest" role="radiogroup" aria-label="Pozostałe usługi" hidden>
       <!-- wypełniane JS-em -->
     </div>
     <p class="field-error" id="err-service" hidden></p>
@@ -691,11 +732,11 @@
 <script>
 const SERVICES = [
   { id: 'odbior',               name: 'Odbiór i odwóz roweru',       price: 'od 50 zł' },
-  { id: 'przeglad-podstawowy',  name: 'Przegląd podstawowy',         price: 'od 150 zł' },
-  { id: 'przeglad-kompleksowy', name: 'Przegląd kompleksowy',        price: 'od 340 zł' },
-  { id: 'regulacja',            name: 'Regulacja (hamulce / przerzutki)', price: 'od 40 zł' },
+  { id: 'przeglad-podstawowy',  name: 'Przegląd podstawowy',         price: 'od 150 zł', common: true },
+  { id: 'przeglad-kompleksowy', name: 'Przegląd kompleksowy',        price: 'od 340 zł', common: true },
+  { id: 'regulacja',            name: 'Regulacja (hamulce / przerzutki)', price: 'od 40 zł', common: true },
   { id: 'bleeding',             name: 'Bleeding hamulców hydraulicznych', price: 'od 100 zł' },
-  { id: 'wymiana-czesci',       name: 'Wymiana części',              price: 'od 35 zł + część' },
+  { id: 'wymiana-czesci',       name: 'Wymiana części',              price: 'od 35 zł + część', common: true },
   { id: 'kolo-centrowanie',     name: 'Centrowanie koła',            price: 'od 120 zł' },
   { id: 'kolo-naprawa',         name: 'Naprawa koła',                price: 'od 35 zł' },
   { id: 'kolo-zaplatanie',      name: 'Zaplatanie koła',             price: 'od 80 zł' },
@@ -755,8 +796,27 @@ function renderChoices(containerId, options, fieldName) {
       </label>`;
   }).join('');
 }
-renderChoices('services', SERVICES, 'service');
+renderChoices('services', SERVICES.filter(s => s.common), 'service');
+renderChoices('services-rest', SERVICES.filter(s => !s.common), 'service');
 renderChoices('bike-types', BIKE_TYPES, 'bike');
+
+// Pozostałe usługi chowają się za przyciskiem, ale radia są w DOM od startu,
+// więc walidacja i prefill z ?service= działają niezależnie od tego, czy
+// grupa jest rozwinięta.
+const servicesRest = document.getElementById('services-rest');
+const servicesMore = document.getElementById('services-more');
+function setServicesRest(open) {
+  if (!servicesRest || !servicesMore) return;
+  servicesRest.hidden = !open;
+  servicesMore.setAttribute('aria-expanded', open ? 'true' : 'false');
+  servicesMore.textContent = open
+    ? 'Ukryj pozostałe usługi'
+    : 'Pokaż wszystkie usługi' + ' (' + servicesRest.querySelectorAll('input').length + ')';
+}
+if (servicesMore) {
+  setServicesRest(false);
+  servicesMore.addEventListener('click', () => setServicesRest(servicesRest.hidden));
+}
 
 // ─── Daty liczone w strefie Europe/Warsaw ───────────────────
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -1127,9 +1187,12 @@ function escapeHtml(s) {
     // bez daty też ma zaznaczyć krok 01, więc leci przed walidacją ?date=.
     const qService = params.get('service');
     if (qService && SERVICES.some(s => s.id === qService)) {
-      const radio = document.querySelector('#services input[name="service"][value="' + CSS.escape(qService) + '"]');
+      // Uwaga: szukamy w calym formularzu, bo czesc uslug siedzi w ukrytej
+      // grupie #services-rest, a nie w #services.
+      const radio = form.querySelector('input[name="service"][value="' + CSS.escape(qService) + '"]');
       if (radio) {
         radio.checked = true;
+        if (radio.closest('#services-rest')) setServicesRest(true);
         radio.dispatchEvent(new Event('change', { bubbles: true }));
       }
     }
