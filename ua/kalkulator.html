@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Калькулятор опорів велосипеда · Bieżnik | skocznarower.pl</title>
-  <meta name="description" content="Безкоштовний калькулятор опорів їзди: шосе, гравел, MTB, даунхіл, dirt jump і BMX. Вати, тиск у шинах і що змінити. Grodzisk Mazowiecki.">
+  <title>Калькулятор потужності велосипеда | skocznarower.pl</title>
+  <meta name="description" content="Оціни потужність для руху зі сталою швидкістю на одній ділянці. Вкажи загальну масу, швидкість, ухил і вітер.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://www.skocznarower.pl/ua/kalkulator">
   <link rel="alternate" type="text/plain" href="/llms.txt" title="Індекс для LLM (llms.txt)">
@@ -16,21 +16,29 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/uploads/favicon-192.png">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.skocznarower.pl/ua/kalkulator">
-  <meta property="og:title" content="Калькулятор опорів велосипеда · Bieżnik">
-  <meta property="og:description" content="Шосе, гравел, MTB, DH, dirt і BMX. Куди діваються вати і який тиск ставити.">
+  <meta property="og:title" content="Калькулятор потужності велосипеда">
+  <meta property="og:description" content="Оціни потужність для руху зі сталою швидкістю на одній ділянці. Вкажи загальну масу, швидкість, ухил і вітер.">
   <meta property="og:image" content="https://www.skocznarower.pl/uploads/photo-1778431658856.jpeg">
   <meta property="og:locale" content="uk_UA">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": "Bieżnik — калькулятор опорів велосипеда",
+    "name": "Калькулятор потужності велосипеда",
     "url": "https://www.skocznarower.pl/ua/kalkulator",
     "applicationCategory": "SportsApplication",
     "operatingSystem": "Any",
-    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "PLN" },
-    "provider": { "@type": "LocalBusiness", "@id": "https://www.skocznarower.pl/#business" },
-    "inLanguage": "uk"
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "PLN"
+    },
+    "provider": {
+      "@type": "LocalBusiness",
+      "@id": "https://www.skocznarower.pl/#business"
+    },
+    "inLanguage": "uk",
+    "description": "Оціни потужність для руху зі сталою швидкістю на одній ділянці. Вкажи загальну масу, швидкість, ухил і вітер."
   }
   </script>
   <script type="application/ld+json">
@@ -38,8 +46,18 @@
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Головна", "item": "https://www.skocznarower.pl/ua/" },
-      { "@type": "ListItem", "position": 2, "name": "Калькулятор опорів", "item": "https://www.skocznarower.pl/ua/kalkulator" }
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Головна",
+        "item": "https://www.skocznarower.pl/ua/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Калькулятор потужності",
+        "item": "https://www.skocznarower.pl/ua/kalkulator"
+      }
     ]
   }
   </script>
@@ -180,23 +198,22 @@
 <main id="main-content" tabindex="-1">
 <div class="kalk-wrap">
   <header class="page-hero">
-    <nav class="breadcrumb" aria-label="Навігаційний ланцюжок"><a href="/ua/">Головна</a> › Калькулятор опорів</nav>
-    <p class="eyebrow">Bieżnik · інструмент майстерні</p>
-    <h1 class="display">Калькулятор<br><em>опорів</em></h1>
-    <p class="page-lead">Повітря, шина, гравітація, ривки і ланцюг. Шосе, гравел, MTB, DH, dirt і BMX. Впиши залізо і подивись, куди діваються вати.</p>
+    <nav class="breadcrumb" aria-label="Навігаційний ланцюжок"><a href="/ua/">Головна</a> › Калькулятор потужності</nav>
+    <p class="eyebrow">Одна ділянка · стала швидкість</p>
+    <h1 class="display">Калькулятор<br><em>потужності</em></h1>
+    <p class="page-lead">Скільки потужності потрібно, щоб підтримувати швидкість? Вкажи загальну масу велосипедиста, велосипеда й багажу, швидкість, ухил і вітер. Результат стосується однієї ділянки зі сталою швидкістю.</p>
   </header>
   <div id="app" data-embed="1"></div>
+  <noscript><p class="page-lead">Для обчислень потрібен JavaScript. Після його ввімкнення калькулятор працює локально у браузері.</p></noscript>
   <div class="cta-box">
-    <h2>Хочеш це закрити в майстерні?</h2>
-    <p>Тиск, шини і гальма ставлю на стійці. Запишися на сервіс у Grodzisk Mazowiecki, Jesionowa 18.</p>
-    <a class="btn-green" href="/ua/umow">Записатися</a>
+    <h2>Гальма, трансмісія й колеса</h2>
+    <p>Регулювання, заміна зношених деталей та огляд велосипеда на Jesionowa 18 у Ґродзіську-Мазовецькому. Обсяг роботи й ціну погоджуємо після огляду.</p>
+    <a class="btn-green" href="/ua/umow">Записатися до сервісу</a>
   </div>
 </div>
 </main>
 <footer><p>skocznarower.pl · Jesionowa 18, Grodzisk Mazowiecki · <a href="tel:+48600370810">600 370 810</a></p><p class="footer-links"><a href="/ua/kalkulator" aria-current="page">Калькулятор</a><span aria-hidden="true"> · </span><a href="/ua/gra">Гра</a><span aria-hidden="true"> · </span><a href="/ua/prywatnosc">Конфіденційність</a></p><p>Mateusz Mamcarz / xPyszczek</p></footer>
 <script src="/kalkulator-assets/physics.js"></script>
-<script src="/kalkulator-assets/tires.js"></script>
-<script src="/kalkulator-assets/parse.js"></script>
 <script src="/kalkulator-assets/i18n.js"></script>
 <script src="/kalkulator-assets/app.js"></script>
 <script>
