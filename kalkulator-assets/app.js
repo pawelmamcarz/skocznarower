@@ -70,7 +70,7 @@
   }
 
   function fmt(n, d) {
-    if (!isFinite(n)) return "—";
+    if (!isFinite(n)) return "-";
     const s = Number(n).toFixed(d);
     return state.lang === "en" ? s : s.replace(".", ",");
   }
@@ -376,7 +376,8 @@
               <p class="hint">${t("gpxP")}</p>
               <label class="btn">${t("gpxBtn")}<input class="hidden" type="file" id="gpxFile" accept=".gpx,.fit,.FIT,.GPX"></label>
               <button type="button" class="btn ghost" id="gpxClear">${t("gpxClear")}</button>
-              <p class="hint" id="gpxSum"></p>
+              <label class="hint"><input type="checkbox" id="weatherConsent"> ${t("weatherConsent")}</label>
+              <p class="hint" id="gpxSum" role="status"></p>
             </div>
             <label class="lab" for="pace">${t("lV")}</label>
             ${numInput("pace", "v", 10, 55, 0.5, t("kmh"))}
@@ -393,7 +394,7 @@
 
         <aside class="bill" id="bill"></aside>
       </div>
-      ${state.embed ? "" : `<p class="foot">Bieżnik · model własny, stałe z literatury (Heil, Kyle, Wilson, BRR, SILCA/Anhalt).</p>`}
+      ${state.embed ? "" : `<p class="foot">${t("modelFoot")}</p>`}
     `;
 
     bind();
@@ -541,7 +542,7 @@
     state.tireClass = m.klasa;
     if (info)
       info.textContent =
-        "✓ " + m.n + " · Crr " + fmt(m.crr, 4) + " (bęben) — " + t("crrSet");
+        "✓ " + m.n + " · Crr " + fmt(m.crr, 4) + " (" + t("drum") + "), " + t("crrSet");
     paint();
   }
 
@@ -559,8 +560,8 @@
     const info = $("#crrInfo");
     if (crr && crr > 0.0015 && crr < 0.04) {
       state.tireCrr = crr;
-      state.tireName = state.lang === "pl" ? "opona wpisana ręcznie" : "tire entered by hand";
-      if (info) info.textContent = "✓ Crr " + fmt(crr, 4) + " — " + t("crrSet");
+      state.tireName = t("manualTire");
+      if (info) info.textContent = "✓ Crr " + fmt(crr, 4) + ", " + t("crrSet");
     } else {
       if (info) info.textContent = "";
     }
@@ -592,7 +593,7 @@
           Math.round(g.gain) +
           " m";
       paint();
-      if (g.start) {
+      if (g.start && $("#weatherConsent").checked) {
         try {
           const w = await Parse.windAt(g.start.lat, g.start.lon, g.t0);
           if (w) {
@@ -691,10 +692,10 @@
             ? acts
                 .map(
                   (a) =>
-                    `<div class="act"><span>${t("act_" + a.id)}</span><span class="w">−${fmt(a.w, 1)} W</span><span class="c">${a.cost ? (state.lang === "en" ? "$" + a.cost : a.cost + " zł") : t("free")}</span></div>`
+                    `<div class="act"><span>${t("act_" + a.id)}</span><span class="w">−${fmt(a.w, 1)} W</span><span class="c">${a.cost ? (fmt(a.cost, 0) + " PLN") : t("free")}</span></div>`
                 )
                 .join("")
-            : `<p class="hint">—</p>`
+            : `<p class="hint">-</p>`
         }
         <h3>${t("engineH")}</h3>
         <p class="hint">${t("engineS")}</p>
@@ -726,23 +727,23 @@
         <p class="muted">${t("feelP")}</p>
         <p class="hint">${t("feelSpeed")}</p>
         <div class="feel-num">${fmt(R.vEq, 1)} ${t("kmh")}</div>
-        <p>${t("feelNow")} <b>${fmt(R.wkg, 2)} W/kg</b> — ${t("feelMap." + feel)}</p>
+        <p>${t("feelNow")} <b>${fmt(R.wkg, 2)} W/kg</b>, ${t("feelMap." + feel)}</p>
         <details class="assum">
           <summary>${t("assumH")}</summary>
           <div class="body">
             <p>${t("assumP")}</p>
             <p style="margin-top:8px">
-              P = F·v. Toczenie: Crr·m·g·v. Aero: ½ρ·CdA·v³.
-              Crr bębnowe × mnożnik nawierzchni
-              (szosa 1,06–1,42 · gravel 1,35–2,55 · MTB 1,9–3,7 · DH 2,1–3,9 · dirt 1,7–3,1 · BMX 1,12–1,85).
+              P = F·v. ${t("formulaRolling")}: Crr·m·g·v. ${t("formulaAero")}: ½ρ·CdA·v³.
+              ${t("formulaSurface")}
+              (${t("d_szosa")} 1,06–1,42 · gravel 1,35–2,55 · MTB 1,9–3,7 · DH 2,1–3,9 · dirt 1,7–3,1 · BMX 1,12–1,85).
               Cd = ${fmt(B.CD0, 2)}.
-              Pozycje: ${Object.entries(B.POS_MUL)
-                .map(([k, v]) => k + " ×" + fmt(v, 2))
+              ${t("formulaPositions")}: ${Object.entries(B.POS_MUL)
+                .map(([k, v]) => t("pos." + k) + " ×" + fmt(v, 2))
                 .join(" · ")}.
-              Koła ΔCdA: 35 mm −0,003 · 50 mm −0,008 · 60+ −0,012.
-              Setup: butyl +0,00045 Crr (gravel/MTB więcej).
-              Ciśnienie z geometrii odcisku (drop ${fmt(drop * 100, 0)}%).
-              Napęd η ${fmt(R.eta * 100, 1)}%.
+              ${t("formulaWheels")}: 35 mm −0,003 · 50 mm −0,008 · 60+ −0,012.
+              ${t("formulaSetup")}
+              ${t("formulaPressure")} (drop ${fmt(drop * 100, 0)}%).
+              ${t("formulaDrive")} η ${fmt(R.eta * 100, 1)}%.
               ρ = 1,225 kg/m³.
             </p>
           </div>

@@ -74,7 +74,7 @@ async function adminCookie() {
 
 function validBooking(overrides = {}) {
   return {
-    date: '2099-08-15',
+    date: warsawDate(2),
     time_slot: '16:00',
     service_type: 'regulacja',
     bike_type: 'MTB',
@@ -162,8 +162,11 @@ beforeEach(async () => {
     env.DB.prepare('DELETE FROM audit_events'),
     env.DB.prepare('DELETE FROM request_rate_limits'),
     env.DB.prepare('DELETE FROM game_scores'),
+    env.DB.prepare('DELETE FROM game_runs'),
     env.DB.prepare('DELETE FROM game_players'),
     env.DB.prepare('DELETE FROM game_verifications'),
+    env.DB.prepare('DELETE FROM google_reviews'),
+    env.DB.prepare('DELETE FROM google_profile'),
   ]);
 });
 
@@ -347,7 +350,7 @@ describe('POST /api/bookings', () => {
     }));
 
     expect(response.status).toBe(413);
-    await expect(response.json()).resolves.toEqual({ error: 'Request too large' });
+    await expect(response.json()).resolves.toMatchObject({ error: 'Request too large' });
     const row = await env.DB.prepare('SELECT COUNT(*) AS total FROM bookings').first();
     expect(row.total).toBe(0);
   });
@@ -358,7 +361,7 @@ describe('POST /api/bookings', () => {
     }));
 
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({ error: 'Wybierz usługę' });
+    await expect(response.json()).resolves.toMatchObject({ error: 'Wybierz usługę' });
 
     const row = await env.DB.prepare('SELECT COUNT(*) AS total FROM bookings').first();
     expect(row.total).toBe(0);
@@ -374,7 +377,7 @@ describe('POST /api/bookings', () => {
       customer_phone: '505 606 707',
     }));
     expect(conflict.status).toBe(409);
-    await expect(conflict.json()).resolves.toEqual({
+    await expect(conflict.json()).resolves.toMatchObject({
       error: 'Slot zajęty, wybierz inny',
     });
 
@@ -404,7 +407,7 @@ describe('POST /api/warsztaty', () => {
     }));
 
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({
+    await expect(response.json()).resolves.toMatchObject({
       error: 'Wiek dziecka: 7-17 lat',
     });
   });
@@ -415,7 +418,7 @@ describe('POST /api/warsztaty', () => {
     }));
 
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({
+    await expect(response.json()).resolves.toMatchObject({
       error: 'Nieprawidłowe źródło',
     });
 
@@ -461,7 +464,7 @@ describe('POST /api/warsztaty', () => {
       status: 'new',
       source: 'instagram',
       landing_path: '/ua/warsztaty.html',
-      landing_language: 'ua',
+      landing_language: 'uk',
       utm_source: 'Instagram',
       utm_medium: 'social',
       utm_campaign: 'wakacje-2099',
@@ -551,10 +554,14 @@ describe('seasonal reminder consent', () => {
       email: 'rowerzysta@example.com',
       consent: true,
     });
-    expect(resubscribed.status).toBe(200);
+    expect(resubscribed.status).toBe(409);
+    expect(await resubscribed.json()).toMatchObject({ code: 'REMINDER_DELIVERY_PENDING' });
     expect((await env.DB.prepare(
       'SELECT unsubscribed_at FROM seasonal_reminders WHERE id=?1'
-    ).bind(row.id).first()).unsubscribed_at).toBeNull();
+    ).bind(row.id).first()).unsubscribed_at).toBeTypeOf('number');
+    await env.DB.prepare("UPDATE notification_outbox SET status='cancelled' WHERE entity_id=?1 AND status='uncertain'").bind(row.id).run();
+    expect((await postJson('/api/reminders', { email: row.email, consent: true })).status).toBe(200);
+    expect((await env.DB.prepare('SELECT unsubscribed_at FROM seasonal_reminders WHERE id=?1').bind(row.id).first()).unsubscribed_at).toBeNull();
   });
 });
 
@@ -726,7 +733,7 @@ describe('scheduled notification workflows', () => {
         `INSERT INTO seasonal_reminders (
            id, email, signed_up_at, consent_at, consent_version, unsubscribe_token
          ) VALUES ('resend-recipient', 'resend@example.com', ?1, ?1, 'test', 'resend-unsubscribe-token')`
-      ).bind(now),
+      ).bind(now - 2),
       env.DB.prepare(
         `INSERT INTO notification_outbox (
            id, entity_type, entity_id, event_key, channel, recipient, body,
@@ -1909,13 +1916,13 @@ describe('static asset fallback', () => {
     await expect(response.text()).resolves.toContain('User-agent:');
   });
 
-  it('publishes a unique 33-URL sitemap with the new multilingual clusters', async () => {
+  it('publishes a unique 36-URL sitemap with the new multilingual clusters', async () => {
     const response = await workerExports.default.fetch(`${BASE_URL}/sitemap.xml`);
     expect(response.status).toBe(200);
     const xml = await response.text();
     const locations = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]);
-    expect(locations).toHaveLength(33);
-    expect(new Set(locations).size).toBe(33);
+    expect(locations).toHaveLength(36);
+    expect(new Set(locations).size).toBe(36);
     for (const slug of [
       'pumptrack-grodzisk-mazowiecki',
       'centrowanie-i-zaplatanie-kol',
@@ -2023,8 +2030,12 @@ describe('gra Skoczna Rider', () => {
     const leftovers = await env.DB.prepare('SELECT COUNT(*) AS n FROM game_verifications').first();
     expect(Number(leftovers.n)).toBe(0);
 
+    const started = await directPostJson('/api/game/run', { token: body.token, level: 'hopki', bike: 'dirt' });
+    const { run_token } = await started.json();
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.now() + 60_000);
     const score = await directPostJson('/api/game/score', {
-      token: body.token, level: 'hopki', score: 1500, dist: 900, coins: 120, flips: 4, bike: 'dirt',
+      token: body.token, run_token, level: 'hopki', score: 1020, dist: 900, coins: 120, flips: 4, bike: 'dirt', duration_ms: 60000, finished: false,
     });
     expect(score.status).toBe(200);
     await expect(score.json()).resolves.toMatchObject({ ok: true, rank: 1 });
@@ -2033,8 +2044,35 @@ describe('gra Skoczna Rider', () => {
     expect(board.status).toBe(200);
     await expect(board.json()).resolves.toEqual({
       level: 'hopki',
-      scores: [{ name: 'Zbyszek', score: 1500 }],
+      scores: [{ name: 'Zbyszek', score: 1020 }],
     });
+  });
+
+  it('binds scores to one signed timed run and rejects replay, tampering and impossible results', async () => {
+    const { body } = await registerAndVerify('600100299', 'Maja', false);
+    const started = await directPostJson('/api/game/run', { token: body.token, level: 'pumptrack', bike: 'bmx' });
+    const { run_token } = await started.json();
+    expect(run_token).toMatch(/^[0-9a-f-]+\.[0-9a-f]{32}$/);
+    const score = { token: body.token, run_token, level: 'pumptrack', bike: 'bmx', score: 650, dist: 620, coins: 30, flips: 1, duration_ms: 30000, finished: false };
+    const tooSoon = await directPostJson('/api/game/score', score);
+    expect(await tooSoon.json()).toMatchObject({ code: 'INVALID_SCORE' });
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.now() + 30_000);
+    for (const patch of [{ run_token: run_token + '0' }, { bike: 'dirt' }, { level: 'las' }]) {
+      const invalid = await directPostJson('/api/game/score', { ...score, ...patch });
+      expect(await invalid.json()).toMatchObject({ code: 'INVALID_RUN' });
+    }
+    for (const patch of [{ score: 9999 }, { coins: 10, score: 630 }, { dist: 900, score: 930 }, { duration_ms: '30000' }]) {
+      const invalid = await directPostJson('/api/game/score', { ...score, ...patch });
+      expect(await invalid.json()).toMatchObject({ code: 'INVALID_SCORE' });
+    }
+    const accepted = await directPostJson('/api/game/score', score);
+    expect(accepted.status).toBe(200);
+    const replay = await directPostJson('/api/game/score', score);
+    expect(replay.status).toBe(409);
+    expect(await replay.json()).toMatchObject({ code: 'RUN_USED' });
+    expect(await env.DB.prepare('SELECT runs, best_score FROM game_players').first()).toEqual({ runs: 1, best_score: 650 });
+    expect((await env.DB.prepare('SELECT COUNT(*) AS n FROM game_scores').first()).n).toBe(1);
   });
 
   it('refuses registration without consent, a bad phone or a wrong code', async () => {
@@ -2134,4 +2172,156 @@ describe('gra Skoczna Rider', () => {
     expect(text.split('\n')[0]).toContain('numer,nick');
     expect(text).toContain('48600100202,Kuba,tak');
   });
+});
+
+describe('customer journey regressions', () => {
+  it('rejects malformed types and non-Polish phone input with stable codes', async () => {
+    for (const [path, body, code] of [
+      ['/api/bookings', validBooking({ customer_name: 123 }), 'INVALID_INPUT'],
+      ['/api/bookings', validBooking({ notes: {} }), 'INVALID_INPUT'],
+      ['/api/bookings', validBooking({ customer_phone: 'abc500600700' }), 'INVALID_PHONE'],
+      ['/api/warsztaty', validWorkshopSignup({ parent_name: [] }), 'INVALID_INPUT'],
+      ['/api/reminders', { email: ['test@example.com'], consent: true }, 'INVALID_INPUT'],
+      ['/api/game/register', { phone: 600100200, nick: 'Test', consent: true }, 'INVALID_INPUT'],
+      ['/api/game/verify', { phone: '600100200', code: {} }, 'INVALID_INPUT'],
+      ['/api/bookings', null, 'INVALID_INPUT'],
+    ]) {
+      const response = await directPostJson(path, body);
+      expect(response.status, path).toBe(400);
+      expect(await response.json(), path).toMatchObject({ code });
+    }
+    expect((await env.DB.prepare('SELECT COUNT(*) AS n FROM bookings').first()).n).toBe(0);
+  });
+
+  it('enforces the same 60-day horizon for public and voice bookings and finds remaining slots today', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-09-04T14:30:00Z'));
+    for (const path of ['/api/bookings', '/api/voice/bookings']) {
+      const response = await directPostJson(path, validBooking({ date: warsawDate(61) }), {}, { Authorization: 'Bearer test-voice-secret' });
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({ code: 'DATE_OUT_OF_RANGE' });
+    }
+    const next = await directFetch('/api/next-slot');
+    expect(await next.json()).toMatchObject({ date: '2026-09-04', time: '17:00' });
+    const old = await directPostJson('/api/bookings', validBooking({ date: '2026-09-04', time_slot: '16:00' }));
+    expect(await old.json()).toMatchObject({ code: 'SLOT_PAST' });
+    const edge = await directPostJson('/api/bookings', validBooking({ date: warsawDate(60) }));
+    expect(edge.status).toBe(200);
+  });
+
+  it('requires and persists pickup alongside a repair and carries its address through lifecycle notifications', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ id: crypto.randomUUID() }), { headers: { 'Content-Type': 'application/json' } })));
+    for (const input of [{ pickup_requested: true }, { service_type: 'odbior', notes: 'Legacy note is not the new address field' }]) {
+      const response = await directPostJson('/api/bookings', validBooking(input));
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({ code: 'PICKUP_ADDRESS_REQUIRED' });
+    }
+    const created = await directPostJson('/api/bookings', validBooking({
+      date: warsawDate(1), pickup_requested: true, pickup_address: 'Kwiatowa 12, Milanówek', customer_email: 'pickup@example.com',
+    }), { RESEND_API_KEY: 'resend-test', NOTIFY_EMAIL: 'owner@example.com' });
+    const { id } = await created.json();
+    expect(created.status).toBe(200);
+    expect(await env.DB.prepare('SELECT pickup_requested, pickup_address, service_type FROM bookings WHERE id=?1').bind(id).first())
+      .toEqual({ pickup_requested: 1, pickup_address: 'Kwiatowa 12, Milanówek', service_type: 'regulacja' });
+    const cookie = await adminCookie();
+    await postForm('/admin/booking', { id, action: 'confirm' }, cookie);
+    await runScheduled('0 8 * * *');
+    await postForm('/admin/booking', { id, action: 'done' }, cookie);
+    const jobs = (await env.DB.prepare('SELECT event_key, body FROM notification_outbox WHERE entity_id=?1').bind(id).all()).results;
+    expect(JSON.parse(jobs.find(j => j.event_key === 'customer_new_booking').body).text).toContain('Podana data i godzina dotyczą odbioru');
+    expect(jobs.find(j => j.event_key.startsWith('confirmed_')).body).toContain('Kwiatowa 12, Milanówek');
+    const reminder = JSON.parse(jobs.find(j => j.event_key.startsWith('reminder_24h_')).body);
+    expect(reminder.whatsapp).toBeNull();
+    expect(reminder.sms).toContain('odbieramy rower pod adresem Kwiatowa 12');
+    expect(jobs.find(j => j.event_key.startsWith('done_')).body).toContain('ustalić odwóz');
+  });
+
+  it('rejects stale lifecycle actions without changing terminal rows or duplicating notifications', async () => {
+    const created = await directPostJson('/api/bookings', validBooking());
+    const { id } = await created.json();
+    const cookie = await adminCookie();
+    await postForm('/admin/booking', { id, action: 'done', expected_status: 'pending' }, cookie);
+    const count = (await env.DB.prepare('SELECT COUNT(*) AS n FROM notification_outbox').first()).n;
+    for (const action of ['confirm', 'start', 'done', 'cancel']) {
+      const response = await postForm('/admin/booking', { id, action, expected_status: 'pending', final_price: '999' }, cookie);
+      expect(response.headers.get('Location'), action).toContain('err=nieaktualny-status');
+    }
+    expect(await env.DB.prepare('SELECT status, final_price FROM bookings WHERE id=?1').bind(id).first()).toEqual({ status: 'done', final_price: null });
+    expect((await env.DB.prepare('SELECT COUNT(*) AS n FROM notification_outbox').first()).n).toBe(count);
+  });
+
+  it('deduplicates identical workshop retries and rejects a changed payload under the same key', async () => {
+    const body = validWorkshopSignup({ idempotency_key: crypto.randomUUID() });
+    const responses = await Promise.all([directPostJson('/api/warsztaty', body), directPostJson('/api/warsztaty', { ...body, landing_language: 'uk' })]);
+    const results = await Promise.all(responses.map(r => r.json()));
+    expect(results[0]).toMatchObject({ ok: true, id: results[1].id });
+    expect((await env.DB.prepare('SELECT COUNT(*) AS n FROM workshop_signups').first()).n).toBe(1);
+    expect((await env.DB.prepare("SELECT COUNT(*) AS n FROM notification_outbox WHERE entity_type='workshop_signup'").first()).n).toBe(1);
+    const changed = await directPostJson('/api/warsztaty', { ...body, notes: 'Changed' });
+    expect(changed.status).toBe(409);
+    expect(await changed.json()).toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
+  });
+
+  it('sends a seasonal reminder only once until an explicit new signup', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2027-03-15T08:00:00Z'));
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ id: crypto.randomUUID() }), { headers: { 'Content-Type': 'application/json' } })));
+    const body = { email: 'once@example.com', consent: true };
+    await directPostJson('/api/reminders', body);
+    await runScheduled('0 8 * * *', { RESEND_API_KEY: 'resend-test' });
+    expect((await env.DB.prepare('SELECT last_sent_year FROM seasonal_reminders').first()).last_sent_year).toBe(2027);
+    vi.setSystemTime(new Date('2028-03-15T08:00:00Z'));
+    await runScheduled('0 8 * * *', { RESEND_API_KEY: 'resend-test' });
+    expect((await env.DB.prepare("SELECT COUNT(*) AS n FROM notification_outbox WHERE entity_type='seasonal_reminder'").first()).n).toBe(1);
+    await directPostJson('/api/reminders', body);
+    expect((await env.DB.prepare('SELECT last_sent_year FROM seasonal_reminders').first()).last_sent_year).toBeNull();
+    await runScheduled('0 8 * * *', { RESEND_API_KEY: 'resend-test' });
+    expect((await env.DB.prepare('SELECT last_sent_year FROM seasonal_reminders').first()).last_sent_year).toBe(2028);
+  });
+});
+
+
+describe('public page responses', () => {
+  it('returns useful localized missing-page HTML with HTTP 404', async () => {
+    for (const [prefix, language] of [['', 'pl'], ['/en', 'en'], ['/ua', 'uk']]) {
+      const response = await workerExports.default.fetch(`${BASE_URL}${prefix}/no-such-page-audit`);
+      expect(response.status).toBe(404);
+      expect(response.headers.get('X-Robots-Tag')).toBe('noindex');
+      const markup = await response.text();
+      expect(markup).toContain(`lang="${language}"`);
+      expect(markup).toContain(`href="${prefix}/umow"`);
+      expect(markup).toContain('<main');
+    }
+  });
+
+  it('keeps Google reviews visible in server-rendered HTML without self-serving review schema', async () => {
+    await env.DB.batch([
+      env.DB.prepare("INSERT INTO google_reviews (review_id, author_name, rating, text, publish_time, fetched_at) VALUES ('audit-review', 'Klient', 5, 'Rower gotowy zgodnie z ustaleniami.', ?1, ?1)").bind(Date.now()),
+      env.DB.prepare("INSERT INTO google_profile (id, rating, review_count, fetched_at) VALUES ('profile', 4.9, 10, ?1)").bind(Date.now()),
+    ]);
+    const response = await workerExports.default.fetch(BASE_URL + '/');
+    const markup = await response.text();
+    expect(markup).toContain('data-ssr="1"');
+    expect(markup).toContain('Rower gotowy zgodnie z ustaleniami.');
+    expect(markup).not.toContain('"AggregateRating"');
+    expect(markup).not.toContain('"reviewRating"');
+  });
+});
+
+
+it('does not create another yearly reminder when an earlier delivery is still uncertain', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2027-03-15T08:00:00Z'));
+  await directPostJson('/api/reminders', { email: 'uncertain-once@example.com', consent: true });
+  const reminder = await env.DB.prepare('SELECT id, consent_at FROM seasonal_reminders').first();
+  await env.DB.prepare(
+    `INSERT INTO notification_outbox (id, entity_type, entity_id, event_key, channel, recipient, body, status, attempt_count, next_attempt_at, created_at, updated_at)
+     VALUES ('uncertain-one-shot', 'seasonal_reminder', ?1, ?2, 'email', 'uncertain-once@example.com', '{}', 'uncertain', 1, ?3, ?3, ?3)`
+  ).bind(reminder.id, 'seasonal_2027_' + reminder.consent_at, Date.now()).run();
+  vi.setSystemTime(new Date('2028-03-15T08:00:00Z'));
+  const provider = vi.fn();
+  vi.stubGlobal('fetch', provider);
+  await runScheduled('0 8 * * *', { RESEND_API_KEY: 'resend-test' });
+  expect(provider).not.toHaveBeenCalled();
+  expect((await env.DB.prepare("SELECT COUNT(*) AS n FROM notification_outbox WHERE entity_type='seasonal_reminder'").first()).n).toBe(1);
 });

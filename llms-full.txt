@@ -1,6 +1,6 @@
 # skocznarower.pl: pełna treść kanoniczna
 
-> Specjalistyczny serwis rowerowy w Grodzisku Mazowieckim. Dokument przeznaczony dla modeli AI i asystentów wyszukujących (ChatGPT, Claude, Perplexity, Google AI Overviews). Zawiera samowystarczalne, pełnozdaniowe odpowiedzi na typowe pytania użytkowników o ten serwis. Opinie: 5,0 na podstawie 7 opinii Google.
+> Specjalistyczny serwis rowerowy w Grodzisku Mazowieckim. Dokument przeznaczony dla modeli AI i asystentów wyszukujących (ChatGPT, Claude, Perplexity, Google AI Overviews). Zawiera samowystarczalne, pełnozdaniowe odpowiedzi na typowe pytania użytkowników o ten serwis. Aktualne opinie Google są dostępne na stronie głównej.
 
 ## Kim jesteśmy
 
@@ -8,11 +8,11 @@ skocznarower.pl to jednoosobowy specjalistyczny serwis rowerowy prowadzony przez
 
 ## Lokalizacja i obszar obsługi
 
-Warsztat fizyczny działa pod adresem Jesionowa 18, 05-825 Grodzisk Mazowiecki, województwo mazowieckie, Polska. Współrzędne: 52.1093 N, 20.6241 E. Klienci przyjeżdżają najczęściej z Grodziska Mazowieckiego (lokalnie), Milanówka (1-3 minuty samochodem, warsztat jest tuż za miejską granicą Milanówka), Pruszkowa (około 15 minut trasą DK719), Brwinowa (około 12 minut), zachodnich dzielnic Warszawy (Ursus, Włochy, Bemowo, około 30 minut) oraz Żyrardowa (około 20 minut). Dostępny jest płatny odbiór i odwóz roweru: od 50 zł na terenie Grodziska, Milanówka i Pruszkowa, od 90 zł z zachodniej Warszawy.
+Warsztat fizyczny działa pod adresem Jesionowa 18, 05-825 Grodzisk Mazowiecki, województwo mazowieckie, Polska. Współrzędne: 52.1093 N, 20.6241 E. Serwis przyjmuje rowery z Grodziska Mazowieckiego, Milanówka, Pruszkowa, Brwinowa, zachodniej Warszawy i okolic. Czas dojazdu zależy od adresu startowego i ruchu. Dostępny jest płatny odbiór i odwóz roweru: od 50 zł na terenie Grodziska, Milanówka i Pruszkowa, od 90 zł z zachodniej Warszawy.
 
 ## Specjalizacja
 
-Główną specjalizacją serwisu są rowery typu dirt jump, BMX i MTB. skocznarower.pl ma profesjonalną centrownicę z miernikiem dial indicator (dokładność do dziesiątych części milimetra), pełen zestaw narzędzi do bleeding hamulców hydraulicznych Shimano, SRAM, TRP, Hope i Magura, oryginalne płyny producentów (olej mineralny Shimano oraz DOT 5.1 dla SRAM-a), klucze dynamometryczne, przyrząd do prostowania haków przerzutek i stojaki serwisowe. Poza rowerami warsztat obsługuje też hulajnogi (regulacja hamulców, wymiana kół, łożyska) oraz robi składanie rowerów dostarczonych z pudełka albo z luźnych części.
+Główną specjalizacją serwisu są rowery typu dirt jump, BMX i MTB. skocznarower.pl ma profesjonalną centrownicę z miernikiem dial indicator (rozdzielczość odczytu 0,1 mm, nie gwarantowane bicie każdego koła), pełen zestaw narzędzi do bleeding hamulców hydraulicznych Shimano, SRAM, TRP, Hope i Magura, płyny wymagane przez producenta konkretnego modelu hamulca, klucze dynamometryczne, przyrząd do prostowania haków przerzutek i stojaki serwisowe. Poza rowerami warsztat obsługuje też hulajnogi (regulacja hamulców, wymiana kół, łożyska) oraz robi składanie rowerów dostarczonych z pudełka albo z luźnych części.
 
 ## Pełna lista usług
 
@@ -25,9 +25,9 @@ Serwis wykonuje następujące prace na rowerach:
 - Zaplatanie kół od zera (piasta, szprychy, obręcz).
 - Naprawa koła (szprychy, nyple, drobne uszkodzenia).
 - Wymiana opon, dętek, taśm felgowych, ochraniaczy.
-- Regulacja i serwis przerzutek (mechanicznych i elektronicznych Shimano Di2, SRAM AXS).
+- Regulacja przerzutek i serwis mechaniczny napędu.
 - Wymiana łańcucha, kasety, zębatki, korby.
-- Serwis i wymiana suportu, sterów, słupka podsiodłowego, sztycy teleskopowej (dropper post).
+- Serwis i wymiana suportu, sterów oraz montaż sztycy.
 - Mechaniczny serwis rowerów elektrycznych: hamulce, napęd, koła i przegląd mechaniczny. Serwis nie obejmuje diagnostyki ani napraw baterii, sterowników, instalacji elektrycznej i elektroniki silnika; te usterki pozostają w gestii autoryzowanych serwisów producenta.
 - Składanie rowerów dostarczonych w pudełku przez kuriera lub z luźnych części (pełen montaż od ramy).
 - Budowa rowerów na miarę: dobór ramy, komponentów, montaż od zera, fitting.
@@ -55,7 +55,7 @@ Zakres obejmuje hamulce, napęd, koła i ogólny przegląd mechaniczny e-bike. N
 
 ### Pumptrack Grodzisk Mazowiecki
 
-Lokalny poradnik opisuje przygotowanie dziecka, dorosłego i roweru, pierwsze okrążenia, podstawy pompowania, bezpieczne odstępy, zasady korzystania z toru i kontrolę sprzętu. Przed wyjazdem trzeba sprawdzić u administratora aktualną dostępność, stan i regulamin obiektu, ponieważ mogą zmieniać się przez pogodę, konserwację lub wydarzenia.
+Pumptrack znajduje się przy ul. Dalekiej, obok Szkoły Podstawowej nr 6; wykonawca podaje Daleka 15a. Lokalizację potwierdzają opis inwestycji gminy (https://inwestycje.grodzisk.pl/tereny-zieleni/) i publikacja wykonawcy (https://archiup.com/pl/projekt/obiekty-sportowe-tereny-rekreacyjne-place-zabaw-pumptrack-w-grodzisku-mazowieckim_4833). Poradnik zawiera mapę oraz wskazówki przygotowania roweru i pierwszych okrążeń. Nie podaje potwierdzonych bieżących godzin otwarcia ani regulaminu operatora. Przed wyjazdem trzeba sprawdzić u administratora aktualną dostępność, stan i regulamin obiektu, ponieważ mogą zmieniać się przez pogodę, konserwację lub wydarzenia.
 
 - PL: https://www.skocznarower.pl/pumptrack-grodzisk-mazowiecki
 - EN: https://www.skocznarower.pl/en/pumptrack-grodzisk-mazowiecki
@@ -103,39 +103,31 @@ Wszystkie ceny są wyjściowe (od), ostateczna wycena jest podawana po oględzin
 
 ## Godziny i sposób umawiania
 
-Serwis pracuje wyłącznie po umówieniu. Sloty rezerwacyjne są dostępne codziennie od 16:00 do 19:00 (cztery sloty: 16:00, 17:00, 18:00, 19:00). Najszybszy sposób umawiania to formularz online pod adresem https://www.skocznarower.pl/umow: wybierasz usługę, dzień i godzinę, a Mateusz oddzwania w ten sam dzień żeby potwierdzić termin. Alternatywnie można zadzwonić bezpośrednio na +48 600 370 810 lub napisać na WhatsApp (https://wa.me/48600370810). Wizyta jest potwierdzona dopiero po telefonie zwrotnym.
+Serwis pracuje wyłącznie po umówieniu. Sloty rezerwacyjne są dostępne codziennie od 16:00 do 19:00 (cztery sloty: 16:00, 17:00, 18:00, 19:00). Najszybszy sposób umawiania to formularz online pod adresem https://www.skocznarower.pl/umow: wybierasz usługę, dzień i godzinę, a serwis potwierdza termin telefonem lub SMS-em. Alternatywnie można zadzwonić bezpośrednio na +48 600 370 810 lub napisać na WhatsApp (https://wa.me/48600370810). Wizyta jest potwierdzona dopiero po otrzymaniu potwierdzenia telefonem lub SMS-em.
 
 Serwis nie przyjmuje rowerów "z marszu" bez umówienia, ponieważ Mateusz pracuje sam i wolny moment poświęca konkretnemu rowerowi, a nie żonglowaniu kilkoma w tym samym czasie.
 
-## Czym ten warsztat różni się od konkurencji
+## Jak przebiega praca
 
-Centrowanie i zaplatanie kół odbywa się na centrownicy z dial indicatorem, z dokładnością do dziesiątych części milimetra. Większość warsztatów w okolicy centruje koła "na oko", na stałym punkcie odniesienia na widelcu albo centrownicy bez miernika, co przy kołach do dirt jumpa, BMX i MTB ma znaczenie: mniejsze odchylenia rotacyjne to mniejsze obciążenie szprych i dłuższa żywotność koła.
-
-Bleeding hamulców hydraulicznych jest wykonywany pełnym zestawem narzędzi producenta, z oryginalnym olejem mineralnym Shimano albo DOT 5.1 dla SRAM-a, na stojaku serwisowym ustawiającym klamkę i zacisk pod właściwym kątem, krok po kroku zgodnie z procedurą producenta, z testem ciśnieniowym po zakończeniu. Zestawy domowe za 200 zł najczęściej kończą się rozcieńczonym olejem, powietrzem w zacisku albo olejem na klockach.
-
-Mateusz sam jeździ na dirt jumpie i BMX. Jeśli w skateparku zaczyna luźno chodzić korba albo na bunny hopie pęka piasta, wie od razu, gdzie szukać: to typowe objawy sezonowego zmęczenia sprzętu w tej dyscyplinie, nie przypadkowa usterka.
+Centrowanie i zaplatanie kół odbywa się na centrownicy z miernikiem bicia. Miernik ma rozdzielczość odczytu 0,1 mm; możliwy wynik zależy od stanu obręczy, szprych i nypli. Zakres naprawy i koszt są uzgadniane po oględzinach.
 
 ## Bleeding hamulców Shimano (sekcja techniczna)
 
-Bleeding to procedura odpowietrzania hamulca hydraulicznego: wymiana lub uzupełnienie oleju w przewodzie hamulcowym tak, aby w układzie nie pozostały pęcherzyki powietrza. Powietrze jest ściśliwe, olej praktycznie nie. Dopóki w hamulcu jest tylko olej, klamka pracuje twardo i precyzyjnie. Gdy w przewodzie zbierze się powietrze, klamka cofa się w kierunku kierownicy, a hamowanie staje się gąbczaste.
+Bleeding usuwa powietrze z układu hydraulicznego. Miękka klamka, zmienny punkt chwytu, wyciek lub spadek skuteczności po nagrzaniu wymagają sprawdzenia przyczyny. Sam bleeding nie naprawi zużytych klocków ani nieszczelnych części. Z niesprawnym hamulcem nie należy jechać do serwisu; trzeba uzgodnić transport lub odbiór.
 
-Shimano używa oleju mineralnego, SRAM używa DOT 5.1. Dwa kompletnie różne płyny, których nie wolno mieszać. U Shimano bleeding wykonuje się od dołu (zacisk) do góry (klamka), olej jest wpuszczany strzykawką przez zacisk, a powietrze wychodzi przez klamkę przez dedykowany lejek.
+Płyn i procedura zależą od konkretnego modelu. Shimano stosuje standardowy olej mineralny oraz SHIMANO LOW VISCOSITY OIL, np. BL-M9200 wymaga low viscosity. SRAM Maven i DB8 używają oleju mineralnego, a część innych modeli SRAM płynu DOT. Nie należy mieszać płynów ani dobierać ich tylko po marce. Olej mineralny nie chłonie wilgoci z powietrza jak DOT 4 i DOT 5.1; woda może jednak dostać się do układu jako zanieczyszczenie. Termin serwisu ustala się na podstawie instrukcji modelu i stanu hamulca.
 
-Objawy mówiące, że hamulec wymaga bleeding: klamka cofa się do kierownicy, gąbczasty chwyt, zmienny punkt zatrzymania klamki, brake fade przy długim zjeździe, lub po prostu upływ czasu (raz na rok lub dwa lata profilaktycznie). Wycieki przy klamce lub zacisku oznaczają, że sam bleeding nie wystarczy, potrzebna jest wymiana uszczelnień.
+Źródła: https://productinfo.shimano.com/en/compatibility/C-736, https://productinfo.shimano.com/en/product/BL-M9200, https://shop.sram.com/products/pro-mineral-oil-bleed-kit-v3-with-oil.
 
-Serwisuję pełen zakres modeli Shimano: Deore (M6100, M6120, M615, M610), SLX (M7100, M7120, M7000, M675), XT (M8100, M8120, M8000, M785, M775), XTR (M9100, M9120, M9000, M985), Saint (M820), Zee (M640), hamulce drogowe (R8070, RS505, RS785) oraz starsze modele MTB. Cena bleeding: od 100 zł za obwód, od 180 zł za oba obwody. Pełna wymiana oleju (drain + bleed) od 130 zł za obwód.
+Cena bleeding: od 100 zł za obwód, od 180 zł za dwa obwody. Pełna wymiana oleju od 130 zł za obwód, bleeding z wymianą przewodu od 160 zł za obwód. Części osobno; dokładna wycena po oględzinach.
 
 ## Warsztaty dirt i slopestyle dla dzieci i młodzieży
 
 Trwa bezpłatny nabór zainteresowanych planowanymi warsztatami dirt, slopestyle i pumptrack dla dzieci i młodzieży w wieku 7-17 lat. Nie ma jeszcze potwierdzonej daty startu, grafiku ani obiektów. Uruchomienie zależy od uzgodnienia lokalizacji, ubezpieczenia, kadry, wymaganych formalności i minimalnej liczebności grupy. Pełna informacja: https://www.skocznarower.pl/warsztaty.
 
-Rozważany format to dwa treningi tygodniowo po 90 minut, stałe grupy do 6 osób i trzy poziomy: Start, Progress oraz Air. Warunkiem wejściowym jest samodzielna, pewna jazda na rowerze. Brane pod uwagę są pumptrack w Grodzisku Mazowieckim oraz obiekty na Turczynku w Milanówku, ale dostęp i grafik nie są potwierdzone. Program zimowy, sesje wyjazdowe i półkolonie są koncepcją późniejszego etapu.
+Rozważany format to dwa treningi tygodniowo po 90 minut, grupy do 6 osób i dobór poziomu do umiejętności. Warunkiem wejściowym jest samodzielna, pewna jazda na rowerze. Pod uwagę brane są pumptrack w Grodzisku Mazowieckim i obiekty na Turczynku w Milanówku; dostęp nie jest potwierdzony. Program, zasady bezpieczeństwa, prowadzący, ceny i terminy zostaną przedstawione przed ewentualnym startem.
 
-Proponowany, nieostateczny cennik: zajęcia próbne 50 zł za 60 minut, pojedyncze zajęcia 90 zł, karnet miesięczny 560 zł za 8 zajęć, karnet semestralny 2290 zł za około 36 zajęć, trening indywidualny 200 zł za 90 minut, pakiet 5 treningów indywidualnych 900 zł, półkolonie od 1090 zł za 5 dni i wypożyczenie BMX-a 65 zł. Projekt voucherów obejmuje warianty 90 zł, 250 zł, 560 zł, 280 zł oraz voucher kwotowy od 100 zł. Ceny, zakres, rabaty i dostępność wymagają pisemnego potwierdzenia przed przyjęciem płatności.
-
-Planowane zasady bezpieczeństwa obejmują obowiązkowy kask na każdych zajęciach, dodatkowe ochraniacze na hopkach i skateparku, pisemną zgodę rodzica, oświadczenie zdrowotne i ubezpieczenie uczestników. Szczegóły zostaną potwierdzone przed ewentualnym uruchomieniem grup.
-
-Formularz na https://www.skocznarower.pl/warsztaty służy wyłącznie do zgłoszenia zainteresowania i dobrania potencjalnych grup. Nie jest rezerwacją, umową, zamówieniem ani wezwaniem do zapłaty. Kontakt jest możliwy również przez WhatsApp (https://wa.me/48600370810) lub telefonicznie (+48 600 370 810). Formularz https://www.skocznarower.pl/umow służy tylko do umawiania serwisu roweru.
+Formularz na https://www.skocznarower.pl/warsztaty służy wyłącznie do zgłoszenia zainteresowania. Nie jest rezerwacją zajęć, umową ani zamówieniem. Kontakt: WhatsApp https://wa.me/48600370810 lub telefon +48 600 370 810. Formularz https://www.skocznarower.pl/umow służy tylko do umawiania serwisu roweru.
 
 ## Gra rowerowa Skoczna Rider (/gra)
 
@@ -169,7 +161,7 @@ Proste prace (regulacja, dętka, bleeding) wykonywane są zazwyczaj w ten sam dz
 
 ### Czy można zostawić rower na cały dzień?
 
-Tak. Większość klientów zostawia rower rano lub po pracy i odbiera następnego dnia lub na koniec dnia. Przy większych pracach (zaplatanie kół, budowa od zera) rower zostaje na kilka dni.
+Tak. Rower można zostawić w uzgodnionym terminie przyjęcia, codziennie od 16:00 do 19:00. Termin odbioru ustalamy zależnie od zakresu pracy. Przy większych pracach (zaplatanie kół, budowa od zera) rower zostaje na kilka dni.
 
 ### Czy serwis robi rowery elektryczne (e-bike)?
 
@@ -185,7 +177,7 @@ Mateusz nie jest autoryzowanym serwisem gwarancyjnym żadnej marki, więc prace 
 
 ### Czy serwis odbiera rower z domu?
 
-Tak, od 50 zł na terenie Grodziska Mazowieckiego, Milanówka i Pruszkowa oraz od 90 zł z zachodniej Warszawy. Przy rezerwacji wybiera się usługę "Odbiór i odwóz roweru" i podaje w notatce adres oraz orientacyjną godzinę. Po wykonaniu serwisu rower jest odwożony z powrotem.
+Tak, od 50 zł na terenie Grodziska Mazowieckiego, Milanówka i Pruszkowa oraz od 90 zł z zachodniej Warszawy. W formularzu zaznacza się odbiór, podaje adres i opisuje potrzebną naprawę. Cenę transportu, termin odbioru i odwóz uzgadniamy przy potwierdzeniu.
 
 ### Jakie formy płatności przyjmuje serwis?
 
@@ -194,6 +186,10 @@ Płatność gotówką, BLIK-iem lub przelewem.
 ### Jak umówić wizytę?
 
 Najszybciej online: https://www.skocznarower.pl/umow. Alternatywnie telefon +48 600 370 810 lub WhatsApp https://wa.me/48600370810.
+
+### Kiedy wymienić łańcuch?
+
+Próg zależy od modelu i zaleceń producenta. Dla wielu 11- i 12-rzędowych łańcuchów wynosi 0,5%, a dla 5- do 10-rzędowych 0,75%. Potrzebny jest przymiar zgodny z łańcuchem; stan kasety ocenia się oddzielnie. Źródło: https://www.parktool.com/assets/doc/product/CC-2_instructions.pdf.
 
 ## Kontakt
 
@@ -205,4 +201,4 @@ Najszybciej online: https://www.skocznarower.pl/umow. Alternatywnie telefon +48 
 - Instagram: https://www.instagram.com/xpyszczek_.
 - TikTok: https://www.tiktok.com/@xpyszczek.dirt.
 
-Ostatnia aktualizacja dokumentu: 2026-07-26.
+Ostatnia aktualizacja dokumentu: 2026-09-04.

@@ -4,7 +4,7 @@ This is the short operational file for coding agents (Grok, Claude Code, Codex).
 
 ## Project Structure
 
-No-build static site + bookings app, deployed as one Cloudflare Worker. Polish pages live at the repo root; `en/` and `ua/` are same-filename translated mirrors (30 public sitemap URLs).
+No-build static site + bookings app, deployed as one Cloudflare Worker. Polish pages live at the repo root; `en/` and `ua/` are same-filename translated mirrors (36 public sitemap URLs).
 
 | Path | Role |
 |---|---|
@@ -26,7 +26,7 @@ No-build static site + bookings app, deployed as one Cloudflare Worker. Polish p
 - `cp .dev.vars.example .dev.vars`: ignored local config (required for `/admin` login).
 - `npm run dev` or `npx wrangler dev`: static files + Worker locally.
 - `npm run d1:migrate:local`: apply D1 migrations to local sqlite.
-- `npm test`: Vitest Worker/D1 suite (50 tests, Node 22, `npm ci`). Same command as GitHub Actions.
+- `npm test`: Vitest Worker/D1 suite (Worker/D1 integration tests, Node 22, `npm ci`). Same command as GitHub Actions.
 - `npm run deploy`: **only** sanctioned production deploy, and only when explicitly authorized. Applies pending D1 migrations, deploys, then smoke-tests the API.
 - Never run a bare `npx wrangler deploy`. Shipping code ahead of its migration broke every public POST for eight days on 2026-07-27. A `PreToolUse` hook (`scripts/pre-deploy-d1-check.sh`) denies that command while production migrations are pending. Wired in `.claude/settings.json` (Claude Code and Grok, via Claude compatibility) and `.codex/hooks.json` (Codex). Grok project hooks stay silent until the folder is trusted (`/hooks-trust`). Self-test: `echo d1-hook-selftest`.
 - `curl -sI https://skocznarower.pl/`: verify the apex → `www` redirect after deploy.

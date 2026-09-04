@@ -52,13 +52,16 @@
       nick: 'Twój nick',
       save: 'Zapisz wynik',
       saved: 'Zapisane w rekordach',
+      savedLocal: 'Zapisane tylko w tej przeglądarce',
+      preparing: 'Przygotowanie przejazdu...',
       retry: 'Jeszcze raz',
       menu: 'Menu',
     },
     scores: { empty: 'Jeszcze nikt tędy nie jechał.', local: 'Wyniki z tej przeglądarki', global: 'Ranking globalny' },
     account: {
+      errors: {"INVALID_PHONE": "Podaj polski numer: 9 cyfr, opcjonalnie z +48.", "INVALID_NICK": "Nick: 2–14 znaków, litery, cyfry, spacje, kropki, myślniki lub podkreślenia.", "INVALID_CODE": "Wpisz poprawny sześciocyfrowy kod z SMS.", "CODE_REQUIRED": "Najpierw poproś o kod SMS.", "CODE_EXPIRED": "Kod wygasł. Poproś o nowy.", "RATE_LIMITED": "Zbyt wiele prób. Poczekaj przed kolejną.", "DELIVERY_FAILED": "Nie udało się wysłać SMS. Spróbuj później.", "SERVICE_UNAVAILABLE": "Ranking jest teraz niedostępny. Możesz grać lokalnie."},
       title: 'Ranking globalny',
-      intro: 'Potwierdź numer SMS-em, a Twój wynik trafi do wspólnej tabeli. Numer trzymamy w bazie serwisu skocznarower.pl, usuniemy go na jedno życzenie pod numerem 600 370 810.',
+      intro: 'Potwierdź numer SMS-em, aby zapisywać kolejne przejazdy w rankingu globalnym. Wcześniejsze wyniki zostają w tej przeglądarce. Aby usunąć konto, zadzwoń pod 600 370 810.',
       nick: 'Nick w rankingu',
       phone: 'Numer telefonu',
       consent: 'Zgadzam się na przetwarzanie numeru telefonu w celu prowadzenia rankingu gry.',
@@ -253,14 +256,30 @@
       }
       return { scope: 'local', rows: this.localTop(levelId) };
     },
-    async submit(entry) {
+    async begin(level, bike) {
+      if (!this.remote || !save.token) return null;
+      try {
+        const res = await fetch(cfg.apiBase + '/run', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: save.token, level, bike }),
+          signal: AbortSignal.timeout(8000),
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.run_token || null;
+      } catch (_) { return null; }
+    },
+    async submit(entry, ticket) {
       this.localAdd(entry);
       if (!this.remote || !save.token) return null;
+      const runToken = await ticket;
+      if (!runToken) return null;
       try {
         const res = await fetch(cfg.apiBase + '/score', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(Object.assign({ token: save.token }, entry)),
+          body: JSON.stringify(Object.assign({ token: save.token, run_token: runToken }, entry)),
+          signal: AbortSignal.timeout(10000),
         });
         if (res.ok) return await res.json();
       } catch (_) {}
@@ -1167,6 +1186,7 @@
     ui.nick.maxLength = 14;
     ui.nick.className = 'nick-input';
     ui.nick.placeholder = T.over.nick;
+    ui.nick.setAttribute('aria-label', T.over.nick);
     ui.nick.value = save.nick || '';
     ui.saveBtn = el('button', 'g-btn-sm', T.over.save);
     ui.saveBtn.type = 'button';
@@ -1324,7 +1344,11 @@
     fill(select.value);
   }
 
+  let launchSequence = 0;
+  let launchPending = false;
   function openMenu(tab) {
+    launchSequence++;
+    launchPending = false;
     input.gas = false; input.brake = false;
     ui.menu.hidden = false;
     ui.over.hidden = true;
@@ -1338,8 +1362,21 @@
     showTab(tab || activeTab);
   }
 
-  function launch(level) {
-    if (!isUnlocked(level)) return;
+  async function launch(level) {
+    if (!isUnlocked(level) || launchPending) return;
+    const sequence = ++launchSequence;
+    const bike = bikeById(save.bike);
+    launchPending = true;
+    const panel = ui.over.hidden ? ui.menu : ui.over;
+    const status = el('p', 'panel-hint', T.over.preparing);
+    status.setAttribute('role', 'status');
+    panel.appendChild(status);
+    panel.setAttribute('aria-busy', 'true');
+    const ticket = await Leaderboard.begin(level.id, bike.id);
+    status.remove();
+    panel.removeAttribute('aria-busy');
+    if (sequence !== launchSequence) return;
+    launchPending = false;
     currentLevel = level;
     ui.menu.hidden = true;
     ui.over.hidden = true;
@@ -1347,7 +1384,8 @@
     ui.touch.hidden = false;
     root.classList.add('playing');
     resize();
-    startRun(level, bikeById(save.bike));
+    startRun(level, bike);
+    run.ticket = ticket;
   }
 
   function finishRun(reason) {
@@ -1370,8 +1408,10 @@
       level: level.id, score,
       dist: Math.round(run.dist), coins: run.coins, flips: run.flips,
       bike: run.bike.id, ts: Date.now(),
+      duration_ms: Math.round(run.time * 1000), finished,
     };
 
+    pendingTicket = run.ticket || null;
     ui.overTitle.textContent = T.over[reason] || T.over.crash;
     ui.overStats.textContent = '';
     const rows = [
@@ -1399,14 +1439,19 @@
   }
 
   let pendingScore = null;
+  let pendingTicket = null;
   async function saveScore() {
-    if (!pendingScore) return;
+    if (!pendingScore || ui.saveBtn.disabled) return;
+    const score = pendingScore;
+    const ticket = pendingTicket;
     const nick = (ui.nick.value || '').replace(/[<>]/g, '').trim().slice(0, 14) || 'Anonim';
     save.nick = nick;
     persist();
     ui.saveBtn.disabled = true;
     ui.saveBtn.textContent = T.over.saved;
-    const result = await Leaderboard.submit(Object.assign({ name: nick }, pendingScore));
+    const result = await Leaderboard.submit(Object.assign({ name: nick }, score), ticket);
+    if (pendingScore !== score) return;
+    ui.saveBtn.textContent = result ? T.over.saved : T.over.savedLocal;
     if (result && result.rank) {
       ui.overUnlock.hidden = false;
       ui.overUnlock.textContent = T.account.rank + ' ' + result.rank;
@@ -1432,6 +1477,7 @@
     field.type = type || 'text';
     field.className = 'nick-input';
     field.placeholder = placeholder;
+    field.setAttribute('aria-label', placeholder);
     if (value) field.value = value;
     return field;
   }
@@ -1455,6 +1501,7 @@
     const consent = checkRow(T.account.consent);
     const marketing = checkRow(T.account.marketing);
     const status = el('p', 'panel-hint', '');
+    status.setAttribute('role', 'status');
     const send = el('button', 'g-btn-sm', T.account.send);
     send.type = 'button';
     const code = textField(T.account.code, '', 'text');
@@ -1468,12 +1515,14 @@
     codeRow.hidden = true;
 
     send.addEventListener('click', async () => {
+      if (send.disabled) return;
       if (!consent.box.checked) { status.textContent = T.account.consent; return; }
       send.disabled = true;
       send.textContent = T.account.sending;
       try {
         const res = await fetch(cfg.apiBase + '/register', {
           method: 'POST',
+          signal: AbortSignal.timeout(15000),
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             phone: phone.value, nick: nick.value,
@@ -1484,10 +1533,11 @@
         if (res.ok) {
           codeRow.hidden = false;
           status.textContent = T.account.sent;
+          code.focus();
           save.nick = nick.value.trim();
           persist();
         } else {
-          status.textContent = data.error || T.account.error;
+          status.textContent = T.account.errors[data.code] || T.account.error;
         }
       } catch (_) {
         status.textContent = T.account.error;
@@ -1497,10 +1547,12 @@
     });
 
     confirm.addEventListener('click', async () => {
+      if (confirm.disabled) return;
       confirm.disabled = true;
       try {
         const res = await fetch(cfg.apiBase + '/verify', {
           method: 'POST',
+          signal: AbortSignal.timeout(15000),
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ phone: phone.value, code: code.value }),
         });
@@ -1512,7 +1564,7 @@
           renderScores();
           return;
         }
-        status.textContent = data.error || T.account.error;
+        status.textContent = T.account.errors[data.code] || T.account.error;
       } catch (_) {
         status.textContent = T.account.error;
       }

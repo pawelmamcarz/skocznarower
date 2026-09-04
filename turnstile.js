@@ -21,15 +21,17 @@
       script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
       script.async = true;
       script.defer = true;
-      script.onload = resolve;
-      script.onerror = reject;
+      const timeout = setTimeout(() => reject(new Error('Security script timeout')), 15000);
+      script.onload = () => { clearTimeout(timeout); resolve(); };
+      script.onerror = () => { clearTimeout(timeout); reject(new Error('Security script unavailable')); };
       document.head.appendChild(script);
     });
   }
 
   function setButtonsDisabled(form, disabled) {
+    form.dataset.turnstileReady = disabled ? 'false' : 'true';
     form.querySelectorAll('button[type="submit"], input[type="submit"]')
-      .forEach(button => { button.disabled = disabled; });
+      .forEach(button => { button.disabled = disabled || form.dataset.submitting === 'true'; });
   }
 
   function mount(form, sitekey, action) {
@@ -77,6 +79,12 @@
       },
     });
 
+    // Obserwator działa po synchronicznym odczytaniu tokenu przez formularz.
+    // Microtask w capture może wykonać się jeszcze przed handlerem submit.
+    new MutationObserver(() => {
+      if (form.dataset.submitting === 'true') reset();
+    }).observe(form, { attributes: true, attributeFilter: ['data-submitting'] });
+
     form.addEventListener('submit', event => {
       const token = form.querySelector('[name="cf-turnstile-response"]')?.value || '';
       if (!token) {
@@ -86,9 +94,6 @@
         wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
-      // Token jest jednorazowy. Kod formularza odczytuje go synchronicznie w tej
-      // samej obsłudze submit, a widget odświeżamy dla ewentualnej kolejnej próby.
-      setTimeout(reset, 0);
     }, true);
   }
 
@@ -97,20 +102,50 @@
       .map(([id, action]) => ({ form: document.getElementById(id), action }))
       .filter(item => item.form);
     if (!forms.length) return;
-
+    forms.forEach(({ form }) => {
+      setButtonsDisabled(form, true);
+      form.addEventListener('submit', event => {
+        if (form.dataset.turnstileReady !== 'false' && form.dataset.submitting !== 'true') return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const status = form.querySelector('.turnstile-box, .security-status');
+        if (status && form.dataset.submitting !== 'true') status.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, true);
+    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
     try {
       const response = await fetch('/api/security-config', {
         headers: { Accept: 'application/json' },
         credentials: 'same-origin',
         cache: 'no-store',
+        signal: controller.signal,
       });
-      if (!response.ok) return;
+      if (!response.ok) throw new Error('Security configuration unavailable');
       const config = await response.json();
-      if (!config?.turnstile_site_key) return;
+      if (!config || typeof config !== 'object') throw new Error('Invalid security configuration');
+      if (!config.turnstile_site_key) {
+        forms.forEach(({ form }) => setButtonsDisabled(form, false));
+        return;
+      }
       await loadApi();
       forms.forEach(item => mount(item.form, config.turnstile_site_key, item.action));
     } catch (error) {
+      forms.forEach(({ form }) => {
+        setButtonsDisabled(form, true);
+        const status = document.createElement('p');
+        status.className = 'security-status';
+        status.setAttribute('role', 'alert');
+        status.textContent = copy.error;
+        const contact = document.createElement('a');
+        contact.href = 'tel:+48600370810';
+        contact.textContent = '600 370 810';
+        status.append(' ', contact);
+        form.append(status);
+      });
       console.warn('Turnstile unavailable', error);
+    } finally {
+      clearTimeout(timeout);
     }
   }
 

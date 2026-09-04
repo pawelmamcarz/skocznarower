@@ -5,7 +5,7 @@
 // - reszta -> ASSETS
 
 const SERVICES = [
-  { id: 'odbior',               name: 'Odbiór i odwóz roweru (adres podaj w notatce)', price: 'od 50 zł' },
+  { id: 'odbior',               name: 'Odbiór i odwóz roweru', price: 'od 50 zł' },
   { id: 'przeglad-podstawowy',  name: 'Przegląd podstawowy',                       price: 'od 150 zł' },
   { id: 'przeglad-kompleksowy', name: 'Przegląd kompleksowy',                      price: 'od 340 zł' },
   { id: 'regulacja',            name: 'Regulacja (hamulce / przerzutki)',          price: 'od 40 zł' },
@@ -46,8 +46,17 @@ const SCHEDULE = {
 // To NIE jest OWNER_PHONE: SMS o nowej rezerwacji do właściciela idzie osobno (patrz sendNotifications), mimo że oba stałe dziś mają tę samą wartość domyślną.
 const PUBLIC_PHONE_DISPLAY = '600 370 810';
 
+function needsPickup(b) {
+  return b.pickup_requested === true || b.pickup_requested === 1 || b.service_type === 'odbior';
+}
+
+function pickupAddress(b) {
+  return b.pickup_address || (b.service_type === 'odbior' ? b.notes : '') || 'adres do uzgodnienia telefonicznie';
+}
+
 function bookingConfirmedSms(b) {
   const firstName = (b.customer_name || '').split(' ')[0];
+  if (needsPickup(b)) return `Cześć ${firstName}! Potwierdzamy odbiór roweru: ${b.date} o ${b.time_slot}, ${pickupAddress(b)}. Termin odwozu ustalimy po naprawie. Kontakt: ${PUBLIC_PHONE_DISPLAY}.`;
   return `Cześć ${firstName}! Potwierdzamy wizytę w skocznarower.pl: ${b.date} o ${b.time_slot}, Jesionowa 18 w Grodzisku Maz. Jeśli termin przestanie pasować, zadzwoń pod ${PUBLIC_PHONE_DISPLAY}.`;
 }
 
@@ -90,6 +99,16 @@ export default {
         return assetRes;
       }
     }
+    if (assetRes.status === 404 && ['GET', 'HEAD'].includes(request.method)) {
+      const prefix = /^\/(en|ua)(?:\/|$)/.exec(url.pathname)?.[1];
+      const errorUrl = new URL((prefix ? '/' + prefix : '') + '/404', url);
+      const page = await env.ASSETS.fetch(new Request(errorUrl, { method: request.method }));
+      if (page.headers.get('Content-Type')?.includes('text/html')) {
+        const headers = new Headers(page.headers);
+        headers.set('X-Robots-Tag', 'noindex');
+        return new Response(page.body, { status: 404, headers });
+      }
+    }
     return assetRes;
   },
   async scheduled(event, env, ctx) {
@@ -125,6 +144,7 @@ const PUBLIC_POST_LIMITS = {
   '/api/reminders': { limit: 5, windowMs: 60 * 60_000 },
   '/api/game/register': { limit: 5, windowMs: 60 * 60_000 },
   '/api/game/verify': { limit: 15, windowMs: 60 * 60_000 },
+  '/api/game/run': { limit: 120, windowMs: 60 * 60_000 },
   '/api/game/score': { limit: 60, windowMs: 60 * 60_000 },
 };
 
@@ -178,7 +198,9 @@ async function readJsonRequest(request, maxBytes = MAX_PUBLIC_JSON_BYTES) {
     offset += chunk.byteLength;
   }
   try {
-    return { body: JSON.parse(new TextDecoder().decode(bytes)) };
+    const body = JSON.parse(new TextDecoder().decode(bytes));
+    if (!body || typeof body !== 'object' || Array.isArray(body)) return { error: 'Invalid input', status: 400 };
+    return { body };
   } catch {
     return { error: 'Bad JSON', status: 400 };
   }
@@ -252,6 +274,7 @@ async function verifyTurnstile(request, env, rawToken, expectedAction) {
 
 function turnstileRejected() {
   return json({
+    code: 'TURNSTILE_FAILED',
     error: 'Nie udało się potwierdzić kontroli bezpieczeństwa. Odśwież stronę i spróbuj ponownie.',
   }, 400);
 }
@@ -349,6 +372,9 @@ async function handleApi(request, env, url, ctx) {
   if (url.pathname === '/api/game/verify' && request.method === 'POST') {
     return await apiGameVerify(request, env);
   }
+  if (url.pathname === '/api/game/run' && request.method === 'POST') {
+    return await apiGameRun(request, env);
+  }
   if (url.pathname === '/api/game/score' && request.method === 'POST') {
     return await apiGameScore(request, env);
   }
@@ -367,7 +393,7 @@ async function handleApi(request, env, url, ctx) {
 const WORKSHOP_LEVELS = ['start', 'progress', 'air', 'nie-wiem'];
 const WORKSHOP_LOCATIONS = ['grodzisk', 'milanowek', 'obojetnie'];
 const WORKSHOP_SOURCES = ['fb', 'szkola', 'serwis', 'instagram', 'google', 'znajomy', 'voucher', 'inne'];
-const LANDING_LANGUAGES = ['pl', 'en', 'ua'];
+const LANDING_LANGUAGES = ['pl', 'en', 'uk', 'ua'];
 
 function cleanAttributionText(value, maxLength) {
   const text = String(value || '').replace(/[\u0000-\u001f\u007f]/g, '').trim();
@@ -380,7 +406,8 @@ function normalizeAttribution(body, source = null) {
   return {
     source,
     landing_path: path?.startsWith('/') && !/[?#]/.test(path) ? path : null,
-    landing_language: LANDING_LANGUAGES.includes(body?.landing_language) ? body.landing_language : null,
+    landing_language: LANDING_LANGUAGES.includes(body?.landing_language)
+      ? (body.landing_language === 'ua' ? 'uk' : body.landing_language) : null,
     utm_source: cleanAttributionText(body?.utm_source, 100),
     utm_medium: cleanAttributionText(body?.utm_medium, 100),
     utm_campaign: cleanAttributionText(body?.utm_campaign, 100),
@@ -392,9 +419,11 @@ function normalizeAttribution(body, source = null) {
 
 function validateWorkshopSignup(b) {
   const e = [];
+  if (!validInputTypes(b, ['parent_name', 'phone', 'email', 'level', 'location', 'source', 'notes', 'idempotency_key'], ['consent']) || !['number', 'string'].includes(typeof b.child_age)) return ['Invalid input'];
+  if (b.idempotency_key !== undefined && !UUID_RE.test(b.idempotency_key)) return ['Invalid idempotency key'];
   if (!b?.parent_name || b.parent_name.trim().length < 2) e.push('Wpisz imię i nazwisko');
   if (b?.parent_name && b.parent_name.length > 80) e.push('Imię za długie');
-  if (!b?.phone || !/^(\+?48)?[0-9]{9}$/.test(normalizePhone(b.phone))) e.push('Wpisz telefon');
+  if (!b?.phone || !validPolishPhone(b.phone)) e.push('Wpisz telefon');
   if (b?.email && !normalizeEmail(b.email)) e.push('Nieprawidłowy email');
   const age = Number(b?.child_age);
   if (!Number.isInteger(age) || age < 7 || age > 17) e.push('Wiek dziecka: 7-17 lat');
@@ -439,23 +468,43 @@ async function apiWorkshopSignup(request, env) {
     ...attribution,
   };
 
+  const idempotencyKey = body.idempotency_key || null;
+  const { id: ignoredId, ...canonical } = row;
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(canonical)));
+  const requestHash = [...new Uint8Array(digest)].map(n => n.toString(16).padStart(2, '0')).join('');
+  const replay = async () => {
+    const existing = await env.DB.prepare('SELECT id, request_hash FROM workshop_signups WHERE idempotency_key=?1').bind(idempotencyKey).first();
+    if (!existing) return null;
+    return existing.request_hash === requestHash
+      ? json({ ok: true, id: existing.id, message: 'Zgłoszenie przyjęte.' })
+      : json({ error: 'Ta próba wysyłki zawierała inne dane.', code: 'IDEMPOTENCY_CONFLICT' }, 409);
+  };
+  if (idempotencyKey) {
+    const response = await replay();
+    if (response) return response;
+  }
+
   try {
     await env.DB.prepare(
       `INSERT INTO workshop_signups (
          id, parent_name, phone, email, child_age, level, location, notes, created_at,
          source, landing_path, landing_language, utm_source, utm_medium, utm_campaign,
-         utm_content, utm_term, referrer_host, updated_at, consent_at, consent_version
+         utm_content, utm_term, referrer_host, updated_at, consent_at, consent_version, idempotency_key, request_hash
        ) VALUES (
          ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9,
-         ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21
+         ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23
        )`
     ).bind(
       row.id, row.parent_name, row.phone, row.email, row.child_age, row.level,
       row.location, row.notes, now, row.source, row.landing_path, row.landing_language,
       row.utm_source, row.utm_medium, row.utm_campaign, row.utm_content, row.utm_term,
-      row.referrer_host, now, now, CONSENT_VERSION,
+      row.referrer_host, now, now, CONSENT_VERSION, idempotencyKey, requestHash,
     ).run();
   } catch (e) {
+    if (idempotencyKey && /UNIQUE constraint/i.test(String(e?.message || e))) {
+      const response = await replay();
+      if (response) return response;
+    }
     console.error('workshop signup insert error', e);
     return json({ error: 'Błąd zapisu, spróbuj ponownie albo napisz na WhatsApp' }, 500);
   }
@@ -501,6 +550,7 @@ ID: ${row.id}
 
   return json({
     ok: true,
+    id: row.id,
     message: 'Dziękujemy za zainteresowanie. Odezwiemy się, gdy będziemy mogli zaproponować grupę i termin zajęć próbnych.',
   });
 }
@@ -549,7 +599,7 @@ async function apiReviews(env) {
 
 // SSR sekcji #opinie na stronie głównej: HTMLRewriter wstrzykuje opinie z cache D1
 // do statycznego index.html (markup 1:1 z klientowym loadReviews), zdejmuje hidden
-// i dokłada JSON-LD AggregateRating do <head>. Klientowy skrypt widzi data-ssr="1"
+// bez ocen własnej firmy w JSON-LD. Klientowy skrypt widzi data-ssr="1"
 // i nie renderuje drugi raz. Pusty cache = strona wraca bez zmian (sekcja hidden,
 // klientowy fallback dalej działa).
 const SSR_STAR_PATH = 'M12 2.6l2.9 6.05 6.6.72-4.9 4.5 1.34 6.53L12 17.1l-5.94 3.3 1.34-6.53-4.9-4.5 6.6-.72z';
@@ -595,33 +645,6 @@ async function injectReviewsSSR(env, res) {
     return `<figure class="review"><blockquote>${esc(rv.text)}</blockquote><figcaption><strong>${esc(rv.author_name)}</strong><span aria-label="${n} z 5">${starsHtml}${date ? ' · ' + esc(date) : ''}</span></figcaption></figure>`;
   }).join('');
 
-  let ldScript = '';
-  if (avg !== null && total !== null && total > 0) {
-    const ld = {
-      '@context': 'https://schema.org',
-      '@type': 'LocalBusiness',
-      '@id': 'https://www.skocznarower.pl/#business',
-      'name': 'skocznarower.pl – Serwis Rowerowy',
-      'url': 'https://www.skocznarower.pl',
-      'aggregateRating': {
-        '@type': 'AggregateRating',
-        'ratingValue': avg.toFixed(1),
-        'reviewCount': total,
-        'bestRating': '5',
-        'worstRating': '1',
-      },
-      'review': rows.slice(0, 5).map(rv => ({
-        '@type': 'Review',
-        'author': { '@type': 'Person', 'name': rv.author_name },
-        'datePublished': rv.publish_time ? new Date(rv.publish_time).toISOString().slice(0, 10) : undefined,
-        'reviewRating': { '@type': 'Rating', 'ratingValue': String(rv.rating || 5), 'bestRating': '5' },
-        'reviewBody': rv.text,
-      })),
-    };
-    // Znak "<" w JSON-ie zamieniany na sekwencję unicode, żeby tekst opinii nie mógł domknąć tagu script.
-    ldScript = '<script type="application/ld+json">' + JSON.stringify(ld).replace(/</g, '\\u003c') + '</script>';
-  }
-
   const rewriter = new HTMLRewriter()
     .on('#opinie', { element(el) { el.removeAttribute('hidden'); el.setAttribute('data-ssr', '1'); } })
     .on('#reviews-grid', { element(el) { el.setInnerContent(gridHtml, { html: true }); } })
@@ -648,9 +671,6 @@ async function injectReviewsSSR(env, res) {
   if (reviewLink) {
     rewriter.on('#reviews-cta', { element(el) { el.setAttribute('href', reviewLink); el.removeAttribute('hidden'); } });
   }
-  if (ldScript) {
-    rewriter.on('head', { element(el) { el.append(ldScript, { html: true }); } });
-  }
 
   return rewriter.transform(res);
 }
@@ -663,12 +683,18 @@ function normalizeEmail(raw) {
   return email;
 }
 
-// Dopisuje email do listy przypomnień sezonowych (idempotentnie, INSERT OR IGNORE,
-// bo email jest unikalny). Zwraca true gdy dodano nowy wiersz, false gdy już był.
+// Zgoda dotyczy jednego przypomnienia. Nowy zapis może uzbroić listę ponownie;
+// zwracamy null, gdy poprzednia dostawa wymaga rozstrzygnięcia przez operatora.
 async function addSeasonalReminder(env, email) {
   const existing = await env.DB.prepare(
-    'SELECT id FROM seasonal_reminders WHERE email = ?1'
+    'SELECT id, last_sent_year, unsubscribed_at FROM seasonal_reminders WHERE email = ?1'
   ).bind(email).first();
+  if (existing && existing.last_sent_year == null && existing.unsubscribed_at == null) return false;
+  if (existing) {
+    const unresolved = await env.DB.prepare("SELECT 1 FROM notification_outbox WHERE entity_type='seasonal_reminder' AND entity_id=?1 AND status IN ('sending','uncertain') LIMIT 1").bind(existing.id).first();
+    if (unresolved) return null;
+    await env.DB.prepare("UPDATE notification_outbox SET status='cancelled', updated_at=?2 WHERE entity_type='seasonal_reminder' AND entity_id=?1 AND status IN ('pending','failed')").bind(existing.id, Date.now()).run();
+  }
   const now = Date.now();
   await env.DB.prepare(
     `INSERT INTO seasonal_reminders (
@@ -678,9 +704,12 @@ async function addSeasonalReminder(env, email) {
        consent_at = excluded.consent_at,
        consent_version = excluded.consent_version,
        unsubscribe_token = COALESCE(seasonal_reminders.unsubscribe_token, excluded.unsubscribe_token),
-       unsubscribed_at = NULL`
+       unsubscribed_at = NULL,
+       last_sent_year = NULL,
+       sent_at = NULL,
+       signed_up_at = excluded.signed_up_at`
   ).bind(crypto.randomUUID(), email, now, CONSENT_VERSION, crypto.randomUUID()).run();
-  return !existing;
+  return true;
 }
 
 async function apiSeasonalReminder(request, env) {
@@ -692,6 +721,7 @@ async function apiSeasonalReminder(request, env) {
     return turnstileRejected();
   }
 
+  if (!validInputTypes(body, ['email'], ['consent'])) return json({ error: 'Invalid input' }, 400);
   const email = normalizeEmail(body?.email);
   if (!email) return json({ error: 'Nieprawidłowy email' }, 400);
   if (body?.consent !== true) {
@@ -700,6 +730,7 @@ async function apiSeasonalReminder(request, env) {
 
   try {
     const added = await addSeasonalReminder(env, email);
+    if (added === null) return json({ error: 'Poprzednia wysyłka wymaga sprawdzenia. Skontaktuj się z serwisem.', code: 'REMINDER_DELIVERY_PENDING' }, 409);
     return json({ ok: true, message: added
       ? 'Zapisany, przypomnę mailem przed sezonem.'
       : 'Już jesteś na liście, do zobaczenia wiosną.' });
@@ -805,7 +836,7 @@ function freeSlotsForDate(date, taken, blocked, blockedDays) {
 
 async function apiAvailability(env, dateStr) {
   if (!isValidDate(dateStr)) return json({ error: 'Bad date' }, 400);
-  if (dateStr < todayInWarsaw()) return json({ slots: [] });
+  if (dateStr < todayInWarsaw() || dateStr > addDaysWarsaw(60)) return json({ slots: [] });
 
   const allSlots = SCHEDULE[dayOfWeek(dateStr)] || [];
   if (allSlots.length === 0) return json({ slots: [] });
@@ -821,20 +852,21 @@ async function apiAvailability(env, dateStr) {
 }
 
 // Najbliższy wolny termin dla nudge'a na stronie głównej.
-// Najwcześniejszy bookowalny dzień to jutro, spójnie z min daty w formularzu /umow.
+// Uwzględnia dzisiaj, pomijając minione godziny w strefie Europe/Warsaw.
 async function apiNextSlot(env) {
   const HORIZON = 21;
-  const start = addDaysWarsaw(1);
+  const start = addDaysWarsaw(0);
   const end = addDaysWarsaw(HORIZON);
   const maps = await loadSlotMaps(env, start, end);
 
-  for (let i = 1; i <= HORIZON; i++) {
+  for (let i = 0; i <= HORIZON; i++) {
     const date = addDaysWarsaw(i);
-    const free = freeSlotsForDate(date, maps.taken, maps.blocked, maps.blockedDays);
+    const free = freeSlotsForDate(date, maps.taken, maps.blocked, maps.blockedDays)
+      .filter(time => i !== 0 || time >= nowTimeInWarsaw());
     if (free.length) {
       const time = free[0];
-      const label = date === start
-        ? `jutro o ${time}`
+      const label = i < 2
+        ? `${i === 0 ? 'dzisiaj' : 'jutro'} o ${time}`
         : `${new Date(date + 'T12:00:00Z').toLocaleDateString('pl-PL', { weekday: 'short', day: 'numeric', month: 'long', timeZone: 'UTC' })}, ${time}`;
       return json({ date, time, label });
     }
@@ -874,6 +906,7 @@ async function createBookingCore(env, ctx, body) {
   if (!SCHEDULE[dow]?.includes(body.time_slot)) {
     return { ok: false, status: 400, error: 'Nieprawidłowy slot' };
   }
+  if (body.date > addDaysWarsaw(60)) return { ok: false, status: 400, error: 'Wybierz termin w ciągu 60 dni' };
   const bookingToday = todayInWarsaw();
   if (body.date < bookingToday) {
     return { ok: false, status: 400, error: 'Nie można umówić wstecz' };
@@ -906,10 +939,10 @@ async function createBookingCore(env, ctx, body) {
       `INSERT INTO bookings (id, created_at, date, time_slot, service_type, bike_type,
          customer_name, customer_phone, customer_email, notes, status,
          source, landing_path, landing_language, utm_source, utm_medium, utm_campaign,
-         utm_content, utm_term, referrer_host)
+         utm_content, utm_term, referrer_host, pickup_requested, pickup_address)
        VALUES (
          ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'pending',
-         ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19
+         ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21
        )`
     ).bind(
       id, now, body.date, body.time_slot,
@@ -920,6 +953,7 @@ async function createBookingCore(env, ctx, body) {
       attribution.source, attribution.landing_path, attribution.landing_language,
       attribution.utm_source, attribution.utm_medium, attribution.utm_campaign,
       attribution.utm_content, attribution.utm_term, attribution.referrer_host,
+      needsPickup(body) ? 1 : 0, needsPickup(body) ? body.pickup_address.trim() : null,
     ).run();
   } catch (e) {
     // Unikalny indeks idx_bookings_active_slot łapie wyścig dwóch równoległych rezerwacji.
@@ -955,7 +989,7 @@ async function createBookingCore(env, ctx, body) {
 // Wolne godziny na dany dzień (tylko wolne, format przyjazny dla TTS).
 async function apiVoiceAvailability(env, dateStr) {
   if (!isValidDate(dateStr)) return json({ error: 'Bad date' }, 400);
-  if (dateStr < todayInWarsaw()) return json({ date: dateStr, free: [] });
+  if (dateStr < todayInWarsaw() || dateStr > addDaysWarsaw(60)) return json({ date: dateStr, free: [] });
   const maps = await loadSlotMaps(env, dateStr, dateStr);
   let free = freeSlotsForDate(dateStr, maps.taken, maps.blocked, maps.blockedDays);
   // Spójnie z apiAvailability: dzisiejsze sloty z miniętą godziną rozpoczęcia odpadają.
@@ -973,6 +1007,14 @@ function apiVoiceConfig() {
     services: SERVICES,
     bike_types: BIKE_TYPES,
     schedule: SCHEDULE,
+    max_days_ahead: 60,
+    pickup: {
+      requested_field: 'pickup_requested',
+      address_field: 'pickup_address',
+      address_required: true,
+      price: SERVICES.find(service => service.id === 'odbior').price,
+      time_meaning: 'Wybrany termin dotyczy odbioru roweru. Odwóz ustalamy po naprawie.',
+    },
     address: 'Jesionowa 18, 05-825 Grodzisk Mazowiecki',
     booking_url: 'https://www.skocznarower.pl/umow',
   });
@@ -987,7 +1029,9 @@ async function apiVoiceCreateBooking(request, env, ctx) {
   const body = parsed.body;
 
   // Oznacz źródło telefoniczne w notatce, żeby rezerwacje z agenta były rozpoznawalne w /admin.
-  const baseNote = (body.notes && String(body.notes).trim()) || '';
+  const errors = validateBooking(body);
+  if (errors.length) return json({ error: errors[0] }, 400);
+  const baseNote = (body.notes && body.notes.trim()) || '';
   const notes = baseNote ? `[tel] ${baseNote}` : '[tel] rezerwacja telefoniczna (agent)';
 
   const res = await createBookingCore(env, ctx, {
@@ -1008,17 +1052,32 @@ async function apiVoiceCreateBooking(request, env, ctx) {
 
 function validateBooking(b) {
   const e = [];
+  if (!validInputTypes(b, ['date', 'time_slot', 'service_type', 'bike_type', 'customer_name', 'customer_phone', 'customer_email', 'notes', 'pickup_address'], ['pickup_requested', 'consent'])) return ['Invalid input'];
+  if (needsPickup(b) && (!b.pickup_address || b.pickup_address.trim().length < 5)) e.push('Podaj adres odbioru');
+  if (b.pickup_address && b.pickup_address.length > 300) e.push('Adres odbioru za długi');
   if (!isValidDate(b?.date)) e.push('Brak daty');
   if (!/^\d{2}:\d{2}$/.test(b?.time_slot || '')) e.push('Brak godziny');
   if (!SERVICES.some(s => s.id === b?.service_type)) e.push('Wybierz usługę');
   if (!BIKE_TYPES.includes(b?.bike_type)) e.push('Wybierz typ roweru');
   if (!b?.customer_name || b.customer_name.trim().length < 2) e.push('Wpisz imię');
   if (b?.customer_name && b.customer_name.length > 80) e.push('Imię za długie');
-  if (!b?.customer_phone || !/^(\+?48)?[0-9]{9}$/.test(normalizePhone(b.customer_phone))) e.push('Wpisz telefon');
+  if (!b?.customer_phone || !validPolishPhone(b.customer_phone)) e.push('Wpisz telefon');
   if (b?.customer_email && b.customer_email.length > 120) e.push('Email za długi');
   if (b?.customer_email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(b.customer_email)) e.push('Nieprawidłowy email');
   if (b?.notes && b.notes.length > 1000) e.push('Notatka za długa');
   return e;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function validInputTypes(body, strings, booleans = []) {
+  return body && typeof body === 'object' && !Array.isArray(body)
+    && strings.every(key => body[key] === undefined || typeof body[key] === 'string')
+    && booleans.every(key => body[key] === undefined || typeof body[key] === 'boolean');
+}
+
+function validPolishPhone(phone) {
+  return typeof phone === 'string' && /^(\+?48)?[0-9]{9}$/.test(phone.replace(/[\s()-]/g, ''));
 }
 
 function normalizePhone(p) {
@@ -1042,13 +1101,13 @@ async function sendNotifications(env, b) {
       entityId: b.id,
       eventKey: 'owner_new_booking',
       recipient: env.OWNER_PHONE || '600370810',
-      body: `Nowa rezerwacja: ${b.date} ${b.time_slot}, ${b.customer_name}, tel ${b.customer_phone}. ${tail}`,
+      body: `Nowa rezerwacja: ${b.date} ${b.time_slot}, ${b.customer_name}, tel ${b.customer_phone}.${needsPickup(b) ? ' Odbiór: ' + pickupAddress(b) + '.' : ''} ${tail}`,
     });
   } catch (e) { console.error('SMS do właściciela error', e); }
 
   // Potwierdzenie do klienta przez WhatsApp (szablon utility), fail-soft.
   // Wysyłamy tylko gdy kanał skonfigurowany (po onboardingu coexistence); inaczej pomijamy bez śladu.
-  if (env.WHATSAPP_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID) {
+  if (!needsPickup(b) && env.WHATSAPP_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID) {
     try {
       const firstName = (b.customer_name || '').split(' ')[0] || b.customer_name;
       await queueWhatsAppNotification(env, {
@@ -1100,7 +1159,7 @@ async function sendNotifications(env, b) {
 Data:    ${b.date} ${b.time_slot}
 Usługa:  ${service}
 Rower:   ${b.bike_type}
-
+${needsPickup(b) ? 'Odbiór roweru: ' + pickupAddress(b) + '. Podana data i godzina dotyczą odbioru. Odwóz ustalimy po naprawie.\n' : ''}
 Klient:  ${b.customer_name}
 Telefon: ${b.customer_phone}
 ${b.customer_email ? 'Email:   ' + b.customer_email + '\n' : ''}
@@ -1124,12 +1183,12 @@ ID:    ${b.id}
         text:
 `Cześć ${b.customer_name},
 
-Dziękuję za zgłoszenie. Twój termin jest wstępnie zarezerwowany, potwierdzę go telefonicznie.
+Dziękuję za zgłoszenie. Twój termin jest wstępnie zarezerwowany, potwierdzę go SMS-em lub telefonicznie.
 
 Data:    ${b.date}, godz. ${b.time_slot}
 Usługa:  ${service}
 Rower:   ${b.bike_type}
-
+${needsPickup(b) ? 'Odbiór roweru: ' + pickupAddress(b) + '. Podana data i godzina dotyczą odbioru. Odwóz ustalimy po naprawie.\n' : ''}
 Jeśli coś się zmieni, zadzwoń: ${PUBLIC_PHONE_DISPLAY}.
 
 Mateusz / skocznarower.pl
@@ -1185,7 +1244,7 @@ const CAL_DURATION_MIN = 60; // domyślny czas wizyty
 async function addToCalendar(env, b) {
   const calId = env.GOOGLE_CALENDAR_ID;
   const service = SERVICES.find(s => s.id === b.service_type)?.name || b.service_type;
-  const summary = `${service}, ${b.customer_name}`;
+  const summary = `${needsPickup(b) ? 'Odbiór: ' : ''}${service}, ${b.customer_name}`;
   const description =
     `Usluga: ${service}\n` +
     `Rower: ${b.bike_type}\n` +
@@ -1212,6 +1271,7 @@ async function addToCalendar(env, b) {
       body: JSON.stringify({
         summary,
         description,
+        location: needsPickup(b) ? pickupAddress(b) : 'Jesionowa 18, Grodzisk Mazowiecki',
         start: { dateTime: start, timeZone: CAL_TZ },
         end: { dateTime: end, timeZone: CAL_TZ },
       }),
@@ -1332,6 +1392,7 @@ async function handleQuickAction(request, env, url) {
   const summary =
     `<p><strong>${esc(b.customer_name)}</strong>, tel. ${esc(b.customer_phone)}</p>` +
     `<p>${esc(b.date)}, godz. ${esc(b.time_slot)}<br>${esc(service)}, ${esc(b.bike_type)}</p>` +
+    (needsPickup(b) ? `<p><strong>Odbiór i odwóz:</strong> ${esc(pickupAddress(b))}</p>` : '') +
     (b.notes ? `<p>Notatka: ${esc(b.notes)}</p>` : '');
 
   // Komunikat dla rezerwacji, która nie jest już 'pending' (np. token z SMS-a przeżył zmianę
@@ -1601,7 +1662,7 @@ async function workshopTrialResponseLink(request, env, signup) {
 }
 
 function workshopTrialLocale(language) {
-  return language === 'en' ? 'en' : language === 'ua' ? 'ua' : 'pl';
+  return language === 'en' ? 'en' : ['ua', 'uk'].includes(language) ? 'ua' : 'pl';
 }
 
 function workshopTrialCopy(language) {
@@ -2974,6 +3035,7 @@ const ADMIN_MSGS = {
 };
 const ADMIN_ERRS = {
   'slot-zajety': 'Ten slot ma już aktywną rezerwację (data + godzina). Zmień godzinę.',
+  'nieaktualny-status': 'Stan zlecenia zmienił się. Odśwież panel i sprawdź aktualne zlecenie.',
   'rez-anulowana': 'Ta rezerwacja jest anulowana. Najpierw przywróć ją przyciskiem Przywróć.',
   'zla-kwota': 'Nieprawidłowa kwota. Wpisz liczbę w złotych.',
   'zla-data': 'Nieprawidłowa data.',
@@ -3013,9 +3075,11 @@ async function adminUpdateBooking(request, env) {
   if (!back.startsWith('/') || back.startsWith('//')) back = '/admin';
   const backWith = (key, code) => redirect(withParam(back, key, code));
 
+  const expectedStatus = String(form.get('expected_status') || '') || null;
   if (action === 'confirm') {
-    const res = await confirmBooking(env, id);
+    const res = await confirmBooking(env, id, expectedStatus);
     if (res.error === 'slot') return backWith('err', 'slot-zajety');
+    if (res.error) return backWith('err', 'nieaktualny-status');
     return backWith('msg', res.notified ? 'potwierdzono-1' : 'potwierdzono-0');
   } else if (action === 'start') {
     // Przyjęcie roweru do serwisu: status 'in_progress' + SMS do klienta.
@@ -3024,11 +3088,13 @@ async function adminUpdateBooking(request, env) {
     // mapujemy na czytelny błąd, tak jak przy 'confirm' i 'done'.
     const b = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
     if (b && b.status === 'cancelled') return backWith('err', 'rez-anulowana');
-    if (b && b.status !== 'in_progress' && b.status !== 'done') {
+    if (!b || !['pending', 'confirmed'].includes(b.status) || (expectedStatus && b.status !== expectedStatus)) return backWith('err', 'nieaktualny-status');
+    if (b) {
       const transitionAt = Date.now();
       try {
         // accepted_at stempluje się tu (raz), ręczna korekta daty idzie przez adminSaveFinance.
-        await env.DB.prepare("UPDATE bookings SET status='in_progress', accepted_at=COALESCE(accepted_at, ?2) WHERE id=?1").bind(id, transitionAt).run();
+        const updated = await env.DB.prepare("UPDATE bookings SET status='in_progress', accepted_at=COALESCE(accepted_at, ?2) WHERE id=?1 AND status=?3").bind(id, transitionAt, b.status).run();
+        if (!updated.meta?.changes) return backWith('err', 'nieaktualny-status');
       } catch (e) {
         if (/UNIQUE constraint/i.test(String(e?.message || e))) return backWith('err', 'slot-zajety');
         throw e;
@@ -3048,6 +3114,7 @@ async function adminUpdateBooking(request, env) {
     const before = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
     // Ten sam guard co przy 'start': anulowanej nie wskrzeszamy po cichu.
     if (before && before.status === 'cancelled') return backWith('err', 'rez-anulowana');
+    if (!before || !['pending', 'confirmed', 'in_progress'].includes(before.status) || (expectedStatus && before.status !== expectedStatus)) return backWith('err', 'nieaktualny-status');
     const summary = String(form.get('repair_summary') || '').trim().slice(0, 300) || null;
     // Formularz „Zrobione" na dashboardzie przesyła też aktualną wartość pola ceny,
     // żeby kwota wpisana przed kliknięciem nie ginęła (SMS „Koszt" czyta final_price).
@@ -3067,12 +3134,13 @@ async function adminUpdateBooking(request, env) {
       }
     }
     try {
-      await env.DB.prepare(
+      const updated = await env.DB.prepare(
         `UPDATE bookings SET status='done', done_at=COALESCE(done_at, ?3),
            repair_summary=COALESCE(?2, repair_summary),
            final_price=CASE WHEN ?4=1 THEN ?5 ELSE final_price END
-         WHERE id=?1`
-      ).bind(id, summary, transitionAt, writePrice, price).run();
+         WHERE id=?1 AND status=?6`
+      ).bind(id, summary, transitionAt, writePrice, price, before.status).run();
+      if (!updated.meta?.changes) return backWith('err', 'nieaktualny-status');
     } catch (e) {
       if (/UNIQUE constraint/i.test(String(e?.message || e))) return backWith('err', 'slot-zajety');
       throw e;
@@ -3092,7 +3160,8 @@ async function adminUpdateBooking(request, env) {
     }
     return backWith('msg', 'zrobione');
   } else if (action === 'cancel') {
-    const res = await cancelBooking(env, id);
+    const res = await cancelBooking(env, id, expectedStatus);
+    if (res.error) return backWith('err', 'nieaktualny-status');
     return backWith('msg', res.notified ? 'anulowano-1' : 'anulowano-0');
   } else if (action === 'delete' || action === 'archive') {
     const b = await env.DB.prepare(
@@ -3227,14 +3296,14 @@ async function isOutboxJobCurrent(env, job) {
   }
 
   if (job.entity_type === 'seasonal_reminder') {
-    const match = /^seasonal_(\d{4})$/.exec(String(job.event_key || ''));
+    const match = /^seasonal_(\d{4})(?:_(\d+))?$/.exec(String(job.event_key || ''));
     if (!match) return false;
-    const year = Number(match[1]);
     const reminder = await env.DB.prepare(
-      'SELECT unsubscribed_at, last_sent_year FROM seasonal_reminders WHERE id=?1'
+      'SELECT unsubscribed_at, last_sent_year, consent_at FROM seasonal_reminders WHERE id=?1'
     ).bind(job.entity_id).first();
     return Boolean(reminder) && reminder.unsubscribed_at == null
-      && Number(reminder.last_sent_year || 0) < year;
+      && reminder.last_sent_year == null
+      && (match[2] ? Number(match[2]) === Number(reminder.consent_at) : Number(reminder.consent_at || 0) <= Number(job.created_at));
   }
 
   return true;
@@ -3286,7 +3355,7 @@ async function stampSentNotification(env, job, sentAt) {
       ).bind(sentAt, job.entity_id).run();
     }
   } else if (job.entity_type === 'seasonal_reminder' && job.channel === 'email') {
-    const sentYear = Number(String(job.event_key).replace(/^seasonal_/, ''));
+    const sentYear = Number(String(job.event_key).split('_')[1]);
     if (Number.isInteger(sentYear)) {
       await env.DB.prepare(
         `UPDATE seasonal_reminders SET sent_at=?1,
@@ -3339,7 +3408,7 @@ async function finalizeOutboxSent(env, job, options = {}) {
          AND EXISTS (SELECT 1 FROM notification_outbox WHERE id=?3 AND status='sent')`
     ).bind(sentAt, job.entity_id, job.id));
   } else if (job.entity_type === 'seasonal_reminder' && job.channel === 'email') {
-    const sentYear = Number(String(job.event_key).replace(/^seasonal_/, ''));
+    const sentYear = Number(String(job.event_key).split('_')[1]);
     if (Number.isInteger(sentYear)) {
       statements.push(env.DB.prepare(
         `UPDATE seasonal_reminders SET sent_at=?1,
@@ -3395,7 +3464,7 @@ async function deliverOutboxJob(env, job) {
     } else if (job.channel === 'reminder_fallback') {
       const payload = JSON.parse(job.body);
       let whatsappResult = { ok: false, uncertain: false, providerMessageId: null };
-      if (env.WHATSAPP_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID) {
+      if (payload.whatsapp && env.WHATSAPP_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID) {
         whatsappResult = await sendWhatsApp(env, job.recipient, payload.whatsapp, { returnResult: true });
       }
       if (whatsappResult.ok) {
@@ -3542,19 +3611,16 @@ async function sendBookingLifecycleSms(env, booking, eventKey, text) {
 /** Potwierdza rezerwację, dodaje wpis do kalendarza i informuje klienta. */
 async function confirmBooking(env, id, expectedStatus = null) {
   const before = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
-  if (!before) return { ok: true, notified: false };
+  if (!before || !['pending', 'cancelled'].includes(before.status)) return { error: 'state' };
   if (expectedStatus && before.status !== expectedStatus) return { error: 'state' };
+  expectedStatus = before.status;
   const transitionAt = Date.now();
   // Status aktywny (!= cancelled), więc przywrócenie anulowanej rezerwacji,
   // której slot zajęła inna, narusza idx_bookings_active_slot. Mapujemy to na 'slot'.
   try {
-    const updated = expectedStatus
-      ? await env.DB.prepare(
-        "UPDATE bookings SET status='confirmed', archived_at=NULL WHERE id=?1 AND status=?2"
-      ).bind(id, expectedStatus).run()
-      : await env.DB.prepare(
-        "UPDATE bookings SET status='confirmed', archived_at=NULL WHERE id=?1"
-      ).bind(id).run();
+    const updated = await env.DB.prepare(
+      "UPDATE bookings SET status='confirmed', archived_at=NULL WHERE id=?1 AND status=?2"
+    ).bind(id, expectedStatus).run();
     if ((updated.meta?.changes || 0) === 0) return { error: 'state' };
   } catch (e) {
     if (/UNIQUE constraint/i.test(String(e?.message || e))) return { error: 'slot' };
@@ -3583,16 +3649,13 @@ async function confirmBooking(env, id, expectedStatus = null) {
 /** Anuluje rezerwację, usuwa wpis z kalendarza i informuje klienta. */
 async function cancelBooking(env, id, expectedStatus = null) {
   const b = await env.DB.prepare('SELECT * FROM bookings WHERE id=?1').bind(id).first();
-  if (!b) return { ok: true, notified: false };
+  if (!b || !['pending', 'confirmed', 'in_progress'].includes(b.status)) return { error: 'state' };
   if (expectedStatus && b.status !== expectedStatus) return { error: 'state' };
+  expectedStatus = b.status;
   const transitionAt = Date.now();
-  const updated = expectedStatus
-    ? await env.DB.prepare(
-      "UPDATE bookings SET status='cancelled', gcal_event_id=NULL WHERE id=?1 AND status=?2"
-    ).bind(id, expectedStatus).run()
-    : await env.DB.prepare(
-      "UPDATE bookings SET status='cancelled', gcal_event_id=NULL WHERE id=?1"
-    ).bind(id).run();
+  const updated = await env.DB.prepare(
+    "UPDATE bookings SET status='cancelled', gcal_event_id=NULL WHERE id=?1 AND status=?2"
+  ).bind(id, expectedStatus).run();
   if ((updated.meta?.changes || 0) === 0) return { error: 'state' };
   if (b.status !== 'cancelled') {
     await auditEvent(env, 'booking', id, 'status_changed', { from: b.status, to: 'cancelled' });
@@ -3610,7 +3673,7 @@ async function cancelBooking(env, id, expectedStatus = null) {
 // SMS po przyjęciu roweru do serwisu (status -> in_progress).
 function repairAcceptedSms(b) {
   const firstName = (b.customer_name || '').split(' ')[0];
-  return `Cześć ${firstName}! Przyjęliśmy Twój rower do serwisu (skocznarower.pl, Jesionowa 18, Grodzisk Maz.). Skoro już u nas jest, dorzucić przegląd albo centrowanie kół? Damy znać SMS-em, gdy będzie gotowy. W razie pytań: ${PUBLIC_PHONE_DISPLAY}.`;
+  return `Cześć ${firstName}! Przyjęliśmy Twój rower do serwisu (skocznarower.pl, Jesionowa 18, Grodzisk Maz.). Damy znać SMS-em, gdy będzie gotowy. W razie pytań: ${PUBLIC_PHONE_DISPLAY}.`;
 }
 
 // SMS z podsumowaniem naprawy (status -> done). Zakres: repair_summary, a jak puste, nazwa usługi.
@@ -3619,6 +3682,7 @@ function repairDoneSms(b) {
   const svc = SERVICES.find(s => s.id === b.service_type)?.name || b.service_type;
   const zakres = (b.repair_summary && b.repair_summary.trim()) || svc;
   const koszt = b.final_price != null ? ` Koszt: ${b.final_price} zł.` : '';
+  if (needsPickup(b)) return `Cześć ${firstName}! Rower po serwisie jest gotowy. Zakres: ${zakres}.${koszt} Skontaktujemy się, żeby ustalić odwóz pod adres: ${pickupAddress(b)}. Kontakt: ${PUBLIC_PHONE_DISPLAY}.`;
   return `Cześć ${firstName}! Rower po serwisie jest gotowy do odbioru. Zakres: ${zakres}.${koszt} Adres: Jesionowa 18, Grodzisk Maz. Następnym razem umówisz się tutaj: skocznarower.pl/umow.`;
 }
 
@@ -3930,6 +3994,7 @@ async function adminBookingDetail(env, url) {
   ${sent === '1' ? '<p class="ok-msg">SMS wysłany.</p>' : ''}
   ${sent === '0' ? '<p class="err-msg">Nie udało się wysłać SMS (sprawdź logi).</p>' : ''}
   <p class="muted">
+    ${needsPickup(b) ? '<b>Odbiór i odwóz:</b> ' + escapeHtml(pickupAddress(b)) + '<br>' : ''}
     <b>${escapeHtml(svc)}</b> · ${escapeHtml(b.bike_type)}${b.bike_model ? ' · ' + escapeHtml(b.bike_model) : ''}<br>
     <a href="tel:${escapeHtml(b.customer_phone)}">${escapeHtml(b.customer_phone)}</a>${b.customer_email ? ' · <a href="mailto:' + escapeHtml(b.customer_email) + '">' + escapeHtml(b.customer_email) + '</a>' : ''}
   </p>
@@ -3982,10 +4047,11 @@ async function adminBookingDetail(env, url) {
   <form method="post" action="/admin/booking" class="actions" style="margin-top:16px">
     <input type="hidden" name="id" value="${escapeHtml(b.id)}">
     <input type="hidden" name="back" value="${escapeHtml(back)}">
+    <input type="hidden" name="expected_status" value="${escapeHtml(b.status)}">
     ${b.status === 'pending' ? '<button name="action" value="confirm" class="btn-ok">Potwierdź</button>' : ''}
     ${b.status !== 'in_progress' && b.status !== 'done' && b.status !== 'cancelled' ? `<button name="action" value="start" class="btn-ok" onclick="return confirm('Przyjąć rower do serwisu? Klient dostanie SMS o przyjęciu.')">Przyjęto</button>` : ''}
     ${b.status !== 'done' && b.status !== 'cancelled' ? `<button name="action" value="done" class="btn-ok" onclick="return confirm('Oznaczyć jako zrobione? Klient dostanie SMS z podsumowaniem i kosztem.')">Zrobione</button>` : ''}
-    ${b.status !== 'cancelled' ? `<button name="action" value="cancel" class="btn-warn" onclick="return confirm('Anulować rezerwację? Slot zostanie zwolniony.')">Anuluj</button>` : ''}
+    ${!['cancelled', 'done'].includes(b.status) ? `<button name="action" value="cancel" class="btn-warn" onclick="return confirm('Anulować rezerwację? Slot zostanie zwolniony.')">Anuluj</button>` : ''}
   </form>
 </section>
 
@@ -4364,7 +4430,7 @@ function renderDashboard({
     const estPrice = svc?.price || '-';
     const finalVal = b.final_price != null ? b.final_price : '';
     const who = `${b.customer_name} (${b.date} ${b.time_slot})`;
-    const hidden = `<input type="hidden" name="id" value="${escapeHtml(b.id)}"><input type="hidden" name="back" value="${backEsc}">`;
+    const hidden = `<input type="hidden" name="id" value="${escapeHtml(b.id)}"><input type="hidden" name="back" value="${backEsc}"><input type="hidden" name="expected_status" value="${escapeHtml(b.status)}">`;
     return `
     <tr class="status-${b.status}">
       <td class="when" data-label="Kiedy">
@@ -4381,6 +4447,7 @@ function renderDashboard({
       </td>
       <td data-label="Usługa">
         <div>${escapeHtml(service)}</div>
+        ${needsPickup(b) ? `<div class="muted">Odbiór i odwóz: ${escapeHtml(pickupAddress(b))}</div>` : ''}
         ${b.notes ? `<div class="muted notes">${escapeHtml(b.notes)}</div>` : ''}
       </td>
       <td class="price-est" data-label="Wycena"><span class="muted">${escapeHtml(estPrice)}</span></td>
@@ -4399,7 +4466,7 @@ function renderDashboard({
         ${b.archived_at == null && (b.status === 'pending' || b.status === 'confirmed') ? `<form method="post" action="/admin/booking" ${confirmAttr(`Przyjąć rower do serwisu? ${who}. Klient dostanie SMS o przyjęciu.`)}>${hidden}<button name="action" value="start" class="btn-ok" title="Przyjęto rower do serwisu, wyśle SMS do klienta">Przyjęto</button></form>` : ''}
         ${b.archived_at == null && b.status !== 'done' && b.status !== 'cancelled' ? `<form method="post" action="/admin/booking" class="done-form" onsubmit="var p=this.closest('tr').querySelector('.price-input'); if (p) this.final_price.value = p.value; return confirm('${confirmJs(`Oznaczyć jako zrobione? ${who}. Klient dostanie SMS z podsumowaniem i kosztem.`)}')">${hidden}<input type="hidden" name="final_price" value="${finalVal}"><input type="text" name="repair_summary" value="${escapeHtml(b.repair_summary || '')}" placeholder="co zrobiono (do SMS)" maxlength="300" class="summary-input" onkeydown="if(event.key==='Enter'){event.preventDefault()}"><button name="action" value="done" class="btn-ok" title="Naprawa gotowa, wyśle SMS z podsumowaniem">Zrobione</button></form>` : ''}
         ${b.archived_at == null && b.status === 'cancelled' ? `<form method="post" action="/admin/booking" ${confirmAttr(`Przywrócić rezerwację? ${who}. Wróci jako potwierdzona.`)}>${hidden}<button name="action" value="confirm" class="btn-ok">Przywróć</button></form>` : ''}
-        ${b.archived_at == null && b.status !== 'cancelled' ? `<form method="post" action="/admin/booking" ${confirmAttr(`Anulować rezerwację? ${who}. Slot zostanie zwolniony.`)}>${hidden}<button name="action" value="cancel" class="btn-warn">Anuluj</button></form>` : ''}
+        ${b.archived_at == null && !['cancelled', 'done'].includes(b.status) ? `<form method="post" action="/admin/booking" ${confirmAttr(`Anulować rezerwację? ${who}. Slot zostanie zwolniony.`)}>${hidden}<button name="action" value="cancel" class="btn-warn">Anuluj</button></form>` : ''}
         ${b.archived_at == null && ['done', 'cancelled'].includes(b.status) ? `<form method="post" action="/admin/booking" ${confirmAttr(`Przenieść rezerwację do archiwum? ${who}. Status pozostanie bez zmian.`)}>${hidden}<button name="action" value="archive" class="btn-del">Archiwizuj</button></form>` : ''}
         ${b.archived_at != null ? `<form method="post" action="/admin/booking" ${confirmAttr(`Przywrócić rezerwację z archiwum? ${who}. Status pozostanie bez zmian.`)}>${hidden}<button name="action" value="unarchive" class="btn-ok">Przywróć z archiwum</button></form>` : ''}
       </td>
@@ -5016,7 +5083,7 @@ function gamePhoneKey(raw) {
 }
 
 function gameNick(raw) {
-  const nick = String(raw || '').replace(/\s+/g, ' ').trim().slice(0, 14);
+  const nick = String(raw || '').replace(/\s+/g, ' ').trim();
   return GAME_NICK_RE.test(nick) ? nick : '';
 }
 
@@ -5042,8 +5109,9 @@ async function apiGameRegister(request, env) {
   const parsed = await readJsonRequest(request);
   if (parsed.error) return json({ error: parsed.error }, parsed.status);
   const body = parsed.body || {};
+  if (!validInputTypes(body, ['phone', 'nick'], ['consent', 'marketing'])) return json({ error: 'Invalid input' }, 400);
 
-  const phoneKey = gamePhoneKey(body.phone);
+  const phoneKey = validPolishPhone(body.phone) ? gamePhoneKey(body.phone) : '';
   const nick = gameNick(body.nick);
   if (!phoneKey) return json({ error: 'Podaj polski numer telefonu.' }, 400);
   if (!nick) return json({ error: 'Nick ma mieć od 2 do 14 znaków.' }, 400);
@@ -5102,10 +5170,11 @@ async function apiGameVerify(request, env) {
   const parsed = await readJsonRequest(request);
   if (parsed.error) return json({ error: parsed.error }, parsed.status);
   const body = parsed.body || {};
+  if (!validInputTypes(body, ['phone', 'code'], [])) return json({ error: 'Invalid input' }, 400);
 
-  const phoneKey = gamePhoneKey(body.phone);
-  const code = String(body.code || '').replace(/[^0-9]/g, '');
-  if (!phoneKey || code.length !== 6) return json({ error: 'Podaj sześciocyfrowy kod z SMS.' }, 400);
+  const phoneKey = validPolishPhone(body.phone) ? gamePhoneKey(body.phone) : '';
+  const code = String(body.code || '').trim();
+  if (!phoneKey || !/^[0-9]{6}$/.test(code)) return json({ error: 'Podaj sześciocyfrowy kod z SMS.' }, 400);
 
   const row = await env.DB.prepare(
     'SELECT code_hash, nick, consent_marketing, expires_at, attempts FROM game_verifications WHERE phone_key = ?1'
@@ -5139,43 +5208,87 @@ async function apiGameVerify(request, env) {
   return json({ ok: true, token: await gameToken(env, player.id), nick: player.nick });
 }
 
-function gameInt(value, max) {
-  const n = Math.floor(Number(value));
-  if (!Number.isFinite(n) || n < 0) return 0;
-  return Math.min(n, max);
+// These generous bounds catch impossible submissions, not a replay of the physics.
+// Keep lengths/PPM/coin spacing in sync with LEVELS and makeWorld in game.js.
+const GAME_METERS = { pumptrack: 620, las: 900, hopki: 1100, szutrowka: 1250, kamieniec: 1400, wydmy: 1350, zima: 1500, noc: 1800 };
+const GAME_RUN_TTL_MS = 2 * 60 * 60_000;
+
+async function gameRunSignature(env, row) {
+  return (await hmacHex(gameSecret(env), `game:run:${row.id}:${row.player_id}:${row.level}:${row.bike}:${row.started_at}`)).slice(0, 32);
+}
+
+async function apiGameRun(request, env) {
+  if (!gameSecret(env)) return json({ error: 'Ranking chwilowo niedostępny.' }, 503);
+  const parsed = await readJsonRequest(request);
+  if (parsed.error) return json({ error: parsed.error }, parsed.status);
+  const body = parsed.body;
+  if (!validInputTypes(body, ['token', 'level', 'bike'])) return json({ error: 'Invalid input' }, 400);
+  const player = await gamePlayerFromToken(env, body.token);
+  if (!player) return json({ error: 'Potwierdź numer, żeby wysyłać wyniki.' }, 401);
+  if (!GAME_LEVELS.includes(body.level)) return json({ error: 'Nieznana trasa.' }, 400);
+  if (!GAME_BIKES.includes(body.bike)) return json({ error: 'Nieznany rower.', code: 'INVALID_BIKE' }, 400);
+  const row = { id: crypto.randomUUID(), player_id: player.id, level: body.level, bike: body.bike, started_at: Date.now() };
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM game_runs WHERE expires_at < ?1').bind(row.started_at),
+    env.DB.prepare('INSERT INTO game_runs (id, player_id, level, bike, started_at, expires_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)')
+      .bind(row.id, row.player_id, row.level, row.bike, row.started_at, row.started_at + GAME_RUN_TTL_MS),
+  ]);
+  return json({ ok: true, run_token: row.id + '.' + await gameRunSignature(env, row) });
 }
 
 async function apiGameScore(request, env) {
   if (!gameSecret(env)) return json({ error: 'Ranking chwilowo niedostępny.' }, 503);
   const parsed = await readJsonRequest(request);
   if (parsed.error) return json({ error: parsed.error }, parsed.status);
-  const body = parsed.body || {};
-
+  const body = parsed.body;
+  if (!validInputTypes(body, ['token', 'run_token', 'level', 'bike'], ['finished'])) return json({ error: 'Invalid input' }, 400);
   const player = await gamePlayerFromToken(env, body.token);
   if (!player) return json({ error: 'Potwierdź numer, żeby wysyłać wyniki.' }, 401);
   const level = GAME_LEVELS.includes(body.level) ? body.level : '';
   if (!level) return json({ error: 'Nieznana trasa.' }, 400);
-  const bike = GAME_BIKES.includes(body.bike) ? body.bike : null;
-
-  const score = gameInt(body.score, 200000);
-  const dist = gameInt(body.dist, 20000);
-  const coins = gameInt(body.coins, 50000);
-  const flips = gameInt(body.flips, 2000);
+  if (!GAME_BIKES.includes(body.bike)) return json({ error: 'Nieznany rower.', code: 'INVALID_BIKE' }, 400);
+  const parts = (body.run_token || '').split('.');
+  const ticket = UUID_RE.test(parts[0] || '') && parts.length === 2
+    ? await env.DB.prepare('SELECT * FROM game_runs WHERE id=?1').bind(parts[0]).first() : null;
   const now = Date.now();
-
-  await env.DB.prepare(
-    'INSERT INTO game_scores (player_id, level, score, dist, coins, flips, bike, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)'
-  ).bind(player.id, level, score, dist, coins, flips, bike, now).run();
-  await env.DB.prepare(
-    'UPDATE game_players SET runs = runs + 1, best_score = MAX(best_score, ?2), last_seen_at = ?3 WHERE id = ?1'
-  ).bind(player.id, score, now).run();
-
+  if (!ticket || ticket.player_id !== player.id || ticket.level !== level || ticket.bike !== body.bike
+      || ticket.expires_at < now || !timingSafeEqual(parts[1], await gameRunSignature(env, ticket))) {
+    return json({ error: 'Rozpocznij nowy przejazd online.', code: 'INVALID_RUN' }, 400);
+  }
+  if (ticket.consumed_at != null) return json({ error: 'Wynik tego przejazdu już zapisano.', code: 'RUN_USED' }, 409);
+  const { score, dist, coins, flips, duration_ms: duration, finished } = body;
+  const meters = GAME_METERS[level];
+  const seconds = duration / 1000;
+  const maxTrackCoins = Math.ceil(meters * 32 / 820) * 25;
+  if (![score, dist, coins, flips, duration].every(n => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0)
+      || typeof finished !== 'boolean' || duration < 1 || duration > GAME_RUN_TTL_MS
+      || duration > now - ticket.started_at + 2000
+      || dist > meters + 10 || dist > seconds * 45 + 5
+      || (finished && dist < meters - 3)
+      || flips > seconds * 5 + 1 || coins % 5 !== 0 || coins < flips * 30
+      || coins - flips * 30 > maxTrackCoins || score !== dist + coins + (finished ? 400 : 0)) {
+    return json({ error: 'Wynik nie zgadza się z danymi przejazdu.', code: 'INVALID_SCORE' }, 400);
+  }
+  // One transaction makes consuming the ticket, recording the score and totals atomic.
+  const results = await env.DB.batch([
+    env.DB.prepare(
+      `INSERT INTO game_scores (player_id, level, score, dist, coins, flips, bike, created_at, run_id)
+       SELECT player_id, level, ?2, ?3, ?4, ?5, bike, ?6, id FROM game_runs
+       WHERE id=?1 AND consumed_at IS NULL AND expires_at>=?6`
+    ).bind(ticket.id, score, dist, coins, flips, now),
+    env.DB.prepare(
+      'UPDATE game_players SET runs=runs+1, best_score=MAX(best_score, ?2), last_seen_at=?3 WHERE id=?1 AND changes()>0'
+    ).bind(player.id, score, now),
+    env.DB.prepare(
+      'UPDATE game_runs SET consumed_at=?2 WHERE id=?1 AND consumed_at IS NULL AND EXISTS (SELECT 1 FROM game_scores WHERE run_id=?1)'
+    ).bind(ticket.id, now),
+  ]);
+  if (!results[0].meta?.changes) return json({ error: 'Wynik tego przejazdu już zapisano.', code: 'RUN_USED' }, 409);
   const rank = await env.DB.prepare(
     `SELECT COUNT(*) + 1 AS pos FROM (
        SELECT player_id, MAX(score) AS best FROM game_scores WHERE level = ?1 GROUP BY player_id
      ) WHERE best > ?2`
   ).bind(level, score).first();
-
   return json({ ok: true, rank: Number(rank?.pos || 1) });
 }
 
@@ -5221,7 +5334,37 @@ function parseCookie(header) {
 
 // ─── UTILS ──────────────────────────────────────────────────────────────────
 
+const PUBLIC_ERROR_CODES = {
+  'Invalid input': 'INVALID_INPUT', 'Bad JSON': 'INVALID_JSON', 'Request too large': 'REQUEST_TOO_LARGE',
+  'Bad date': 'INVALID_DATE', 'Brak daty': 'INVALID_DATE', 'Brak godziny': 'INVALID_TIME',
+  'Nieprawidłowy slot': 'INVALID_TIME', 'Wybierz usługę': 'INVALID_SERVICE', 'Wybierz typ roweru': 'INVALID_BIKE',
+  'Wpisz imię': 'INVALID_NAME', 'Wpisz imię i nazwisko': 'INVALID_NAME', 'Imię za długie': 'INVALID_NAME',
+  'Wpisz telefon': 'INVALID_PHONE', 'Podaj polski numer telefonu.': 'INVALID_PHONE',
+  'Nieprawidłowy email': 'INVALID_EMAIL', 'Email za długi': 'INVALID_EMAIL',
+  'Notatka za długa': 'INVALID_NOTES', 'Uwagi za długie': 'INVALID_NOTES',
+  'Podaj adres odbioru': 'PICKUP_ADDRESS_REQUIRED', 'Adres odbioru za długi': 'INVALID_PICKUP_ADDRESS',
+  'Wybierz termin w ciągu 60 dni': 'DATE_OUT_OF_RANGE', 'Nie można umówić wstecz': 'DATE_OUT_OF_RANGE',
+  'Ta godzina już minęła, wybierz późniejszy termin': 'SLOT_PAST',
+  'Slot zajęty, wybierz inny': 'SLOT_UNAVAILABLE', 'Termin niedostępny': 'SLOT_UNAVAILABLE',
+  'Potrzebna zgoda na kontakt': 'CONSENT_REQUIRED',
+  'Wiek dziecka: 7-17 lat': 'INVALID_AGE', 'Wybierz poziom': 'INVALID_LEVEL',
+  'Wybierz lokalizację': 'INVALID_LOCATION', 'Nieprawidłowe źródło': 'INVALID_SOURCE',
+  'Invalid idempotency key': 'INVALID_IDEMPOTENCY_KEY',
+  'Nick ma mieć od 2 do 14 znaków.': 'INVALID_NICK',
+  'Zgoda na przetwarzanie numeru jest wymagana.': 'CONSENT_REQUIRED',
+  'Podaj sześciocyfrowy kod z SMS.': 'INVALID_CODE', 'Kod się nie zgadza.': 'INVALID_CODE',
+  'Najpierw poproś o kod.': 'CODE_REQUIRED', 'Kod wygasł. Poproś o nowy.': 'CODE_EXPIRED',
+  'Nieznana trasa.': 'INVALID_LEVEL',
+};
+
 function json(obj, status = 200) {
+  if (obj.error && !obj.code) {
+    obj = { ...obj, code: PUBLIC_ERROR_CODES[obj.error] || ({
+      400: 'INVALID_INPUT', 401: 'UNAUTHORIZED', 403: 'FORBIDDEN', 404: 'NOT_FOUND',
+      409: 'CONFLICT', 413: 'REQUEST_TOO_LARGE', 429: 'RATE_LIMITED',
+      500: 'SERVER_ERROR', 502: 'DELIVERY_FAILED', 503: 'SERVICE_UNAVAILABLE',
+    }[status] || 'SERVER_ERROR') };
+  }
   return new Response(JSON.stringify(obj), {
     status,
     headers: {
@@ -5297,14 +5440,16 @@ function escapeHtml(s) {
 async function sendDailyReminders(env) {
   const tomorrow = addDaysWarsaw(1);
   const rows = await env.DB.prepare(
-    `SELECT id, customer_name, customer_phone, date, time_slot
+    `SELECT id, customer_name, customer_phone, date, time_slot, service_type, pickup_requested, pickup_address, notes
      FROM bookings
      WHERE date = ?1 AND status = 'confirmed' AND reminder_sent_at IS NULL`
   ).bind(tomorrow).all();
 
   for (const b of rows.results || []) {
     const firstName = (b.customer_name || '').split(' ')[0];
-    const sms = `Cześć ${firstName}! Przypomnienie: jutro o ${b.time_slot} wizyta w skocznarower.pl, Jesionowa 18 Grodzisk Maz. Jakby coś: ${PUBLIC_PHONE_DISPLAY}.`;
+    const sms = needsPickup(b)
+      ? `Cześć ${firstName}! Przypomnienie: jutro o ${b.time_slot} odbieramy rower pod adresem ${pickupAddress(b)}. Kontakt: ${PUBLIC_PHONE_DISPLAY}.`
+      : `Cześć ${firstName}! Przypomnienie: jutro o ${b.time_slot} wizyta w skocznarower.pl, Jesionowa 18 Grodzisk Maz. Jakby coś: ${PUBLIC_PHONE_DISPLAY}.`;
     await queueReminderNotification(env, {
       entityType: 'booking',
       entityId: b.id,
@@ -5314,7 +5459,7 @@ async function sendDailyReminders(env) {
       body: {
         // Outbox próbuje WhatsApp jako pierwszy. Po jednoznacznym odrzuceniu
         // automatycznie używa SMS; nie robi fallbacku przy nieznanym wyniku Meta.
-        whatsapp: {
+        whatsapp: needsPickup(b) ? null : {
           type: 'template',
           template: {
             name: env.WHATSAPP_TPL_REMINDER || 'przypomnienie_wizyty',
@@ -5405,10 +5550,15 @@ async function sendSeasonalReminders(env) {
   if (month !== '03' || day !== '15') return;
 
   const rows = await env.DB.prepare(
-    `SELECT id, email, unsubscribe_token FROM seasonal_reminders
+    `SELECT id, email, unsubscribe_token, consent_at FROM seasonal_reminders
      WHERE unsubscribed_at IS NULL
-       AND (last_sent_year IS NULL OR last_sent_year < ?1)`
-  ).bind(Number(year)).all();
+       AND last_sent_year IS NULL
+       AND NOT EXISTS (
+         SELECT 1 FROM notification_outbox o
+         WHERE o.entity_type='seasonal_reminder' AND o.entity_id=seasonal_reminders.id
+           AND o.created_at >= COALESCE(seasonal_reminders.consent_at, 0)
+       )`
+  ).all();
 
   if (!env.RESEND_API_KEY) {
     console.log('seasonal reminders: no RESEND_API_KEY, skipping send for', (rows.results || []).length);
@@ -5449,7 +5599,7 @@ Rezygnacja z przypomnień: ${unsubscribeUrl}
       await queueEmailNotification(env, {
         entityType: 'seasonal_reminder',
         entityId: r.id,
-        eventKey: 'seasonal_' + year,
+        eventKey: 'seasonal_' + year + '_' + (r.consent_at || 0),
         recipient: r.email,
         body: payload,
       });

@@ -30,246 +30,475 @@
 
   <!-- Schema.org FAQPage -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "@id": "https://www.skocznarower.pl/#faq",
-    "inLanguage": "pl-PL",
-    "speakable": {
-      "@type": "SpeakableSpecification",
-      "cssSelector": [".faq-q", ".faq-a"]
-    },
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "Jak umówić rower do serwisu w Grodzisku Mazowieckim?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Najprościej przez formularz online na skocznarower.pl/umow: wybierasz usługę, dzień i godzinę, oddzwaniam żeby potwierdzić. Możesz też zadzwonić (600 370 810) albo napisać na Instagramie (@xpyszczek_). Serwis na Jesionowej 18 w Grodzisku Mazowieckim, tylko po umówieniu."}
-      },
-      {
-        "@type": "Question",
-        "name": "Ile trwa serwis roweru?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Proste rzeczy jak regulacja czy dętka to zazwyczaj tego samego dnia. Przegląd kompleksowy albo zaplatanie koła to 2 do 4 dni roboczych."}
-      },
-      {
-        "@type": "Question",
-        "name": "Czy serwisujesz rowery Dirt Jump i BMX?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Tak, to główna specjalizacja. Serwis Dirt Jump i BMX w Grodzisku Mazowieckim, obsługa klientów z Pruszkowa, Milanówka i okolic Warszawy."}
-      },
-      {
-        "@type": "Question",
-        "name": "Czy naprawiasz rowery elektryczne (e-bike)?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Tak. Serwis mechaniczny e-bike: hamulce, koła i osprzęt bez problemu. Elektroniką ani silnikiem się nie zajmuję."}
-      },
-      {
-        "@type": "Question",
-        "name": "Czy dojadę do serwisu z Pruszkowa lub Milanówka?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Tak. Z Pruszkowa ok. 15 min samochodem, z Milanówka minuta (serwis stoi na granicy). Z zachodnich dzielnic Warszawy ok. 30 minut. Serwis na Jesionowej 18 w Grodzisku Mazowieckim."}
-      },
-      {
-        "@type": "Question",
-        "name": "Jak często serwisować rower dirt jump?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Przy regularnej jeździe na torze polecam podstawowy przegląd co sezon, czyli wiosną przed startem. Przy intensywnej jeździe kilka razy w tygodniu warto zajrzeć do roweru też w połowie lata."}
-      },
-      {
-        "@type": "Question",
-        "name": "Jaka różnica między zaplataniem koła a centrowaniem?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Centrowanie to regulacja naciągu szprych w gotowym kole. Zaplatanie to składanie koła od zera: obręcz, piasta, szprychy, nyple. Zaplatanie przy nowej piaście lub obręczy, centrowanie gdy koło jest sprawne ale bije. Oba robię na profesjonalnej centrownicy z miernikiem."}
-      },
-      {
-        "@type": "Question",
-        "name": "Kiedy wymienić łańcuch rowerowy?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Przy zużyciu 0,75 warto wymienić łańcuch, bo zaoszczędzisz na kasecie. Przy 1,0 kaseta idzie razem z łańcuchem i płacisz kilka razy więcej."}
-      },
-      {
-        "@type": "Question",
-        "name": "Robisz serwis hydraulicznych hamulców rowerowych?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Tak. Bleeding hamulców hydraulicznych dla Shimano, SRAM, TRP, Hope i Magury. Odpowietrzanie, wymiana oleju, regulacja punktu chwytu. Cena od 100 zł za obwód."}
-      },
-      {
-        "@type": "Question",
-        "name": "Czy serwis jest profesjonalnie wyposażony?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Tak. Stojak serwisowy, profesjonalna centrownica do kół z miernikiem wybierania (truing stand), klucz dynamometryczny, zestaw do odpowietrzania hamulców hydraulicznych, przyrząd do prostowania haków i tarcz, skuwacz, klucze do konusów, bacik i klucze do kaset i suportów. Dzięki centrownicy z miernikiem zaplatanie i centrowanie koła robię z milimetrową precyzją."}
-      },
-      {
-        "@type": "Question",
-        "name": "Co to jest centrownica z miernikiem i dlaczego to ważne?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Centrownica to stojak do centrowania i zaplatania kół. Tania wersja to dwa kawałki metalu i oko mechanika. Profesjonalna centrownica z miernikiem (dial indicator) to precyzyjny przyrząd, który mierzy odchylenie koła z dokładnością do dziesiątych części milimetra, zarówno na boki jak i na górę/dół. Dzięki temu zaplatam i centruję koła tak blisko idealnego jak to możliwe fizycznie. Dla kół do dirt jumpa, BMX czy MTB, gdzie koło dostaje mocne uderzenia, precyzja szprychowania robi realną różnicę w trwałości."}
-      },
-      {
-        "@type": "Question",
-        "name": "Jakie marki osprzętu obsługujesz?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Shimano, SRAM, TRP, Hope, Magura, bez problemu. Masz coś innego? Napisz, prawie na pewno dam radę."}
-      }
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "@id": "https://www.skocznarower.pl/#faq",
+  "inLanguage": "pl-PL",
+  "speakable": {
+    "@type": "SpeakableSpecification",
+    "cssSelector": [
+      ".faq-q",
+      ".faq-a"
     ]
-  }
+  },
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Jak umówić rower do serwisu w Grodzisku Mazowieckim?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Najprościej przez formularz online na skocznarower.pl/umow: wybierasz usługę, dzień i godzinę, potwierdzam termin telefonem lub SMS-em. Możesz też zadzwonić (600 370 810) albo napisać na Instagramie (@xpyszczek_). Serwis na Jesionowej 18 w Grodzisku Mazowieckim, tylko po umówieniu."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Ile trwa serwis roweru?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Proste rzeczy jak regulacja czy dętka to zazwyczaj tego samego dnia. Przegląd kompleksowy albo zaplatanie koła to 2 do 4 dni roboczych."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Czy serwisujesz rowery Dirt Jump i BMX?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tak, to główna specjalizacja. Serwis Dirt Jump i BMX w Grodzisku Mazowieckim, obsługa klientów z Pruszkowa, Milanówka i okolic Warszawy."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Czy naprawiasz rowery elektryczne (e-bike)?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tak. Serwis mechaniczny e-bike: hamulce, koła i osprzęt bez problemu. Elektroniką ani silnikiem się nie zajmuję."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Czy dojadę do serwisu z Pruszkowa lub Milanówka?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Warsztat jest przy Jesionowej 18 w Grodzisku Mazowieckim. Przyjmuję rowery z Pruszkowa , Milanówka i okolic. Czas dojazdu zależy od miejsca startu i ruchu; sprawdź trasę z własnego adresu."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Jak często serwisować rower dirt jump?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Przy regularnej jeździe na torze polecam podstawowy przegląd co sezon, czyli wiosną przed startem. Przy intensywnej jeździe kilka razy w tygodniu warto zajrzeć do roweru też w połowie lata."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Jaka różnica między zaplataniem koła a centrowaniem?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Centrowanie to regulacja naciągu szprych w gotowym kole. Zaplatanie to składanie koła od zera: obręcz, piasta, szprychy, nyple. Zaplatanie przy nowej piaście lub obręczy, centrowanie gdy koło jest sprawne ale bije. Oba robię na profesjonalnej centrownicy z miernikiem."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Kiedy wymienić łańcuch rowerowy?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Próg wymiany zależy od modelu łańcucha i zaleceń producenta. Orientacyjnie dla wielu napędów 11- i 12-rzędowych wynosi 0,5%, a dla 5- do 10-rzędowych 0,75%. Użyj przymiaru zgodnego z łańcuchem; zużycie kasety oceniam osobno przy przeglądzie."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Robisz serwis hydraulicznych hamulców rowerowych?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tak. Bleeding hamulców hydraulicznych dla Shimano, SRAM, TRP, Hope i Magury. Odpowietrzanie, wymiana oleju, regulacja punktu chwytu. Cena od 100 zł za obwód."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Czy serwis jest profesjonalnie wyposażony?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tak. Stojak serwisowy, profesjonalna centrownica do kół z miernikiem wybierania (truing stand), klucz dynamometryczny, zestaw do odpowietrzania hamulców hydraulicznych, przyrząd do prostowania haków i tarcz, skuwacz, klucze do konusów, bacik i klucze do kaset i suportów."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Co to jest centrownica z miernikiem i dlaczego to ważne?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Centrownica utrzymuje koło podczas centrowania i zaplatania. Miernik pokazuje bicie boczne i promieniowe z rozdzielczością 0,1 mm. To rozdzielczość odczytu, nie obietnica takiego samego wyniku dla każdego koła. Sprawdzam też stan obręczy, szprych i nypli; uszkodzonej obręczy nie zawsze da się wycentrować."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Jakie marki osprzętu obsługujesz?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Shimano, SRAM, TRP, Hope, Magura, bez problemu. Masz coś innego? Napisz, prawie na pewno dam radę."
+      }
+    }
+  ]
+}
   </script>
 
   <!-- Schema.org LocalBusiness -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": ["LocalBusiness", "BicycleStore"],
-    "@id": "https://www.skocznarower.pl/#business",
-    "name": "skocznarower.pl – Serwis Rowerowy",
-    "description": "Warsztat rowerowy specjalizujący się w Dirt Jump, MTB, BMX i e-bike, z centrownicą z miernikiem do precyzyjnego zaplatania i centrowania kół. Obsługuję klientów z Grodziska Mazowieckiego, Pruszkowa, Milanówka i okolic Warszawy.",
-    "url": "https://www.skocznarower.pl",
-    "telephone": "+48600370810",
-    "image": "https://www.skocznarower.pl/uploads/photo-1778431658856.jpeg",
-    "currenciesAccepted": "PLN",
-    "paymentAccepted": "Gotówka, BLIK, przelew",
-    "knowsAbout": [
-      "Serwis rowerowy",
-      "Dirt jump",
-      "BMX",
-      "MTB",
-      "E-bike",
-      "Zaplatanie kół",
-      "Centrowanie kół",
-      "Bleeding hamulców hydraulicznych",
-      "Hamulce Shimano",
-      "Hamulce SRAM",
-      "Budowa rowerów na miarę"
-    ],
-    "slogan": "Serwis Dirt Jump, MTB, BMX i e-bike w Grodzisku Mazowieckim",
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": "Jesionowa 18",
-      "addressLocality": "Grodzisk Mazowiecki",
-      "postalCode": "05-825",
-      "addressCountry": "PL"
+{
+  "@context": "https://schema.org",
+  "@type": [
+    "LocalBusiness",
+    "BicycleStore"
+  ],
+  "@id": "https://www.skocznarower.pl/#business",
+  "name": "skocznarower.pl – Serwis Rowerowy",
+  "description": "Warsztat rowerowy specjalizujący się w Dirt Jump, MTB, BMX i e-bike, z centrownicą z miernikiem do precyzyjnego zaplatania i centrowania kół. Obsługuję klientów z Grodziska Mazowieckiego, Pruszkowa, Milanówka i okolic Warszawy.",
+  "url": "https://www.skocznarower.pl",
+  "telephone": "+48600370810",
+  "image": "https://www.skocznarower.pl/uploads/photo-1778431658856.jpeg",
+  "currenciesAccepted": "PLN",
+  "paymentAccepted": "Gotówka, BLIK, przelew",
+  "knowsAbout": [
+    "Serwis rowerowy",
+    "Dirt jump",
+    "BMX",
+    "MTB",
+    "E-bike",
+    "Zaplatanie kół",
+    "Centrowanie kół",
+    "Bleeding hamulców hydraulicznych",
+    "Hamulce Shimano",
+    "Hamulce SRAM",
+    "Budowa rowerów na miarę"
+  ],
+  "slogan": "Serwis Dirt Jump, MTB, BMX i e-bike w Grodzisku Mazowieckim",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Jesionowa 18",
+    "addressLocality": "Grodzisk Mazowiecki",
+    "postalCode": "05-825",
+    "addressCountry": "PL"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": 52.1093,
+    "longitude": 20.6241
+  },
+  "openingHoursSpecification": [
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ],
+      "opens": "16:00",
+      "closes": "19:00"
+    }
+  ],
+  "areaServed": [
+    {
+      "@type": "City",
+      "name": "Grodzisk Mazowiecki"
     },
-    "geo": {
+    {
+      "@type": "City",
+      "name": "Pruszków"
+    },
+    {
+      "@type": "City",
+      "name": "Milanówek"
+    },
+    {
+      "@type": "City",
+      "name": "Brwinów"
+    },
+    {
+      "@type": "City",
+      "name": "Warszawa"
+    }
+  ],
+  "serviceArea": {
+    "@type": "GeoCircle",
+    "geoMidpoint": {
       "@type": "GeoCoordinates",
       "latitude": 52.1093,
       "longitude": 20.6241
     },
-    "openingHoursSpecification": [
+    "geoRadius": "30000"
+  },
+  "priceRange": "$$",
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Usługi serwisu rowerowego",
+    "itemListElement": [
       {
-        "@type": "OpeningHoursSpecification",
-        "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
-        "opens": "16:00",
-        "closes": "19:00"
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Przegląd i serwis roweru",
+          "description": "Kompleksowy przegląd, regulacje, smarowanie"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Zaplatanie kół",
+          "description": "Centrowanie, zaplatanie i wymiana szprych"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Serwis Dirt Jump i BMX",
+          "description": "Specjalistyczny serwis dirt jump, skatepark i street"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Serwis MTB",
+          "description": "Hardtail i full suspension: hamulce, koła, przerzutki"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Serwis e-bike",
+          "description": "Serwis mechaniczny rowerów elektrycznych"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Budowa roweru na miarę",
+          "description": "Składanie roweru od ramy do gotowego sprzętu"
+        }
       }
-    ],
-    "areaServed": [
-      {"@type": "City", "name": "Grodzisk Mazowiecki"},
-      {"@type": "City", "name": "Pruszków"},
-      {"@type": "City", "name": "Milanówek"},
-      {"@type": "City", "name": "Brwinów"},
-      {"@type": "City", "name": "Warszawa"}
-    ],
-    "serviceArea": {
-      "@type": "GeoCircle",
-      "geoMidpoint": {"@type": "GeoCoordinates", "latitude": 52.1093, "longitude": 20.6241},
-      "geoRadius": "30000"
-    },
-    "priceRange": "$$",
-    "hasOfferCatalog": {
-      "@type": "OfferCatalog",
-      "name": "Usługi serwisu rowerowego",
-      "itemListElement": [
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Przegląd i serwis roweru", "description": "Kompleksowy przegląd, regulacje, smarowanie"}},
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Zaplatanie kół", "description": "Centrowanie, zaplatanie i wymiana szprych"}},
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Serwis Dirt Jump i BMX", "description": "Specjalistyczny serwis dirt jump, skatepark i street"}},
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Serwis MTB", "description": "Hardtail i full suspension: hamulce, koła, przerzutki"}},
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Serwis e-bike", "description": "Serwis mechaniczny rowerów elektrycznych"}},
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Budowa roweru na miarę", "description": "Składanie roweru od ramy do gotowego sprzętu"}}
-      ]
-    },
-    "founder": {
-      "@type": "Person",
-      "@id": "https://www.skocznarower.pl/#mateusz",
-      "name": "Mateusz Mamcarz",
-      "alternateName": "xPyszczek"
-    },
-    "hasMap": "https://maps.google.com/?cid=6298905504059882234",
-    "sameAs": [
-      "https://www.instagram.com/xpyszczek_",
-      "https://www.tiktok.com/@xpyszczek.dirt"
     ]
-  }
+  },
+  "founder": {
+    "@type": "Person",
+    "@id": "https://www.skocznarower.pl/#mateusz",
+    "name": "Mateusz Mamcarz",
+    "alternateName": "xPyszczek"
+  },
+  "hasMap": "https://maps.google.com/?cid=6298905504059882234",
+  "sameAs": [
+    "https://www.instagram.com/xpyszczek_",
+    "https://www.tiktok.com/@xpyszczek.dirt"
+  ]
+}
   </script>
 
   <!-- Schema.org WebSite (pomaga wyszukiwarkom generatywnym zrozumieć kontekst całej domeny) -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "@id": "https://www.skocznarower.pl/#website",
-    "url": "https://www.skocznarower.pl/",
-    "name": "skocznarower.pl",
-    "inLanguage": "pl-PL",
-    "description": "Serwis rowerowy w Grodzisku Mazowieckim, specjalizacja dirt jump, BMX, MTB i e-bike.",
-    "publisher": { "@id": "https://www.skocznarower.pl/#business" }
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": "https://www.skocznarower.pl/#website",
+  "url": "https://www.skocznarower.pl/",
+  "name": "skocznarower.pl",
+  "inLanguage": "pl-PL",
+  "description": "Serwis rowerowy w Grodzisku Mazowieckim, specjalizacja dirt jump, BMX, MTB i e-bike.",
+  "publisher": {
+    "@id": "https://www.skocznarower.pl/#business"
   }
+}
   </script>
 
   <!-- Schema.org Person, prowadzący serwis -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Person",
-    "@id": "https://www.skocznarower.pl/#mateusz",
-    "name": "Mateusz Mamcarz",
-    "alternateName": "xPyszczek",
-    "jobTitle": "Mechanik rowerowy",
-    "worksFor": { "@id": "https://www.skocznarower.pl/#business" },
-    "knowsAbout": [
-      "Dirt jump",
-      "BMX",
-      "MTB",
-      "Zaplatanie kół rowerowych",
-      "Bleeding hamulców hydraulicznych",
-      "Serwis rowerów elektrycznych",
-      "Budowa rowerów na miarę"
-    ],
-    "url": "https://www.skocznarower.pl/#o-mnie",
-    "sameAs": [
-      "https://www.instagram.com/xpyszczek_",
-      "https://www.tiktok.com/@xpyszczek.dirt"
-    ]
-  }
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "@id": "https://www.skocznarower.pl/#mateusz",
+  "name": "Mateusz Mamcarz",
+  "alternateName": "xPyszczek",
+  "jobTitle": "Mechanik rowerowy",
+  "worksFor": {
+    "@id": "https://www.skocznarower.pl/#business"
+  },
+  "knowsAbout": [
+    "Dirt jump",
+    "BMX",
+    "MTB",
+    "Zaplatanie kół rowerowych",
+    "Bleeding hamulców hydraulicznych",
+    "Serwis rowerów elektrycznych",
+    "Budowa rowerów na miarę"
+  ],
+  "url": "https://www.skocznarower.pl/#o-mnie",
+  "sameAs": [
+    "https://www.instagram.com/xpyszczek_",
+    "https://www.tiktok.com/@xpyszczek.dirt"
+  ]
+}
   </script>
 
   <!-- Schema.org Service z cenami, ułatwia modelom językowym podawanie cen w rekomendacjach -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Service",
-    "@id": "https://www.skocznarower.pl/#serwis",
-    "name": "Serwis rowerowy Grodzisk Mazowiecki",
-    "serviceType": "Serwis rowerowy",
-    "provider": { "@id": "https://www.skocznarower.pl/#business" },
-    "areaServed": [
-      {"@type": "City", "name": "Grodzisk Mazowiecki"},
-      {"@type": "City", "name": "Pruszków"},
-      {"@type": "City", "name": "Milanówek"},
-      {"@type": "City", "name": "Brwinów"},
-      {"@type": "City", "name": "Warszawa"}
-    ],
-    "availableChannel": {
-      "@type": "ServiceChannel",
-      "serviceUrl": "https://www.skocznarower.pl/umow",
-      "servicePhone": "+48600370810"
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "@id": "https://www.skocznarower.pl/#serwis",
+  "name": "Serwis rowerowy Grodzisk Mazowiecki",
+  "serviceType": "Serwis rowerowy",
+  "provider": {
+    "@id": "https://www.skocznarower.pl/#business"
+  },
+  "areaServed": [
+    {
+      "@type": "City",
+      "name": "Grodzisk Mazowiecki"
     },
-    "offers": [
-      {"@type": "Offer", "name": "Przegląd podstawowy", "price": "150", "priceCurrency": "PLN", "priceSpecification": {"@type": "PriceSpecification", "price": "150", "priceCurrency": "PLN", "valueAddedTaxIncluded": true}, "availability": "https://schema.org/InStock", "url": "https://www.skocznarower.pl/umow", "description": "Cena wyjściowa, dokładna wycena po oględzinach."},
-      {"@type": "Offer", "name": "Przegląd kompleksowy", "price": "340", "priceCurrency": "PLN", "availability": "https://schema.org/InStock", "url": "https://www.skocznarower.pl/umow"},
-      {"@type": "Offer", "name": "Regulacja roweru miejskiego", "price": "70", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
-      {"@type": "Offer", "name": "Regulacja hamulców", "price": "40", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
-      {"@type": "Offer", "name": "Regulacja przerzutek", "price": "40", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
-      {"@type": "Offer", "name": "Centrowanie koła", "price": "120", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
-      {"@type": "Offer", "name": "Zaplatanie koła (robocizna)", "price": "80", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
-      {"@type": "Offer", "name": "Naprawa koła", "price": "35", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
-      {"@type": "Offer", "name": "Wymiana dętki", "price": "35", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
-      {"@type": "Offer", "name": "Wymiana opony", "price": "40", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
-      {"@type": "Offer", "name": "Montaż tubeless", "price": "70", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
-      {"@type": "Offer", "name": "Bleeding hamulców hydraulicznych (obwód)", "price": "100", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
-      {"@type": "Offer", "name": "Budowa roweru na miarę", "price": "500", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/umow"},
-      {"@type": "Offer", "name": "Odbiór i odwóz roweru (Grodzisk, Milanówek, Pruszków)", "price": "50", "priceCurrency": "PLN"},
-      {"@type": "Offer", "name": "Odbiór i odwóz roweru (Warszawa zachodnia)", "price": "90", "priceCurrency": "PLN"}
-    ]
-  }
+    {
+      "@type": "City",
+      "name": "Pruszków"
+    },
+    {
+      "@type": "City",
+      "name": "Milanówek"
+    },
+    {
+      "@type": "City",
+      "name": "Brwinów"
+    },
+    {
+      "@type": "City",
+      "name": "Warszawa"
+    }
+  ],
+  "availableChannel": {
+    "@type": "ServiceChannel",
+    "serviceUrl": "https://www.skocznarower.pl/umow",
+    "servicePhone": "+48600370810"
+  },
+  "offers": [
+    {
+      "@type": "Offer",
+      "name": "Przegląd podstawowy",
+      "price": "150",
+      "priceCurrency": "PLN",
+      "priceSpecification": {
+        "@type": "PriceSpecification",
+        "price": "150",
+        "priceCurrency": "PLN",
+        "valueAddedTaxIncluded": true
+      },
+      "availability": "https://schema.org/InStock",
+      "url": "https://www.skocznarower.pl/umow",
+      "description": "Cena wyjściowa, dokładna wycena po oględzinach."
+    },
+    {
+      "@type": "Offer",
+      "name": "Przegląd kompleksowy",
+      "price": "340",
+      "priceCurrency": "PLN",
+      "availability": "https://schema.org/InStock",
+      "url": "https://www.skocznarower.pl/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Regulacja roweru miejskiego",
+      "price": "70",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Regulacja hamulców",
+      "price": "40",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Regulacja przerzutek",
+      "price": "40",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Centrowanie koła",
+      "price": "120",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Zaplatanie koła (robocizna)",
+      "price": "80",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Naprawa koła",
+      "price": "35",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Wymiana dętki",
+      "price": "35",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Wymiana opony",
+      "price": "40",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Montaż tubeless",
+      "price": "70",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Bleeding hamulców hydraulicznych (obwód)",
+      "price": "100",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Budowa roweru na miarę",
+      "price": "500",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Odbiór i odwóz roweru (Grodzisk, Milanówek, Pruszków)",
+      "price": "50",
+      "priceCurrency": "PLN"
+    },
+    {
+      "@type": "Offer",
+      "name": "Odbiór i odwóz roweru (Warszawa zachodnia)",
+      "price": "90",
+      "priceCurrency": "PLN"
+    }
+  ]
+}
   </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -318,6 +547,10 @@
   <script>document.documentElement.classList.add('js');</script>
 
   <style>
+    .skip-link { position:fixed; top:8px; left:8px; z-index:10000; padding:12px 18px; background:#9fe22e; color:#080808; font:700 16px sans-serif; transform:translateY(-160%); }
+    .skip-link:focus { transform:translateY(0); }
+    :focus-visible { outline:2px solid #9fe22e; outline-offset:4px; }
+
     /* ─── TOKENS ─────────────────────────────────────────── */
     :root {
       --bg:    #080808;
@@ -368,7 +601,8 @@
       justify-content: space-between;
       padding: 22px 48px;
       transition: background .3s, padding .3s, border-color .3s;
-      border-bottom: 1px solid transparent;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,8,8,.96);
     }
     .nav.stuck {
       inset-block-start: 0;
@@ -1807,8 +2041,25 @@
     }
   </style>
   <script src="/turnstile.js" defer></script>
+<script>
+(function(){
+  try {
+    var key = 'skoczna-attribution-v1';
+    var first = JSON.parse(sessionStorage.getItem(key));
+    if (first && first.landing_path) return;
+    var params = new URLSearchParams(location.search);
+    var first = { landing_path: location.pathname.slice(0, 200), landing_language: document.documentElement.lang, referrer_host: null };
+    try { first.referrer_host = document.referrer ? new URL(document.referrer).hostname.slice(0, 253) : null; } catch (_) {}
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(function(name){
+      first[name] = (params.get(name) || '').replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 100) || null;
+    });
+    sessionStorage.setItem('skoczna-attribution-v1', JSON.stringify(first));
+  } catch (_) {}
+})();
+</script>
 </head>
 <body>
+<a class="skip-link" href="#main-content">Przejdź do treści</a>
 
 <!-- ═══════════════════════════════════════════════
      NAV
@@ -1841,6 +2092,7 @@
     <li><a class="cta" href="/umow">Umów wizytę</a></li>
   </ul>
 </nav>
+<main id="main-content" tabindex="-1">
 
 
 
@@ -1905,7 +2157,7 @@
   </div>
   <div class="trust-item">
     <span class="trust-v">0,1 mm</span>
-    <span class="trust-k">odchyłka koła na centrownicy z miernikiem</span>
+    <span class="trust-k">rozdzielczość odczytu miernika bicia koła</span>
   </div>
   <div class="trust-item">
     <span class="trust-v">16:00 do 19:00</span>
@@ -1936,7 +2188,7 @@
         </div>
         <div class="spec-row">
           <span class="spec-k">Centrownica z miernikiem</span>
-          <span class="spec-v">odchyłka do 0,1 mm</span>
+          <span class="spec-v">odczyt co 0,1 mm</span>
         </div>
         <div class="spec-row">
           <span class="spec-k">Klucz dynamometryczny</span>
@@ -1995,8 +2247,8 @@
           <path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/>
         </svg>
       <a class="service-name" href="/centrowanie-i-zaplatanie-kol">ZAPLATANIE KÓŁ</a>
-      <div class="service-desc">Centrowanie, zaplatanie od zera, wymiana szprych. Pracuję na centrownicy z miernikiem wybierania, mierzę odchyłkę do dziesiątych milimetra, nie zgaduję. Koło wytrzyma to, co chcesz po nim odpalić.</div>
-      <a class="service-go" href="/umow?service=kolo-centrowanie">Umów pod tę usługę <span aria-hidden="true">&rarr;</span></a>
+      <div class="service-desc">Centrowanie, zaplatanie od zera, wymiana szprych. Sprawdzam bicie na centrownicy z miernikiem oraz stan obręczy, szprych i nypli. <a href="/centrowanie-i-zaplatanie-kol">Zakres prac przy kołach</a>.</div>
+      <a class="service-go" href="/umow?service=kolo-zaplatanie">Umów pod tę usługę <span aria-hidden="true">&rarr;</span></a>
     </div>
 
   </div>
@@ -2093,7 +2345,7 @@
         </svg>
         <div class="service-name">ROWERY MIEJSKIE</div>
       </div>
-      <div class="service-desc">Przegląd, regulacje, wymiana części. Ten sam stojak, ten sam zestaw narzędzi, niższe ceny niż w sezonowych pop-upach.
+      <div class="service-desc">Przegląd, regulacje, wymiana części. Sprawdzam hamulce, przerzutki i koła, dobieram zakres pracy do stanu roweru.
         <a class="service-go" href="/umow?service=przeglad-podstawowy">Umów pod tę usługę <span aria-hidden="true">&rarr;</span></a>
       </div>
     </div>
@@ -2138,17 +2390,17 @@
   <p class="price-lead reveal" data-delay="1">Ceny za robociznę, części wyceniane osobno. Dokładna wycena po oględzinach, zanim cokolwiek zacznę robić.</p>
 
   <div class="price-anchors">
-    <a class="price-anchor reveal" data-delay="1" href="/umow">
+    <a class="price-anchor reveal" data-delay="1" href="/umow?service=wymiana-czesci">
       <span class="price-anchor-k">Szybka naprawa</span>
       <span class="price-anchor-v">od 35 zł</span>
       <span class="price-anchor-d">Dętka, opona, regulacja hamulców albo przerzutek. Zwykle tego samego dnia.</span>
     </a>
-    <a class="price-anchor price-anchor-hi reveal" data-delay="2" href="/umow">
+    <a class="price-anchor price-anchor-hi reveal" data-delay="2" href="/umow?service=przeglad-podstawowy">
       <span class="price-anchor-k">Przegląd podstawowy <span class="price-badge">od czego zacząć</span></span>
       <span class="price-anchor-v">od 150 zł</span>
       <span class="price-anchor-d">Cały rower punkt po punkcie, regulacje, smarowanie. Mówię, co wymaga ręki, a co jeszcze pojeździ.</span>
     </a>
-    <a class="price-anchor reveal" data-delay="3" href="/umow">
+    <a class="price-anchor reveal" data-delay="3" href="/umow?service=przeglad-kompleksowy">
       <span class="price-anchor-k">Przegląd kompleksowy</span>
       <span class="price-anchor-v">od 340 zł</span>
       <span class="price-anchor-d">Dokładny przegląd na start sezonu, koła na centrownicy. Zwykle 2 do 4 dni roboczych.</span>
@@ -2238,7 +2490,7 @@
         <span class="faq-t">Jak umówić rower do serwisu w Grodzisku Mazowieckim?</span>
         <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
-      <div class="faq-a">Najprościej przez <a href="/umow" style="color:var(--accent)">formularz online</a>: wybierasz usługę, dzień i godzinę, oddzwaniam żeby potwierdzić. Możesz też zadzwonić albo napisać na Instagramie (@xpyszczek_). Nie przyjmuję bez umówienia, bo pracuję samodzielnie i chcę mieć czas na każdy rower.</div>
+      <div class="faq-a">Najprościej przez <a href="/umow" style="color:var(--accent)">formularz online</a>: wybierasz usługę, dzień i godzinę, potwierdzam termin telefonem lub SMS-em. Możesz też zadzwonić albo napisać na Instagramie (@xpyszczek_). Nie przyjmuję bez umówienia, bo pracuję samodzielnie i chcę mieć czas na każdy rower.</div>
     </div>
 
     <div class="faq-item">
@@ -2274,7 +2526,7 @@
         <span class="faq-t">Czy dojadę do serwisu z Pruszkowa lub Milanówka?</span>
         <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
-      <div class="faq-a">Tak, bez problemu. Z <a href="/serwis-rowerow-pruszkow" style="color:var(--accent)">Pruszkowa</a> ok. 15 min samochodem, z <a href="/serwis-rowerow-milanowek" style="color:var(--accent)">Milanówka</a> minuta, warsztat stoi na granicy. Z zachodnich dzielnic Warszawy wychodzi ok. 30 minut. Umów się, nie bój się jechać dalej.</div>
+      <div class="faq-a">Warsztat jest przy Jesionowej 18 w Grodzisku Mazowieckim. Przyjmuję rowery z <a href="/serwis-rowerow-pruszkow">Pruszkowa</a>, <a href="/serwis-rowerow-milanowek">Milanówka</a> i okolic. Czas dojazdu zależy od miejsca startu i ruchu; sprawdź trasę z własnego adresu.</div>
     </div>
 
     <div class="faq-item" data-faq-extra hidden>
@@ -2283,7 +2535,7 @@
         <span class="faq-t">Czy serwis jest profesjonalnie wyposażony?</span>
         <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
-      <div class="faq-a">Tak. Mam stojak serwisowy, <strong>profesjonalną centrownicę do kół z miernikiem wybierania</strong>, klucz dynamometryczny, zestaw do odpowietrzania hydrauliki, przyrząd do prostowania haków i tarcz, skuwacz, klucze do konusów, bacik, klucze do kaset i suportów. Dzięki centrownicy z miernikiem zaplatanie i centrowanie koła robię z milimetrową precyzją. Każda naprawa jest robiona właściwym narzędziem, nie kombinuję na skróty.</div>
+      <div class="faq-a">Tak. Mam stojak serwisowy, <strong>profesjonalną centrownicę do kół z miernikiem wybierania</strong>, klucz dynamometryczny, zestaw do odpowietrzania hydrauliki, przyrząd do prostowania haków i tarcz, skuwacz, klucze do konusów, bacik, klucze do kaset i suportów.</div>
     </div>
 
     <div class="faq-item" data-faq-extra hidden>
@@ -2301,7 +2553,7 @@
         <span class="faq-t">Co to jest centrownica z miernikiem i dlaczego to ważne?</span>
         <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
-      <div class="faq-a">Centrownica to stojak do centrowania i zaplatania kół. Tania wersja to dwa kawałki metalu i oko mechanika. Profesjonalna centrownica z miernikiem (dial indicator) to precyzyjny przyrząd, który mierzy odchylenie koła z dokładnością do dziesiątych części milimetra, zarówno na boki jak i na górę/dół. Dzięki temu zaplatam i centruję koła tak blisko idealnego jak to możliwe fizycznie, a nie "na oko i prawie dobrze". Dla kół do dirt jumpa, BMX czy MTB, gdzie koło dostaje mocne uderzenia, precyzja szprychowania robi realną różnicę w trwałości.</div>
+      <div class="faq-a">Centrownica utrzymuje koło podczas centrowania i zaplatania. Miernik pokazuje bicie boczne i promieniowe z rozdzielczością 0,1 mm. To rozdzielczość odczytu, nie obietnica takiego samego wyniku dla każdego koła. Sprawdzam też stan obręczy, szprych i nypli; uszkodzonej obręczy nie zawsze da się wycentrować.</div>
     </div>
 
     <div class="faq-item" data-faq-extra hidden>
@@ -2319,7 +2571,7 @@
         <span class="faq-t">Kiedy wymienić łańcuch rowerowy?</span>
         <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
-      <div class="faq-a">Najprościej sprawdzić przymiarem zużycia łańcucha. Przy 0,75 warto wymienić, bo zaoszczędzisz na kasecie. Jak poczekasz do 1,0 to kaseta idzie razem z łańcuchem i płacisz kilka razy więcej. Przy serwisie zawsze sprawdzam łańcuch i powiem Ci czy już czas.</div>
+      <div class="faq-a">Próg wymiany zależy od modelu łańcucha i zaleceń producenta. Orientacyjnie dla wielu napędów 11- i 12-rzędowych wynosi 0,5%, a dla 5- do 10-rzędowych 0,75%. Użyj przymiaru zgodnego z łańcuchem; zużycie kasety oceniam osobno przy przeglądzie. <a href="https://www.parktool.com/assets/doc/product/CC-2_instructions.pdf">Instrukcja przymiaru Park Tool</a>.</div>
     </div>
 
     <div class="faq-item" data-faq-extra hidden>
@@ -2366,6 +2618,7 @@
         <input type="checkbox" name="consent" required aria-invalid="false">
         <span>Zgadzam się na otrzymanie jednego przypomnienia mailem w marcu o przeglądzie rowerowym. Możesz zrezygnować w każdej chwili.</span>
       </label>
+      <p class="reminder-note"><a href="/prywatnosc">Jak przetwarzamy dane</a></p>
       <button type="submit" class="btn btn-green reminder-submit">Zapisz mnie</button>
       <p class="reminder-msg" id="reminder-msg" role="status" aria-live="polite"></p>
     </form>
@@ -2415,7 +2668,7 @@
 <section class="section" id="kontakt">
   <p class="eyebrow reveal"><span class="eyebrow-no">05 /</span>Kontakt</p>
   <h2 class="display reveal" data-delay="1">PRZYJEDŹ<br>NA JESIONOWĄ</h2>
-  <p class="about-body reveal" data-delay="1" style="max-width:600px; margin-top:16px;">Serwis jest na <strong>Jesionowej 18 w Grodzisku Mazowieckim</strong>. Z <strong>Pruszkowa</strong> ok. 15 min, z <strong>Milanówka</strong> minuta (warsztat stoi na granicy), z zachodniej <strong>Warszawy</strong> ok. 30 min. Umów się, przyjedź, pogadamy.</p>
+  <p class="about-body reveal" data-delay="1" style="max-width:600px; margin-top:16px;">Warsztat jest przy Jesionowej 18 w Grodzisku Mazowieckim. Przyjmuję rowery z <a href="/serwis-rowerow-pruszkow">Pruszkowa</a>, <a href="/serwis-rowerow-milanowek">Milanówka</a> i okolic. Czas dojazdu zależy od miejsca startu i ruchu; sprawdź trasę z własnego adresu.</p>
 
   <div class="contact-grid">
     <div>
@@ -2626,10 +2879,11 @@
 <!-- ═══════════════════════════════════════════════
      FOOTER
 ════════════════════════════════════════════════ -->
+</main>
 <footer>
   <span class="footer-brand">SKOCZ<em>NAROWER</em>.PL</span>
   <p>Mateusz Mamcarz · Jesionowa 18, Grodzisk Mazowiecki · 600 370 810</p>
-  <p class="footer-links"><a href="/kalkulator">Kalkulator</a><span aria-hidden="true"> · </span><a href="/gra">Gra</a></p>
+  <p class="footer-links"><a href="/kalkulator">Kalkulator</a><span aria-hidden="true"> · </span><a href="/gra">Gra</a><span aria-hidden="true"> · </span><a href="/prywatnosc">Prywatność</a></p>
   <p>© 2026 skocznarower.pl</p>
 </footer>
 
@@ -2727,18 +2981,21 @@
     const remBtn = remForm.querySelector('button[type="submit"]');
     remForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (remForm.dataset.submitting === 'true') return;
       remMsg.textContent = ''; remMsg.className = 'reminder-msg';
       const email = remForm.email.value.trim();
       const consent = remForm.consent.checked;
       if (!email) { showRemMsg('Wpisz adres email.', 'err'); return; }
       if (!consent) { remForm.consent.setAttribute('aria-invalid', 'true'); showRemMsg('Zaznacz zgodę żebym mógł napisać.', 'err'); return; }
       remForm.consent.setAttribute('aria-invalid', 'false');
+      remForm.dataset.submitting = 'true';
       remBtn.disabled = true;
       const originalText = remBtn.textContent;
       remBtn.textContent = 'Zapisuję...';
       try {
         const r = await fetch('/api/reminders', {
           method: 'POST',
+          signal: AbortSignal.timeout(20000),
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             email,
@@ -2748,9 +3005,9 @@
         });
         const data = await r.json();
         if (!r.ok) {
-          showRemMsg(data.error || 'Coś nie zagrało, spróbuj jeszcze raz.', 'err');
+          showRemMsg('Nie udało się zapisać. Sprawdź email i spróbuj ponownie.', 'err');
         } else {
-          showRemMsg(data.message || 'Zapisany.', 'ok');
+          showRemMsg('Zapisano. Wyślemy jedno przypomnienie przed sezonem.', 'ok');
           remForm.email.value = '';
           remForm.consent.checked = false;
           remForm.consent.setAttribute('aria-invalid', 'false');
@@ -2760,7 +3017,8 @@
       } catch (err) {
         showRemMsg('Brak połączenia, spróbuj jeszcze raz.', 'err');
       } finally {
-        remBtn.disabled = false;
+        delete remForm.dataset.submitting;
+        remBtn.disabled = remForm.dataset.turnstileReady === 'false';
         remBtn.textContent = originalText;
       }
     });

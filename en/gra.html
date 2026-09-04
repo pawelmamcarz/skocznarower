@@ -88,6 +88,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
   <style>
+    .skip-link { position:fixed; top:8px; left:8px; z-index:10000; padding:12px 18px; background:#9fe22e; color:#080808; font:700 16px sans-serif; transform:translateY(-160%); }
+    .skip-link:focus { transform:translateY(0); }
+    :focus-visible { outline:2px solid #9fe22e; outline-offset:4px; }
+
     :root { --bg:#080808; --bg2:#101010; --bg3:#1c1c1c; --accent:#9fe22e; --accent-dim:rgba(159,226,46,.10); --white:#f0f0f0; --muted:#969696; --border:rgba(255,255,255,.07); --accent-hi:#b5f040; --radius:2px; --fd:'Bebas Neue',sans-serif; --fb:'DM Sans',sans-serif; }
     *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
     html { scroll-behavior:smooth; }
@@ -246,8 +250,25 @@
       .nav-more-menu a { padding: 15px 2px; }
     }
   </style>
+<script>
+(function(){
+  try {
+    var key = 'skoczna-attribution-v1';
+    var first = JSON.parse(sessionStorage.getItem(key));
+    if (first && first.landing_path) return;
+    var params = new URLSearchParams(location.search);
+    var first = { landing_path: location.pathname.slice(0, 200), landing_language: document.documentElement.lang, referrer_host: null };
+    try { first.referrer_host = document.referrer ? new URL(document.referrer).hostname.slice(0, 253) : null; } catch (_) {}
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(function(name){
+      first[name] = (params.get(name) || '').replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 100) || null;
+    });
+    sessionStorage.setItem('skoczna-attribution-v1', JSON.stringify(first));
+  } catch (_) {}
+})();
+</script>
 </head>
 <body>
+<a class="skip-link" href="#main-content">Skip to content</a>
 <nav class="nav">
   <a class="logo" href="/en/"><img class="logo-icon" src="/uploads/logo-icon.png" alt="Skocz na Rower" width="44" height="48"></a>
   <button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg></button>
@@ -265,7 +286,7 @@
     <li><a class="nav-cta" href="/en/umow">Book a visit</a></li>
   </ul>
 </nav>
-<main class="container">
+<main class="container" id="main-content" tabindex="-1">
   <header class="hero">
     <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/en/">Home</a> › Game</nav>
     <p class="eyebrow">Bike game</p>
@@ -341,8 +362,9 @@
     <h3>What do you do besides the game?</h3>
     <p>We run a bike workshop in Grodzisk Mazowiecki and prepare <a href="/en/warsztaty">dirt riding courses for teenagers</a>. Prices and the scope of work are on the <a href="/en/">home page</a>.</p>
   </section>
+<p class="privacy-note"><a href="/en/prywatnosc">Privacy</a></p>
 </main>
-<footer><p>skocznarower.pl · Jesionowa 18, Grodzisk Mazowiecki · <a href="tel:+48600370810">600 370 810</a></p><p class="footer-links"><a href="/en/kalkulator">Calculator</a><span aria-hidden="true"> · </span><a href="/en/gra" aria-current="page">Game</a></p><p>Mateusz Mamcarz / xPyszczek</p></footer>
+<footer><p>skocznarower.pl · Jesionowa 18, Grodzisk Mazowiecki · <a href="tel:+48600370810">600 370 810</a></p><p class="footer-links"><a href="/en/kalkulator">Calculator</a><span aria-hidden="true"> · </span><a href="/en/gra" aria-current="page">Game</a><span aria-hidden="true"> · </span><a href="/en/prywatnosc">Privacy</a></p><p>Mateusz Mamcarz / xPyszczek</p></footer>
 <script>
   // --- Nawigacja: rozwijane "Więcej" (Gra, Kalkulator). Ponizej breakpointu
   //     przycisk jest ukryty w CSS, a obie pozycje widac od razu. ---
@@ -395,12 +417,15 @@ window.GAME_I18N = {
     crash: 'Wipeout!', fuel: 'Out of carrots', finish: 'Finish!',
     score: 'Score', dist: 'Distance', coins: 'Coins', flips: 'Flips',
     unlocked: 'New track unlocked:', nick: 'Your nickname', save: 'Save score',
+    preparing: 'Preparing your run...',
+    savedLocal: 'Saved only in this browser',
     saved: 'Saved to records', retry: 'Ride again', menu: 'Menu'
   },
   scores: { empty: 'Nobody has ridden here yet.', local: 'Scores from this browser', global: 'Global ranking' },
   account: {
+    errors: {"INVALID_PHONE": "Enter a Polish number: 9 digits, optionally with +48.", "INVALID_NICK": "Nickname: 2–14 characters, using letters, digits, spaces, dots, hyphens or underscores.", "INVALID_CODE": "Enter the correct six-digit SMS code.", "CODE_REQUIRED": "Request an SMS code first.", "CODE_EXPIRED": "The code expired. Request a new one.", "RATE_LIMITED": "Too many attempts. Wait before trying again.", "DELIVERY_FAILED": "The SMS could not be sent. Try later.", "SERVICE_UNAVAILABLE": "The leaderboard is unavailable. You can still play locally."},
     title: 'Global ranking',
-    intro: 'Confirm your number by SMS and your score joins the shared table. We keep the number in the skocznarower.pl database and delete it on request at 600 370 810.',
+    intro: 'Confirm your number by SMS to submit future runs to the global leaderboard. Earlier scores stay in this browser. To delete your account, call 600 370 810.',
     nick: 'Ranking nickname', phone: 'Phone number',
     consent: 'I agree to have my phone number processed for the game ranking.',
     marketing: 'Send me SMS about the workshop, free slots and courses.',

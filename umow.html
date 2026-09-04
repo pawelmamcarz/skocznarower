@@ -105,6 +105,10 @@
   </script>
 
   <style>
+    .skip-link { position:fixed; top:8px; left:8px; z-index:10000; padding:12px 18px; background:#9fe22e; color:#080808; font:700 16px sans-serif; transform:translateY(-160%); }
+    .skip-link:focus { transform:translateY(0); }
+    :focus-visible { outline:2px solid #9fe22e; outline-offset:4px; }
+
     :root {
       --bg:    #080808;
       --bg2:   #101010;
@@ -285,8 +289,10 @@
         border-inline-end: 0;
         background: rgba(8,8,8,.97);
         backdrop-filter: blur(12px);
+        max-height: 30svh;
+        overflow-y: auto;
       }
-      #booking-form { padding-bottom: 78px; }
+      #booking-form { padding-bottom: calc(var(--summary-height, 78px) + 24px); }
 
       .choice-card {
         display: flex;
@@ -600,10 +606,32 @@
     .choices-more:hover { border-color: var(--accent); color: var(--accent); }
     .choices-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
     #services-rest { margin-top: 10px; }
+    #services-rest[hidden], #pickup-fields[hidden] { display: none; }
+    .pickup-option { margin-top: 24px; }
+    .pickup-note { margin: 10px 0 16px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .privacy-note { color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .privacy-note a { color: var(--accent); }
   </style>
   <script src="/turnstile.js" defer></script>
+<script>
+(function(){
+  try {
+    var key = 'skoczna-attribution-v1';
+    var first = JSON.parse(sessionStorage.getItem(key));
+    if (first && first.landing_path) return;
+    var params = new URLSearchParams(location.search);
+    var first = { landing_path: location.pathname.slice(0, 200), landing_language: document.documentElement.lang, referrer_host: null };
+    try { first.referrer_host = document.referrer ? new URL(document.referrer).hostname.slice(0, 253) : null; } catch (_) {}
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(function(name){
+      first[name] = (params.get(name) || '').replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 100) || null;
+    });
+    sessionStorage.setItem('skoczna-attribution-v1', JSON.stringify(first));
+  } catch (_) {}
+})();
+</script>
 </head>
 <body>
+<a class="skip-link" href="#main-content">Przejdź do treści</a>
 
 <nav class="nav">
   <a class="logo" href="/">
@@ -633,7 +661,7 @@
   <p class="lead">Wybierz usługę, dzień i godzinę, potwierdzę termin telefonicznie albo SMS-em, zwykle tego samego dnia.</p>
 </header>
 
-<main class="form-wrap">
+<main class="form-wrap" id="main-content" tabindex="-1">
 
 <form id="booking-form" autocomplete="on" novalidate>
 
@@ -648,6 +676,18 @@
       <!-- wypełniane JS-em -->
     </div>
     <p class="field-error" id="err-service" hidden></p>
+    <label class="consent-check pickup-option">
+      <input type="checkbox" id="pickup-requested" name="pickup_requested" aria-controls="pickup-fields" aria-describedby="pickup-note">
+      <span>Potrzebuję odbioru i odwozu roweru</span>
+    </label>
+    <p class="pickup-note" id="pickup-note">Transport od 50 zł, Warszawa od 90 zł. Koszt naprawy i części osobno. Cenę oraz termin odbioru i odwozu ustalimy przed potwierdzeniem.</p>
+    <div id="pickup-fields" hidden>
+      <label class="field">
+        <span>Adres odbioru: miejscowość, ulica i numer <em>*</em></span>
+        <textarea class="textarea" id="pickup-address" name="pickup_address" maxlength="300" autocomplete="street-address" placeholder="np. Grodzisk Mazowiecki, ul. Przykładowa 12" aria-describedby="err-pickup"></textarea>
+        <span class="field-error" id="err-pickup" hidden></span>
+      </label>
+    </div>
   </section>
 
   <section class="step">
@@ -663,9 +703,10 @@
     <div class="step-num"><span class="num">03</span> / Termin</div>
     <h2 class="step-title" id="t-termin">Kiedy pasuje Ci termin?</h2>
     <p class="hours-info">Przyjmuję codziennie, także w weekendy, w godzinach <span class="val-mono">16:00-19:00</span>.</p>
+    <p class="pickup-note" id="pickup-time-note" hidden>Wybierz proponowany dzień i godzinę odbioru. Termin wymaga potwierdzenia telefonicznego albo SMS-em.</p>
     <div class="date-row">
       <label class="field">
-        <span>Data wizyty <em>*</em></span>
+        <span id="date-label">Data wizyty <em>*</em></span>
         <input id="date" class="date-input" type="date" required aria-describedby="err-date">
       </label>
     </div>
@@ -687,7 +728,7 @@
           <span class="field-error" id="err-name" hidden></span>
         </label>
         <label class="field">
-          <span>Telefon <em>*</em></span>
+          <span>Telefon (polski numer) <em>*</em></span>
           <input class="input" type="tel" id="phone" name="phone" required maxlength="20" inputmode="tel" autocomplete="tel" placeholder="np. 600 123 456" aria-describedby="err-phone">
           <span class="field-error" id="err-phone" hidden></span>
         </label>
@@ -697,6 +738,7 @@
         <input class="input" type="email" id="email" name="email" maxlength="120" autocomplete="email" aria-describedby="err-email">
         <span class="field-error" id="err-email" hidden></span>
       </label>
+      <p class="privacy-note"><a href="/prywatnosc">Jak przetwarzane są dane?</a></p>
       <label class="consent-check">
         <input type="checkbox" id="consent" name="consent">
         <span>Chcę dostać jedno przypomnienie mailem przed sezonem, mogę się wypisać w każdej chwili.</span>
@@ -719,13 +761,13 @@
 
 </form>
 
-<div id="success" hidden></div>
+<div id="success" tabindex="-1" role="status" aria-live="polite" hidden></div>
 
 </main>
 
 <footer>
   <p>skocznarower.pl · Jesionowa 18, Grodzisk Mazowiecki · <a href="tel:+48600370810">600 370 810</a></p>
-  <p class="footer-links"><a href="/kalkulator">Kalkulator</a><span aria-hidden="true"> · </span><a href="/gra">Gra</a></p>
+  <p class="footer-links"><a href="/kalkulator">Kalkulator</a><span aria-hidden="true"> · </span><a href="/gra">Gra</a><span aria-hidden="true"> · </span><a href="/prywatnosc">Prywatność</a></p>
   <p>Mateusz Mamcarz / xPyszczek</p>
 </footer>
 
@@ -760,22 +802,26 @@ const $ = sel => document.querySelector(sel);
 
 function captureAttribution(language) {
   const params = new URLSearchParams(window.location.search);
-  const bounded = (value, max) => {
-    const cleaned = String(value || '').trim().replace(/[\u0000-\u001f\u007f]/g, '').slice(0, max);
-    return cleaned || null;
-  };
+  const bounded = (value, max) => typeof value === 'string'
+    ? value.trim().replace(/[\u0000-\u001f\u007f]/g, '').slice(0, max) || null : null;
   let referrerHost = null;
   try { referrerHost = document.referrer ? new URL(document.referrer).hostname : null; } catch (_) {}
-  return {
-    landing_path: bounded(window.location.pathname, 200),
-    landing_language: language,
-    utm_source: bounded(params.get('utm_source'), 100),
-    utm_medium: bounded(params.get('utm_medium'), 100),
-    utm_campaign: bounded(params.get('utm_campaign'), 100),
-    utm_content: bounded(params.get('utm_content'), 100),
-    utm_term: bounded(params.get('utm_term'), 100),
-    referrer_host: bounded(referrerHost, 253),
+  let stored = null;
+  try {
+    const raw = JSON.parse(sessionStorage.getItem('skoczna-attribution-v1'));
+    if (raw && typeof raw === 'object' && !Array.isArray(raw) && typeof raw.landing_path === 'string'
+      && /^\/(?!\/)[^?#]*$/.test(raw.landing_path) && ['pl', 'en', 'uk'].includes(raw.landing_language)) stored = raw;
+  } catch (_) {}
+  const source = stored || {
+    landing_path: window.location.pathname, landing_language: language,
+    ...Object.fromEntries(['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].map(key => [key, params.get(key)])),
+    referrer_host: referrerHost,
   };
+  const result = { landing_path: bounded(source.landing_path, 200), landing_language: source.landing_language };
+  for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']) result[key] = bounded(source[key], 100);
+  const host = bounded(source.referrer_host, 253);
+  result.referrer_host = host && /^[a-z0-9.-]+$/i.test(host) ? host : null;
+  return result;
 }
 const ATTRIBUTION = captureAttribution('pl');
 
@@ -822,6 +868,17 @@ if (servicesMore) {
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const MAX_DAYS_AHEAD = 60;
+async function requestJson(url, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20000);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    let data = null;
+    try { data = await response.json(); } catch (error) { if (response.ok || controller.signal.aborted) throw error; }
+    return { response, data };
+  } finally { clearTimeout(timeout); }
+}
+
 const WA_LINK = 'https://wa.me/48600370810?text=Cze%C5%9B%C4%87%2C%20chcia%C5%82bym%20um%C3%B3wi%C4%87%20rower';
 
 function warsawToday() {
@@ -878,18 +935,18 @@ function slotsMsg(msg) {
 
 async function loadSlots() {
   const date = dateInput.value;
-  if (!date) return;
   const seq = ++slotsReq;
+  if (!date) { slotsArea.innerHTML = ''; updateSummary(); return; }
   const todayW = warsawToday();
   if (!DATE_RE.test(date)) { slotsMsg('Nieprawidłowa data.'); return; }
   if (date < todayW) { slotsMsg('Ta data już minęła. Wybierz dzisiejszą albo późniejszą.'); return; }
   if (date > addDaysISO(todayW, MAX_DAYS_AHEAD)) { slotsMsg('Rezerwacja online obejmuje najbliższe 60 dni. Wybierz wcześniejszą datę.'); return; }
   slotsArea.innerHTML = '<p class="slots-hint">Ładuję wolne godziny...</p>';
   try {
-    const r = await fetch('/api/availability?date=' + encodeURIComponent(date));
+    const { response: r, data } = await requestJson('/api/availability?date=' + encodeURIComponent(date));
     if (seq !== slotsReq) return;
     if (!r.ok) { renderSlotsError(); return; }
-    const data = await r.json();
+    if (!data || !Array.isArray(data.slots)) { renderSlotsError(); return; }
     if (seq !== slotsReq) return;
     renderSlots(date, hidePastToday(date, data.slots || [], todayW));
   } catch (e) {
@@ -944,6 +1001,11 @@ function renderSlots(date, slots) {
 
 // ─── Podsumowanie wyboru nad przyciskiem ────────────────────
 const summaryEl = $('#summary');
+if (typeof ResizeObserver === 'function') {
+  new ResizeObserver(() => {
+    document.documentElement.style.setProperty('--summary-height', Math.ceil(summaryEl.getBoundingClientRect().height) + 'px');
+  }).observe(summaryEl);
+}
 
 function updateSummary() {
   const serviceId = form.querySelector('input[name="service"]:checked')?.value;
@@ -951,10 +1013,12 @@ function updateSummary() {
   const slot = form.querySelector('input[name="slot"]:checked')?.value;
   const date = dateInput.value;
   const svc = SERVICES.find(s => s.id === serviceId);
+  syncPickup();
   const parts = [];
-  if (svc) parts.push(`${svc.name} (${svc.price})`);
+  if (svc) parts.push(svc.id === 'odbior' ? 'Transport od 50 zł (Warszawa od 90 zł); naprawa i części wyceniane osobno' : `${svc.name} (${svc.price})`);
+  if (pickupRequested() && serviceId !== 'odbior') parts.push('Transport od 50 zł (Warszawa od 90 zł), dodatkowo do naprawy i części');
   if (bike) parts.push(bike);
-  if (date && DATE_RE.test(date)) parts.push(formatDatePl(date) + (slot ? ', ' + slot : ''));
+  if (date && DATE_RE.test(date)) parts.push((pickupRequested() ? 'Proponowany odbiór: ' : '') + formatDatePl(date) + (slot ? ', ' + slot : ''));
   else if (slot) parts.push('godz. ' + slot);
   if (parts.length === 0) { summaryEl.hidden = true; summaryEl.textContent = ''; return; }
   summaryEl.textContent = parts.join(' · ');
@@ -968,6 +1032,24 @@ const alertBox = $('#alert');
 const submitBtnHTML = submitBtn.innerHTML;
 const nameEl = $('#name'), phoneEl = $('#phone'), emailEl = $('#email'), consentEl = $('#consent');
 let submitting = false;
+const pickupEl = $('#pickup-requested');
+const pickupAddress = $('#pickup-address');
+function pickupRequested() {
+  return pickupEl.checked || form.querySelector('input[name="service"]:checked')?.value === 'odbior';
+}
+function syncPickup() {
+  const legacyPickup = form.querySelector('input[name="service"]:checked')?.value === 'odbior';
+  if (legacyPickup) pickupEl.checked = true;
+  pickupEl.disabled = legacyPickup;
+  const enabled = pickupRequested();
+  $('#pickup-fields').hidden = !enabled;
+  pickupAddress.required = enabled;
+  $('#pickup-time-note').hidden = !enabled;
+  $('#date-label').firstChild.nodeValue = (enabled ? 'Proponowana data odbioru' : 'Data wizyty') + ' ';
+  if (!enabled) clearErr('err-pickup', pickupAddress);
+}
+pickupAddress.addEventListener('input', () => clearErr('err-pickup', pickupAddress));
+
 
 function showAlert(msg, kind = 'error') {
   alertBox.className = 'alert alert-' + kind;
@@ -982,18 +1064,47 @@ function showAlertHTML(html, kind = 'error') {
   alertBox.hidden = false;
 }
 
+const API_ERRORS = {
+  INVALID_INPUT: 'Sprawdź dane formularza i spróbuj ponownie.',
+  INVALID_DATE: 'Wybierz poprawną datę.',
+  INVALID_TIME: 'Wybierz poprawną godzinę.',
+  INVALID_SERVICE: 'Wybierz usługę.',
+  INVALID_BIKE: 'Wybierz typ roweru.',
+  INVALID_NAME: 'Wpisz imię (2–80 znaków).',
+  INVALID_EMAIL: 'Wpisz poprawny email.',
+  INVALID_NOTES: 'Skróć opis do 1000 znaków.',
+  DATE_OUT_OF_RANGE: 'Rezerwacja online obejmuje dziś i najbliższe 60 dni.',
+  SLOT_PAST: 'Ta godzina już minęła. Wybierz późniejszą.',
+  SLOT_UNAVAILABLE: 'Ta godzina właśnie się zajęła. Wybierz inną.',
+  CONSENT_REQUIRED: 'Sprawdź wymaganą zgodę.',
+  TURNSTILE_FAILED: 'Ponów kontrolę bezpieczeństwa przed wysłaniem.',
+  RATE_LIMITED: 'Zbyt wiele prób. Odczekaj kilka minut lub zadzwoń: 600 370 810.',
+  FORBIDDEN: 'Odśwież stronę i spróbuj ponownie.',
+  SERVER_ERROR: 'Nie udało się zapisać zgłoszenia. Spróbuj później lub zadzwoń: 600 370 810.',
+  INVALID_JSON: 'Sprawdź dane formularza i spróbuj ponownie.',
+  INVALID_PHONE: 'Wpisz polski numer: 9 cyfr, opcjonalnie z +48 lub 48.',
+  PICKUP_ADDRESS_REQUIRED: 'Podaj adres odbioru: miejscowość, ulicę i numer (5–300 znaków).',
+  IDEMPOTENCY_CONFLICT: 'Sprawdź dane formularza i spróbuj ponownie.',
+};
+API_ERRORS.INVALID_PICKUP_ADDRESS = API_ERRORS.PICKUP_ADDRESS_REQUIRED;
+API_ERRORS.REQUEST_TOO_LARGE = API_ERRORS.INVALID_INPUT;
+API_ERRORS.SERVICE_UNAVAILABLE = API_ERRORS.SERVER_ERROR;
+function apiError(data, status) {
+  return API_ERRORS[data?.code] || (status === 429 ? API_ERRORS.RATE_LIMITED : status === 403 ? API_ERRORS.TURNSTILE_FAILED : API_ERRORS.SERVER_ERROR);
+}
+
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-const PHONE_MSG = 'Wpisz prawidłowy telefon: 9-15 cyfr, może być z +48.';
+const PHONE_MSG = 'Wpisz polski numer: 9 cyfr, opcjonalnie z +48 lub 48.';
 const CONSENT_MSG = 'Podaj email albo odznacz zgodę na przypomnienie.';
 
 function phoneOk(v) {
-  return /^\+?[0-9]{9,15}$/.test(v.replace(/[\s\-()]/g, ''));
+  return /^(\+?48)?[0-9]{9}$/.test(v.replace(/[\s\-()]/g, ''));
 }
 
-const ALL_ERR_IDS = ['err-service', 'err-bike', 'err-date', 'err-slot', 'err-name', 'err-phone', 'err-email'];
+const ALL_ERR_IDS = ['err-service', 'err-pickup', 'err-bike', 'err-date', 'err-slot', 'err-name', 'err-phone', 'err-email'];
 function clearAllErrs() {
   ALL_ERR_IDS.forEach(id => clearErr(id));
-  [nameEl, phoneEl, emailEl].forEach(el => el.removeAttribute('aria-invalid'));
+  [nameEl, phoneEl, emailEl, pickupAddress].forEach(el => el.removeAttribute('aria-invalid'));
 }
 
 function collectValues() {
@@ -1007,6 +1118,8 @@ function collectValues() {
     email:   emailEl.value.trim(),
     notes:   $('#notes').value.trim(),
     consent: consentEl?.checked || false,
+    pickup_requested: pickupRequested(),
+    pickup_address: pickupRequested() ? pickupAddress.value.trim() : '',
   };
 }
 
@@ -1016,6 +1129,7 @@ function validateForm(v) {
   const todayW = warsawToday();
   const maxW = addDaysISO(todayW, MAX_DAYS_AHEAD);
   if (!v.service) errors.push({ id: 'err-service', msg: 'Wybierz usługę.', focus: form.querySelector('input[name="service"]') });
+  if (v.pickup_requested && (v.pickup_address.length < 5 || v.pickup_address.length > 300)) errors.push({ id: 'err-pickup', msg: 'Podaj adres odbioru: miejscowość, ulicę i numer (5–300 znaków).', focus: pickupAddress, invalid: pickupAddress });
   if (!v.bike) errors.push({ id: 'err-bike', msg: 'Wybierz typ roweru.', focus: form.querySelector('input[name="bike"]') });
   if (!v.date) errors.push({ id: 'err-date', msg: 'Wybierz datę.', focus: dateInput });
   else if (!DATE_RE.test(v.date)) errors.push({ id: 'err-date', msg: 'Nieprawidłowa data.', focus: dateInput });
@@ -1030,15 +1144,18 @@ function validateForm(v) {
 }
 
 // Walidacja inline przy opuszczeniu pola (tylko gdy coś wpisano; puste łapie submit).
-nameEl.addEventListener('blur', () => {
+nameEl.addEventListener('blur', event => {
+  if (event.relatedTarget === submitBtn) return;
   const val = nameEl.value.trim();
   if (val && val.length < 2) showErr('err-name', 'Wpisz imię.', nameEl);
 });
-phoneEl.addEventListener('blur', () => {
+phoneEl.addEventListener('blur', event => {
+  if (event.relatedTarget === submitBtn) return;
   const val = phoneEl.value.trim();
   if (val && !phoneOk(val)) showErr('err-phone', PHONE_MSG, phoneEl);
 });
-emailEl.addEventListener('blur', () => {
+emailEl.addEventListener('blur', event => {
+  if (event.relatedTarget === submitBtn) return;
   const val = emailEl.value.trim();
   if (val && !EMAIL_RE.test(val)) showErr('err-email', 'Wpisz prawidłowy email.', emailEl);
 });
@@ -1079,12 +1196,14 @@ form.addEventListener('submit', async (e) => {
   }
 
   submitting = true;
+  form.dataset.submitting = 'true';
+  form.setAttribute('aria-busy', 'true');
   submitBtn.disabled = true;
   submitBtn.textContent = 'Wysyłanie...';
   let done = false;
 
   try {
-    const r = await fetch('/api/bookings', {
+    const { response: r, data } = await requestJson('/api/bookings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1094,38 +1213,42 @@ form.addEventListener('submit', async (e) => {
         customer_email: v.email || null,
         notes: v.notes || null,
         consent: v.consent,
+        pickup_requested: v.pickup_requested,
+        pickup_address: v.pickup_address || null,
         turnstile_token: form.querySelector('[name="cf-turnstile-response"]')?.value || undefined,
         ...ATTRIBUTION,
       }),
     });
-    let data = null;
-    try { data = await r.json(); } catch (_) {}
 
     if (r.status === 409) {
-      showAlert((data && data.error) || 'Ta godzina właśnie się zajęła. Wybierz inną.');
+      showAlert(apiError(data, r.status));
       await loadSlots();
       slotsArea.insertAdjacentHTML('afterbegin',
         '<p class="slots-empty" role="status">Ta godzina właśnie się zajęła. Wybierz inną z odświeżonej listy.</p>');
       document.getElementById('t-termin').scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
+    if (r.status >= 500) throw new Error('Booking result uncertain');
     if (!r.ok) {
-      showAlert((data && data.error) || 'Nie udało się umówić, spróbuj ponownie.');
+      showAlert(apiError(data, r.status));
       return;
     }
+    if (!data || typeof data.id !== 'string' || !data.id) throw new Error('Missing booking acknowledgement');
     done = true;
-    showSuccess({ id: data && data.id, date: v.date, slot: v.slot, service: v.service, bike: v.bike, name: v.name, phone: v.phone });
+    showSuccess({ id: data && data.id, date: v.date, slot: v.slot, service: v.service, bike: v.bike, name: v.name, phone: v.phone, pickup: v.pickup_requested, pickupAddress: v.pickup_address });
     trackBookingSuccess({ service: v.service, bike: v.bike });
   } catch (err) {
     showAlertHTML(
-      'Błąd połączenia. Rezerwacja mogła mimo to dojść, więc nie wysyłaj jej od razu drugi raz. ' +
+      'Nie udało się potwierdzić wyniku wysyłki. Rezerwacja mogła mimo to dojść, więc nie wysyłaj jej od razu drugi raz. ' +
       'Napisz na <a href="' + WA_LINK + '" target="_blank" rel="noopener">WhatsApp</a> ' +
       'albo zadzwoń: <a href="tel:+48600370810">600 370 810</a>, żeby sprawdzić, czy zgłoszenie doszło.'
     );
   } finally {
     submitting = false;
+    delete form.dataset.submitting;
+    form.removeAttribute('aria-busy');
     if (!done) {
-      submitBtn.disabled = false;
+      submitBtn.disabled = form.dataset.turnstileReady === 'false';
       submitBtn.innerHTML = submitBtnHTML;
     }
   }
@@ -1142,10 +1265,11 @@ function trackBookingSuccess({ service, bike }) {
   } catch (_) {}
 }
 
-function showSuccess({ id, date, slot, service, bike, name, phone }) {
+function showSuccess({ id, date, slot, service, bike, name, phone, pickup, pickupAddress }) {
   const svc = SERVICES.find(s => s.id === service);
   const serviceName = svc ? svc.name : service;
   const servicePrice = svc && svc.price ? ' (' + svc.price + ')' : '';
+  const transportPrice = pickup ? (service === 'odbior' ? 'Transport od 50 zł (Warszawa od 90 zł); naprawa i części wyceniane osobno' : 'Transport od 50 zł (Warszawa od 90 zł), dodatkowo do naprawy i części') : '';
   const idShort = (id || '').slice(0, 8);
   form.hidden = true;
   const box = $('#success');
@@ -1158,16 +1282,19 @@ function showSuccess({ id, date, slot, service, bike, name, phone }) {
       <h2>Zgłoszenie przyjęte</h2>
       <p>Dzięki, ${escapeHtml(name)}. Potwierdzę termin telefonicznie albo SMS-em na <strong>${escapeHtml(phone)}</strong>, zwykle tego samego dnia.</p>
       <div class="success-meta">
-        <div><strong>Termin:</strong> <span class="val-mono">${escapeHtml(formatDatePl(date))}, godz. ${escapeHtml(slot)}</span></div>
-        <div><strong>Usługa:</strong> ${escapeHtml(serviceName + servicePrice)}</div>
+        <div><strong>${pickup ? 'Proponowany odbiór' : 'Termin wizyty'}:</strong> <span class="val-mono">${escapeHtml(formatDatePl(date))}, godz. ${escapeHtml(slot)}</span></div>
+        <div><strong>Usługa:</strong> ${escapeHtml(service === 'odbior' ? transportPrice : serviceName + servicePrice)}</div>
         <div><strong>Rower:</strong> ${escapeHtml(bike)}</div>
-        <div><strong>${service === 'odbior' ? 'Odbiór roweru' : 'Adres'}:</strong> ${service === 'odbior' ? 'pod adresem podanym w notatce' : 'Jesionowa 18, Grodzisk Mazowiecki'}</div>
+        <div><strong>${pickup ? 'Adres odbioru' : 'Adres'}:</strong> ${pickup ? escapeHtml(pickupAddress) : 'Jesionowa 18, Grodzisk Mazowiecki'}</div>
+        ${pickup && service !== 'odbior' ? `<div>${escapeHtml(transportPrice)}</div>` : ''}
         ${idShort ? `<div><strong>Zgłoszenie:</strong> <span class="val-mono">${escapeHtml(idShort)}</span></div>` : ''}
       </div>
-      <p>Brak potwierdzenia do jutra? Napisz na <a href="${WA_LINK}" target="_blank" rel="noopener">WhatsApp</a> albo zadzwoń: <a href="tel:+48600370810">600 370 810</a>.</p>
+      ${pickup ? '<p>Odbiór, odwóz i łączny koszt ustalimy przy potwierdzeniu.</p>' : ''}
+      <p>${date === warsawToday() ? 'Termin jest na dziś. Jeśli nie masz potwierdzenia, zadzwoń teraz, żeby uzgodnić wizytę albo odbiór.' : 'Nie masz potwierdzenia przed planowanym terminem?'} Napisz na <a href="${WA_LINK}" target="_blank" rel="noopener">WhatsApp</a> albo zadzwoń: <a href="tel:+48600370810">600 370 810</a>.</p>
       <p><a class="back-link" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Wróć na stronę</a></p>
     </div>
   `;
+  box.focus({ preventScroll: true });
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

@@ -30,247 +30,476 @@
 
   <!-- Schema.org FAQPage -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "@id": "https://www.skocznarower.pl/#faq",
-    "inLanguage": "en",
-    "speakable": {
-      "@type": "SpeakableSpecification",
-      "cssSelector": [".faq-q", ".faq-a"]
-    },
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "How do I book my bike in for service in Grodzisk Mazowiecki?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Easiest through the online form at skocznarower.pl/en/umow: pick a service, day and time, and you get a call back to confirm. You can also call (600 370 810) or message on Instagram (@xpyszczek_). The workshop is at Jesionowa 18 in Grodzisk Mazowiecki, by appointment only."}
-      },
-      {
-        "@type": "Question",
-        "name": "How long does a bike service take?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Simple jobs like an adjustment or an inner tube are usually done the same day. A full tune-up or a wheel build takes 2 to 4 working days."}
-      },
-      {
-        "@type": "Question",
-        "name": "Do you service Dirt Jump and BMX bikes?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Yes, that is the main speciality. Dirt Jump and BMX service in Grodzisk Mazowiecki, serving riders from Pruszków, Milanówek and the Warsaw area."}
-      },
-      {
-        "@type": "Question",
-        "name": "Do you repair electric bikes (e-bikes)?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Yes. Mechanical e-bike service: brakes, wheels and components are no problem. Electronics and the motor are not covered."}
-      },
-      {
-        "@type": "Question",
-        "name": "Is the workshop easy to reach from Pruszków or Milanówek?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Yes. From Pruszków about 15 minutes by car, from Milanówek a minute (the workshop sits right on the border). From the western districts of Warsaw about 30 minutes. The workshop is at Jesionowa 18 in Grodzisk Mazowiecki."}
-      },
-      {
-        "@type": "Question",
-        "name": "How often should a dirt jump bike be serviced?",
-        "acceptedAnswer": {"@type": "Answer", "text": "With regular track riding, a basic tune-up every season is a good rule, in spring before you start. If you ride hard several times a week, it is worth another look mid-summer."}
-      },
-      {
-        "@type": "Question",
-        "name": "What is the difference between wheel building and truing?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Truing is adjusting spoke tension in an existing wheel. Building is assembling a wheel from scratch: rim, hub, spokes, nipples. Building for a new hub or rim, truing when the wheel is sound but wobbles. Both are done on a professional truing stand with a dial indicator."}
-      },
-      {
-        "@type": "Question",
-        "name": "When should a bike chain be replaced?",
-        "acceptedAnswer": {"@type": "Answer", "text": "At 0.75 wear it is worth replacing the chain, because you save the cassette. At 1.0 the cassette goes together with the chain and you pay several times more."}
-      },
-      {
-        "@type": "Question",
-        "name": "Do you service hydraulic bike brakes?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Yes. Hydraulic brake bleeding for Shimano, SRAM, TRP, Hope and Magura. Bleeding, fluid replacement, bite point adjustment. From 100 zł per circuit."}
-      },
-      {
-        "@type": "Question",
-        "name": "Is the workshop professionally equipped?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Yes. A repair stand, a professional wheel truing stand with a dial indicator, a torque wrench, a hydraulic brake bleeding kit, a hanger and rotor straightening tool, a chain tool, cone spanners, a chain whip and cassette and bottom bracket tools. The dial indicator makes wheel building and truing millimetre-precise."}
-      },
-      {
-        "@type": "Question",
-        "name": "What is a truing stand with a dial indicator and why does it matter?",
-        "acceptedAnswer": {"@type": "Answer", "text": "A truing stand is a jig for truing and building wheels. The cheap version is two pieces of metal and the mechanic's eye. A professional stand with a dial indicator measures wheel deviation to tenths of a millimetre, both side to side and up and down. That allows wheels to be built and trued as close to perfect as physically possible. For dirt jump, BMX or MTB wheels that take hard hits, spoke precision makes a real difference in durability."}
-      },
-      {
-        "@type": "Question",
-        "name": "Which component brands do you work with?",
-        "acceptedAnswer": {"@type": "Answer", "text": "Shimano, SRAM, TRP, Hope, Magura, no problem. Got something else? Write, it will almost certainly work out."}
-      }
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "@id": "https://www.skocznarower.pl/#faq",
+  "inLanguage": "en",
+  "speakable": {
+    "@type": "SpeakableSpecification",
+    "cssSelector": [
+      ".faq-q",
+      ".faq-a"
     ]
-  }
+  },
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How do I book my bike in for service in Grodzisk Mazowiecki?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Easiest through the online form at skocznarower.pl/en/umow: pick a service, day and time, and you receive confirmation by phone or SMS. You can also call (600 370 810) or message on Instagram (@xpyszczek_). The workshop is at Jesionowa 18 in Grodzisk Mazowiecki, by appointment only."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How long does a bike service take?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Simple jobs like an adjustment or an inner tube are usually done the same day. A full tune-up or a wheel build takes 2 to 4 working days."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do you service Dirt Jump and BMX bikes?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, that is the main speciality. Dirt Jump and BMX service in Grodzisk Mazowiecki, serving riders from Pruszków, Milanówek and the Warsaw area."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do you repair electric bikes (e-bikes)?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Mechanical e-bike service: brakes, wheels and components are no problem. Electronics and the motor are not covered."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is the workshop easy to reach from Pruszków or Milanówek?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The workshop is at Jesionowa 18 in Grodzisk Mazowiecki. I welcome bikes from Pruszków , Milanówek and nearby towns. Travel time depends on your starting point and traffic; plan a route from your own address."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How often should a dirt jump bike be serviced?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "With regular track riding, a basic tune-up every season is a good rule, in spring before you start. If you ride hard several times a week, it is worth another look mid-summer."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between wheel building and truing?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Truing is adjusting spoke tension in an existing wheel. Building is assembling a wheel from scratch: rim, hub, spokes, nipples. Building for a new hub or rim, truing when the wheel is sound but wobbles. Both are done on a professional truing stand with a dial indicator."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "When should a bike chain be replaced?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The replacement limit depends on the chain model and manufacturer guidance. For many 11- and 12-speed chains it is 0.5%; for many 5- to 10-speed chains it is 0.75%. Use a compatible gauge. I assess cassette wear separately during a check."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do you service hydraulic bike brakes?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Hydraulic brake bleeding for Shimano, SRAM, TRP, Hope and Magura. Bleeding, fluid replacement, bite point adjustment. From 100 zł per circuit."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is the workshop professionally equipped?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. A repair stand, a professional wheel truing stand with a dial indicator, a torque wrench, a hydraulic brake bleeding kit, a hanger and rotor straightening tool, a chain tool, cone spanners, a chain whip and cassette and bottom bracket tools. The dial indicator makes wheel building and truing millimetre-precise."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is a truing stand with a dial indicator and why does it matter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A truing stand holds a wheel while it is trued or built. Its dial indicator reads lateral and radial runout in 0.1 mm increments. That is the measurement resolution, not a guaranteed result for every wheel. I also check the rim, spokes and nipples; a damaged rim cannot always be trued."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which component brands do you work with?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Shimano, SRAM, TRP, Hope, Magura, no problem. Got something else? Write, it will almost certainly work out."
+      }
+    }
+  ]
+}
   </script>
 
   <!-- Schema.org LocalBusiness -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": ["LocalBusiness", "BicycleStore"],
-    "@id": "https://www.skocznarower.pl/#business",
-    "name": "skocznarower.pl – Bike Repair Shop",
-    "inLanguage": "en",
-    "description": "Bike workshop specialising in Dirt Jump, MTB, BMX and e-bikes, with a dial-indicator truing stand for precise wheel building and truing. Serving riders from Grodzisk Mazowiecki, Pruszków, Milanówek and the Warsaw area.",
-    "url": "https://www.skocznarower.pl/en/",
-    "telephone": "+48600370810",
-    "image": "https://www.skocznarower.pl/uploads/photo-1778431658856.jpeg",
-    "currenciesAccepted": "PLN",
-    "paymentAccepted": "Cash, BLIK, bank transfer",
-    "knowsAbout": [
-      "Bicycle service",
-      "Dirt jump",
-      "BMX",
-      "MTB",
-      "E-bike",
-      "Wheel building",
-      "Wheel truing",
-      "Hydraulic brake bleeding",
-      "Shimano brakes",
-      "SRAM brakes",
-      "Custom bike builds"
-    ],
-    "slogan": "Dirt Jump, MTB, BMX and e-bike service in Grodzisk Mazowiecki",
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": "Jesionowa 18",
-      "addressLocality": "Grodzisk Mazowiecki",
-      "postalCode": "05-825",
-      "addressCountry": "PL"
+{
+  "@context": "https://schema.org",
+  "@type": [
+    "LocalBusiness",
+    "BicycleStore"
+  ],
+  "@id": "https://www.skocznarower.pl/#business",
+  "name": "skocznarower.pl – Bike Repair Shop",
+  "inLanguage": "en",
+  "description": "Bike workshop specialising in Dirt Jump, MTB, BMX and e-bikes, with a dial-indicator truing stand for precise wheel building and truing. Serving riders from Grodzisk Mazowiecki, Pruszków, Milanówek and the Warsaw area.",
+  "url": "https://www.skocznarower.pl/en/",
+  "telephone": "+48600370810",
+  "image": "https://www.skocznarower.pl/uploads/photo-1778431658856.jpeg",
+  "currenciesAccepted": "PLN",
+  "paymentAccepted": "Cash, BLIK, bank transfer",
+  "knowsAbout": [
+    "Bicycle service",
+    "Dirt jump",
+    "BMX",
+    "MTB",
+    "E-bike",
+    "Wheel building",
+    "Wheel truing",
+    "Hydraulic brake bleeding",
+    "Shimano brakes",
+    "SRAM brakes",
+    "Custom bike builds"
+  ],
+  "slogan": "Dirt Jump, MTB, BMX and e-bike service in Grodzisk Mazowiecki",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Jesionowa 18",
+    "addressLocality": "Grodzisk Mazowiecki",
+    "postalCode": "05-825",
+    "addressCountry": "PL"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": 52.1093,
+    "longitude": 20.6241
+  },
+  "openingHoursSpecification": [
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ],
+      "opens": "16:00",
+      "closes": "19:00"
+    }
+  ],
+  "areaServed": [
+    {
+      "@type": "City",
+      "name": "Grodzisk Mazowiecki"
     },
-    "geo": {
+    {
+      "@type": "City",
+      "name": "Pruszków"
+    },
+    {
+      "@type": "City",
+      "name": "Milanówek"
+    },
+    {
+      "@type": "City",
+      "name": "Brwinów"
+    },
+    {
+      "@type": "City",
+      "name": "Warsaw"
+    }
+  ],
+  "serviceArea": {
+    "@type": "GeoCircle",
+    "geoMidpoint": {
       "@type": "GeoCoordinates",
       "latitude": 52.1093,
       "longitude": 20.6241
     },
-    "openingHoursSpecification": [
+    "geoRadius": "30000"
+  },
+  "priceRange": "$$",
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Bike workshop services",
+    "itemListElement": [
       {
-        "@type": "OpeningHoursSpecification",
-        "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
-        "opens": "16:00",
-        "closes": "19:00"
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Bike tune-up and service",
+          "description": "Full check-up, adjustments, lubrication"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Wheel building",
+          "description": "Truing, building and spoke replacement"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Dirt Jump and BMX service",
+          "description": "Specialist dirt jump, skatepark and street service"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "MTB service",
+          "description": "Hardtail and full suspension: brakes, wheels, derailleurs"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "E-bike service",
+          "description": "Mechanical service for electric bikes"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Custom bike build",
+          "description": "Building a bike from frame to finished ride"
+        }
       }
-    ],
-    "areaServed": [
-      {"@type": "City", "name": "Grodzisk Mazowiecki"},
-      {"@type": "City", "name": "Pruszków"},
-      {"@type": "City", "name": "Milanówek"},
-      {"@type": "City", "name": "Brwinów"},
-      {"@type": "City", "name": "Warsaw"}
-    ],
-    "serviceArea": {
-      "@type": "GeoCircle",
-      "geoMidpoint": {"@type": "GeoCoordinates", "latitude": 52.1093, "longitude": 20.6241},
-      "geoRadius": "30000"
-    },
-    "priceRange": "$$",
-    "hasOfferCatalog": {
-      "@type": "OfferCatalog",
-      "name": "Bike workshop services",
-      "itemListElement": [
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Bike tune-up and service", "description": "Full check-up, adjustments, lubrication"}},
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Wheel building", "description": "Truing, building and spoke replacement"}},
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Dirt Jump and BMX service", "description": "Specialist dirt jump, skatepark and street service"}},
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "MTB service", "description": "Hardtail and full suspension: brakes, wheels, derailleurs"}},
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "E-bike service", "description": "Mechanical service for electric bikes"}},
-        {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Custom bike build", "description": "Building a bike from frame to finished ride"}}
-      ]
-    },
-    "founder": {
-      "@type": "Person",
-      "@id": "https://www.skocznarower.pl/#mateusz",
-      "name": "Mateusz Mamcarz",
-      "alternateName": "xPyszczek"
-    },
-    "hasMap": "https://maps.google.com/?cid=6298905504059882234",
-    "sameAs": [
-      "https://www.instagram.com/xpyszczek_",
-      "https://www.tiktok.com/@xpyszczek.dirt"
     ]
-  }
+  },
+  "founder": {
+    "@type": "Person",
+    "@id": "https://www.skocznarower.pl/#mateusz",
+    "name": "Mateusz Mamcarz",
+    "alternateName": "xPyszczek"
+  },
+  "hasMap": "https://maps.google.com/?cid=6298905504059882234",
+  "sameAs": [
+    "https://www.instagram.com/xpyszczek_",
+    "https://www.tiktok.com/@xpyszczek.dirt"
+  ]
+}
   </script>
 
   <!-- Schema.org WebSite (pomaga wyszukiwarkom generatywnym zrozumieć kontekst całej domeny) -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "@id": "https://www.skocznarower.pl/#website",
-    "url": "https://www.skocznarower.pl/en/",
-    "name": "skocznarower.pl",
-    "inLanguage": "en",
-    "description": "Bike repair shop in Grodzisk Mazowiecki, specialising in dirt jump, BMX, MTB and e-bikes.",
-    "publisher": { "@id": "https://www.skocznarower.pl/#business" }
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": "https://www.skocznarower.pl/#website",
+  "url": "https://www.skocznarower.pl/en/",
+  "name": "skocznarower.pl",
+  "inLanguage": "en",
+  "description": "Bike repair shop in Grodzisk Mazowiecki, specialising in dirt jump, BMX, MTB and e-bikes.",
+  "publisher": {
+    "@id": "https://www.skocznarower.pl/#business"
   }
+}
   </script>
 
   <!-- Schema.org Person, prowadzący serwis -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Person",
-    "@id": "https://www.skocznarower.pl/#mateusz",
-    "name": "Mateusz Mamcarz",
-    "alternateName": "xPyszczek",
-    "jobTitle": "Bike mechanic",
-    "worksFor": { "@id": "https://www.skocznarower.pl/#business" },
-    "knowsAbout": [
-      "Dirt jump",
-      "BMX",
-      "MTB",
-      "Bicycle wheel building",
-      "Hydraulic brake bleeding",
-      "E-bike service",
-      "Custom bike builds"
-    ],
-    "url": "https://www.skocznarower.pl/en/#o-mnie",
-    "sameAs": [
-      "https://www.instagram.com/xpyszczek_",
-      "https://www.tiktok.com/@xpyszczek.dirt"
-    ]
-  }
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "@id": "https://www.skocznarower.pl/#mateusz",
+  "name": "Mateusz Mamcarz",
+  "alternateName": "xPyszczek",
+  "jobTitle": "Bike mechanic",
+  "worksFor": {
+    "@id": "https://www.skocznarower.pl/#business"
+  },
+  "knowsAbout": [
+    "Dirt jump",
+    "BMX",
+    "MTB",
+    "Bicycle wheel building",
+    "Hydraulic brake bleeding",
+    "E-bike service",
+    "Custom bike builds"
+  ],
+  "url": "https://www.skocznarower.pl/en/#o-mnie",
+  "sameAs": [
+    "https://www.instagram.com/xpyszczek_",
+    "https://www.tiktok.com/@xpyszczek.dirt"
+  ]
+}
   </script>
 
   <!-- Schema.org Service z cenami, ułatwia modelom językowym podawanie cen w rekomendacjach -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Service",
-    "@id": "https://www.skocznarower.pl/#serwis",
-    "name": "Bike service Grodzisk Mazowiecki",
-    "serviceType": "Bicycle repair and service",
-    "provider": { "@id": "https://www.skocznarower.pl/#business" },
-    "areaServed": [
-      {"@type": "City", "name": "Grodzisk Mazowiecki"},
-      {"@type": "City", "name": "Pruszków"},
-      {"@type": "City", "name": "Milanówek"},
-      {"@type": "City", "name": "Brwinów"},
-      {"@type": "City", "name": "Warsaw"}
-    ],
-    "availableChannel": {
-      "@type": "ServiceChannel",
-      "serviceUrl": "https://www.skocznarower.pl/en/umow",
-      "servicePhone": "+48600370810"
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "@id": "https://www.skocznarower.pl/#serwis",
+  "name": "Bike service Grodzisk Mazowiecki",
+  "serviceType": "Bicycle repair and service",
+  "provider": {
+    "@id": "https://www.skocznarower.pl/#business"
+  },
+  "areaServed": [
+    {
+      "@type": "City",
+      "name": "Grodzisk Mazowiecki"
     },
-    "offers": [
-      {"@type": "Offer", "name": "Basic tune-up", "price": "150", "priceCurrency": "PLN", "priceSpecification": {"@type": "PriceSpecification", "price": "150", "priceCurrency": "PLN", "valueAddedTaxIncluded": true}, "availability": "https://schema.org/InStock", "url": "https://www.skocznarower.pl/en/umow", "description": "Starting price, exact quote after inspection."},
-      {"@type": "Offer", "name": "Full tune-up", "price": "340", "priceCurrency": "PLN", "availability": "https://schema.org/InStock", "url": "https://www.skocznarower.pl/en/umow"},
-      {"@type": "Offer", "name": "City bike adjustment", "price": "70", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/en/umow"},
-      {"@type": "Offer", "name": "Brake adjustment", "price": "40", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/en/umow"},
-      {"@type": "Offer", "name": "Derailleur adjustment", "price": "40", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/en/umow"},
-      {"@type": "Offer", "name": "Wheel truing", "price": "120", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/en/umow"},
-      {"@type": "Offer", "name": "Wheel building (labour)", "price": "80", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/en/umow"},
-      {"@type": "Offer", "name": "Wheel repair", "price": "35", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/en/umow"},
-      {"@type": "Offer", "name": "Inner tube replacement", "price": "35", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/en/umow"},
-      {"@type": "Offer", "name": "Tyre replacement", "price": "40", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/en/umow"},
-      {"@type": "Offer", "name": "Tubeless setup", "price": "70", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/en/umow"},
-      {"@type": "Offer", "name": "Hydraulic brake bleeding (per circuit)", "price": "100", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/en/umow"},
-      {"@type": "Offer", "name": "Custom bike build", "price": "500", "priceCurrency": "PLN", "url": "https://www.skocznarower.pl/en/umow"},
-      {"@type": "Offer", "name": "Bike pickup and delivery (Grodzisk, Milanówek, Pruszków)", "price": "50", "priceCurrency": "PLN"},
-      {"@type": "Offer", "name": "Bike pickup and delivery (western Warsaw)", "price": "90", "priceCurrency": "PLN"}
-    ]
-  }
+    {
+      "@type": "City",
+      "name": "Pruszków"
+    },
+    {
+      "@type": "City",
+      "name": "Milanówek"
+    },
+    {
+      "@type": "City",
+      "name": "Brwinów"
+    },
+    {
+      "@type": "City",
+      "name": "Warsaw"
+    }
+  ],
+  "availableChannel": {
+    "@type": "ServiceChannel",
+    "serviceUrl": "https://www.skocznarower.pl/en/umow",
+    "servicePhone": "+48600370810"
+  },
+  "offers": [
+    {
+      "@type": "Offer",
+      "name": "Basic tune-up",
+      "price": "150",
+      "priceCurrency": "PLN",
+      "priceSpecification": {
+        "@type": "PriceSpecification",
+        "price": "150",
+        "priceCurrency": "PLN",
+        "valueAddedTaxIncluded": true
+      },
+      "availability": "https://schema.org/InStock",
+      "url": "https://www.skocznarower.pl/en/umow",
+      "description": "Starting price, exact quote after inspection."
+    },
+    {
+      "@type": "Offer",
+      "name": "Full tune-up",
+      "price": "340",
+      "priceCurrency": "PLN",
+      "availability": "https://schema.org/InStock",
+      "url": "https://www.skocznarower.pl/en/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "City bike adjustment",
+      "price": "70",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/en/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Brake adjustment",
+      "price": "40",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/en/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Derailleur adjustment",
+      "price": "40",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/en/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Wheel truing",
+      "price": "120",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/en/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Wheel building (labour)",
+      "price": "80",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/en/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Wheel repair",
+      "price": "35",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/en/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Inner tube replacement",
+      "price": "35",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/en/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Tyre replacement",
+      "price": "40",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/en/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Tubeless setup",
+      "price": "70",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/en/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Hydraulic brake bleeding (per circuit)",
+      "price": "100",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/en/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Custom bike build",
+      "price": "500",
+      "priceCurrency": "PLN",
+      "url": "https://www.skocznarower.pl/en/umow"
+    },
+    {
+      "@type": "Offer",
+      "name": "Bike pickup and delivery (Grodzisk, Milanówek, Pruszków)",
+      "price": "50",
+      "priceCurrency": "PLN"
+    },
+    {
+      "@type": "Offer",
+      "name": "Bike pickup and delivery (western Warsaw)",
+      "price": "90",
+      "priceCurrency": "PLN"
+    }
+  ]
+}
   </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -319,6 +548,10 @@
   <script>document.documentElement.classList.add('js');</script>
 
   <style>
+    .skip-link { position:fixed; top:8px; left:8px; z-index:10000; padding:12px 18px; background:#9fe22e; color:#080808; font:700 16px sans-serif; transform:translateY(-160%); }
+    .skip-link:focus { transform:translateY(0); }
+    :focus-visible { outline:2px solid #9fe22e; outline-offset:4px; }
+
     /* ─── TOKENS ─────────────────────────────────────────── */
     :root {
       --bg:    #080808;
@@ -369,7 +602,8 @@
       justify-content: space-between;
       padding: 22px 48px;
       transition: background .3s, padding .3s, border-color .3s;
-      border-bottom: 1px solid transparent;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,8,8,.96);
     }
     .nav.stuck {
       inset-block-start: 0;
@@ -1808,8 +2042,25 @@
     }
   </style>
   <script src="/turnstile.js" defer></script>
+<script>
+(function(){
+  try {
+    var key = 'skoczna-attribution-v1';
+    var first = JSON.parse(sessionStorage.getItem(key));
+    if (first && first.landing_path) return;
+    var params = new URLSearchParams(location.search);
+    var first = { landing_path: location.pathname.slice(0, 200), landing_language: document.documentElement.lang, referrer_host: null };
+    try { first.referrer_host = document.referrer ? new URL(document.referrer).hostname.slice(0, 253) : null; } catch (_) {}
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(function(name){
+      first[name] = (params.get(name) || '').replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 100) || null;
+    });
+    sessionStorage.setItem('skoczna-attribution-v1', JSON.stringify(first));
+  } catch (_) {}
+})();
+</script>
 </head>
 <body>
+<a class="skip-link" href="#main-content">Skip to content</a>
 
 <!-- ═══════════════════════════════════════════════
      NAV
@@ -1842,6 +2093,7 @@
     <li><a class="cta" href="/en/umow">Book a visit</a></li>
   </ul>
 </nav>
+<main id="main-content" tabindex="-1">
 
 
 
@@ -1906,7 +2158,7 @@
   </div>
   <div class="trust-item">
     <span class="trust-v">0.1 mm</span>
-    <span class="trust-k">wheel runout on a dial-indicator truing stand</span>
+    <span class="trust-k">wheel runout gauge resolution</span>
   </div>
   <div class="trust-item">
     <span class="trust-v">16:00 to 19:00</span>
@@ -1937,7 +2189,7 @@
         </div>
         <div class="spec-row">
           <span class="spec-k">Truing stand with dial indicator</span>
-          <span class="spec-v">runout within 0.1 mm</span>
+          <span class="spec-v">readings in 0.1 mm steps</span>
         </div>
         <div class="spec-row">
           <span class="spec-k">Torque wrench</span>
@@ -1996,8 +2248,8 @@
           <path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/>
         </svg>
       <a class="service-name" href="/en/centrowanie-i-zaplatanie-kol">WHEEL BUILDING</a>
-      <div class="service-desc">Truing, building from scratch, spoke replacement. I work on a truing stand with a dial indicator and measure runout to tenths of a millimetre, no guessing. The wheel will survive whatever you plan to send on it.</div>
-      <a class="service-go" href="/en/umow?service=kolo-centrowanie">Book this service <span aria-hidden="true">&rarr;</span></a>
+      <div class="service-desc">Truing, building from scratch and spoke replacement. I check runout with a dial indicator and inspect the rim, spokes and nipples. <a href="/en/centrowanie-i-zaplatanie-kol">Wheel service details</a>.</div>
+      <a class="service-go" href="/en/umow?service=kolo-zaplatanie">Book this service <span aria-hidden="true">&rarr;</span></a>
     </div>
 
   </div>
@@ -2094,7 +2346,7 @@
         </svg>
         <div class="service-name">CITY BIKES</div>
       </div>
-      <div class="service-desc">Tune-ups, adjustments, parts replacement. Same stand, same toolset, lower prices than the seasonal pop-ups.
+      <div class="service-desc">Checks, adjustments and parts replacement. I inspect brakes, gears and wheels, then agree on work to suit the bike’s condition.
         <a class="service-go" href="/en/umow?service=przeglad-podstawowy">Book this service <span aria-hidden="true">&rarr;</span></a>
       </div>
     </div>
@@ -2139,17 +2391,17 @@
   <p class="price-lead reveal" data-delay="1">Prices are for labour, parts quoted separately. Exact quote after inspection, before I start anything.</p>
 
   <div class="price-anchors">
-    <a class="price-anchor reveal" data-delay="1" href="/en/umow">
+    <a class="price-anchor reveal" data-delay="1" href="/en/umow?service=wymiana-czesci">
       <span class="price-anchor-k">Quick fix</span>
       <span class="price-anchor-v">from 35 zł</span>
       <span class="price-anchor-d">Tube, tyre, brake or gear adjustment. Usually the same day.</span>
     </a>
-    <a class="price-anchor price-anchor-hi reveal" data-delay="2" href="/en/umow">
+    <a class="price-anchor price-anchor-hi reveal" data-delay="2" href="/en/umow?service=przeglad-podstawowy">
       <span class="price-anchor-k">Basic tune-up <span class="price-badge">start here</span></span>
       <span class="price-anchor-v">from 150 zł</span>
       <span class="price-anchor-d">The whole bike point by point, adjustments, lubrication. I tell you what needs work and what can wait.</span>
     </a>
-    <a class="price-anchor reveal" data-delay="3" href="/en/umow">
+    <a class="price-anchor reveal" data-delay="3" href="/en/umow?service=przeglad-kompleksowy">
       <span class="price-anchor-k">Full tune-up</span>
       <span class="price-anchor-v">from 340 zł</span>
       <span class="price-anchor-d">Thorough pre-season check, wheels on the truing stand. Usually 2 to 4 working days.</span>
@@ -2239,7 +2491,7 @@
         <span class="faq-t">How do I book my bike in for service in Grodzisk Mazowiecki?</span>
         <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
-      <div class="faq-a">Easiest through the <a href="/en/umow" style="color:var(--accent)">online form</a>: pick a service, day and time, and you get a call back to confirm. You can also call or message on Instagram (@xpyszczek_). No drop-ins without an appointment: it is a one-man workshop and every bike deserves proper time.</div>
+      <div class="faq-a">Easiest through the <a href="/en/umow" style="color:var(--accent)">online form</a>: pick a service, day and time, and you receive confirmation by phone or SMS. You can also call or message on Instagram (@xpyszczek_). No drop-ins without an appointment: it is a one-man workshop and every bike deserves proper time.</div>
     </div>
 
     <div class="faq-item">
@@ -2275,7 +2527,7 @@
         <span class="faq-t">Is the workshop easy to reach from Pruszków or Milanówek?</span>
         <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
-      <div class="faq-a">Yes, easily. From <a href="/en/serwis-rowerow-pruszkow" style="color:var(--accent)">Pruszków</a> it is about 15 min by car, from <a href="/en/serwis-rowerow-milanowek" style="color:var(--accent)">Milanówek</a> a minute, the workshop sits right on the border. From the western districts of Warsaw it works out at about 30 minutes. Book a visit, the extra distance is worth it.</div>
+      <div class="faq-a">The workshop is at Jesionowa 18 in Grodzisk Mazowiecki. I welcome bikes from <a href="/en/serwis-rowerow-pruszkow">Pruszków</a>, <a href="/en/serwis-rowerow-milanowek">Milanówek</a> and nearby towns. Travel time depends on your starting point and traffic; plan a route from your own address.</div>
     </div>
 
     <div class="faq-item" data-faq-extra hidden>
@@ -2284,7 +2536,7 @@
         <span class="faq-t">Is the workshop professionally equipped?</span>
         <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
-      <div class="faq-a">Yes. There is a repair stand, a <strong>professional wheel truing stand with a dial indicator</strong>, a torque wrench, a hydraulic bleeding kit, a hanger and rotor straightening tool, a chain tool, cone spanners, a chain whip, cassette and bottom bracket tools. The dial indicator lets me build and true wheels with millimetre precision. Every repair is done with the right tool, no improvised shortcuts.</div>
+      <div class="faq-a">Yes. There is a repair stand, a <strong>professional wheel truing stand with a dial indicator</strong>, a torque wrench, a hydraulic bleeding kit, a hanger and rotor straightening tool, a chain tool, cone spanners, a chain whip, cassette and bottom bracket tools.</div>
     </div>
 
     <div class="faq-item" data-faq-extra hidden>
@@ -2302,7 +2554,7 @@
         <span class="faq-t">What is a truing stand with a dial indicator and why does it matter?</span>
         <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
-      <div class="faq-a">A truing stand is a jig for truing and building wheels. The cheap version is two pieces of metal and the mechanic's eye. A professional stand with a dial indicator is a precision instrument that measures wheel deviation to tenths of a millimetre, both side to side and up and down. That lets me build and true wheels as close to perfect as physics allows, not "by eye and near enough". For dirt jump, BMX or MTB wheels that take hard hits, spoke precision makes a real difference in durability.</div>
+      <div class="faq-a">A truing stand holds a wheel while it is trued or built. Its dial indicator reads lateral and radial runout in 0.1 mm increments. That is the measurement resolution, not a guaranteed result for every wheel. I also check the rim, spokes and nipples; a damaged rim cannot always be trued.</div>
     </div>
 
     <div class="faq-item" data-faq-extra hidden>
@@ -2320,7 +2572,7 @@
         <span class="faq-t">When should a bike chain be replaced?</span>
         <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
-      <div class="faq-a">The simplest check is a chain wear gauge. At 0.75 it is worth replacing, because you save the cassette. Wait until 1.0 and the cassette goes together with the chain and you pay several times more. The chain gets checked at every service, so you will know when it is time.</div>
+      <div class="faq-a">The replacement limit depends on the chain model and manufacturer guidance. For many 11- and 12-speed chains it is 0.5%; for many 5- to 10-speed chains it is 0.75%. Use a compatible gauge. I assess cassette wear separately during a check. <a href="https://www.parktool.com/assets/doc/product/CC-2_instructions.pdf">Park Tool gauge instructions</a>.</div>
     </div>
 
     <div class="faq-item" data-faq-extra hidden>
@@ -2367,6 +2619,7 @@
         <input type="checkbox" name="consent" required aria-invalid="false">
         <span>I agree to receive one email reminder in March about a bike tune-up. You can opt out at any time.</span>
       </label>
+      <p class="reminder-note"><a href="/en/prywatnosc">How we use your data</a></p>
       <button type="submit" class="btn btn-green reminder-submit">Sign me up</button>
       <p class="reminder-msg" id="reminder-msg" role="status" aria-live="polite"></p>
     </form>
@@ -2416,7 +2669,7 @@
 <section class="section" id="kontakt">
   <p class="eyebrow reveal"><span class="eyebrow-no">05 /</span>Contact</p>
   <h2 class="display reveal" data-delay="1">COME TO<br>JESIONOWA</h2>
-  <p class="about-body reveal" data-delay="1" style="max-width:600px; margin-top:16px;">The workshop is at <strong>Jesionowa 18 in Grodzisk Mazowiecki</strong>. From <strong>Pruszków</strong> about 15 min, from <strong>Milanówek</strong> a minute (it sits right on the border), from western <strong>Warsaw</strong> about 30 min. Book a visit, come over, we will talk bikes.</p>
+  <p class="about-body reveal" data-delay="1" style="max-width:600px; margin-top:16px;">The workshop is at Jesionowa 18 in Grodzisk Mazowiecki. I welcome bikes from <a href="/en/serwis-rowerow-pruszkow">Pruszków</a>, <a href="/en/serwis-rowerow-milanowek">Milanówek</a> and nearby towns. Travel time depends on your starting point and traffic; plan a route from your own address.</p>
 
   <div class="contact-grid">
     <div>
@@ -2627,10 +2880,11 @@
 <!-- ═══════════════════════════════════════════════
      FOOTER
 ════════════════════════════════════════════════ -->
+</main>
 <footer>
   <span class="footer-brand">SKOCZ<em>NAROWER</em>.PL</span>
   <p>Mateusz Mamcarz · Jesionowa 18, Grodzisk Mazowiecki · 600 370 810</p>
-  <p class="footer-links"><a href="/en/kalkulator">Calculator</a><span aria-hidden="true"> · </span><a href="/en/gra">Game</a></p>
+  <p class="footer-links"><a href="/en/kalkulator">Calculator</a><span aria-hidden="true"> · </span><a href="/en/gra">Game</a><span aria-hidden="true"> · </span><a href="/en/prywatnosc">Privacy</a></p>
   <p>© 2026 skocznarower.pl</p>
 </footer>
 
@@ -2728,18 +2982,21 @@
     const remBtn = remForm.querySelector('button[type="submit"]');
     remForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (remForm.dataset.submitting === 'true') return;
       remMsg.textContent = ''; remMsg.className = 'reminder-msg';
       const email = remForm.email.value.trim();
       const consent = remForm.consent.checked;
       if (!email) { showRemMsg('Enter your email address.', 'err'); return; }
       if (!consent) { remForm.consent.setAttribute('aria-invalid', 'true'); showRemMsg('Tick the consent box so I can write to you.', 'err'); return; }
       remForm.consent.setAttribute('aria-invalid', 'false');
+      remForm.dataset.submitting = 'true';
       remBtn.disabled = true;
       const originalText = remBtn.textContent;
       remBtn.textContent = 'Saving...';
       try {
         const r = await fetch('/api/reminders', {
           method: 'POST',
+          signal: AbortSignal.timeout(20000),
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             email,
@@ -2749,9 +3006,9 @@
         });
         const data = await r.json();
         if (!r.ok) {
-          showRemMsg(data.error || 'Something went wrong, try again.', 'err');
+          showRemMsg('Could not save your request. Check your email and try again.', 'err');
         } else {
-          showRemMsg(data.message || 'Saved.', 'ok');
+          showRemMsg('Saved. We will send one reminder before the season.', 'ok');
           remForm.email.value = '';
           remForm.consent.checked = false;
           remForm.consent.setAttribute('aria-invalid', 'false');
@@ -2761,7 +3018,8 @@
       } catch (err) {
         showRemMsg('No connection, try again.', 'err');
       } finally {
-        remBtn.disabled = false;
+        delete remForm.dataset.submitting;
+        remBtn.disabled = remForm.dataset.turnstileReady === 'false';
         remBtn.textContent = originalText;
       }
     });
