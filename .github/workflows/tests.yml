@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   worker-tests:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, bielik]
     timeout-minutes: 10
 
     steps:
