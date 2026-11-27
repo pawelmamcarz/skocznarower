@@ -7,9 +7,13 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   worker-tests:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, bielik]
     timeout-minutes: 10
 
     steps:
